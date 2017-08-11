@@ -7,6 +7,8 @@ import sys
 import pytest
 import six
 
+from _pytest.terminal import TerminalReporter
+
 import pip
 from pip.utils import appdirs
 from tests.lib import SRC_DIR, TestData
@@ -235,3 +237,70 @@ class InMemoryPip(object):
 @pytest.fixture
 def in_memory_pip():
     return InMemoryPip()
+
+
+class Reporter(TerminalReporter):
+
+    def __init__(self, reporter):
+        TerminalReporter.__init__(self, reporter.config)
+        self._reports_count = 0
+        self._dots_count = 0
+        self.verbosity = 1
+
+    def _report_failure(self, report):
+        msg = self._getfailureheadline(report)
+        if not hasattr(report, 'when'):
+            msg = 'ERROR collecting ' + msg
+        elif report.when == 'setup':
+            msg = 'ERROR at setup of ' + msg
+        elif report.when == 'teardown':
+            msg = 'ERROR at teardown of ' + msg
+        self.write_sep('-', msg)
+        self._outrep_summary(report)
+        self.write_sep('-', msg)
+
+    def pytest_runtest_logreport(self, report):
+        has_multiple_jobs = hasattr(report, 'node')
+        if not report.passed or hasattr(report, 'wasxfail'):
+            if has_multiple_jobs and self._dots_count:
+                self.write_line('')
+            self._dots_count = 0
+            TerminalReporter.pytest_runtest_logreport(self, report)
+            if report.failed:
+                self._report_failure(report)
+            self._reports_count += 1
+        elif report.when == 'call':
+            if self._reports_count:
+                self.ensure_newline()
+            self._reports_count = 0
+            if self._dots_count >= self.writer.fullwidth-1:
+                self._dots_count = 0
+                self.write_line('')
+            self.writer.write('.')
+            self._dots_count += 1
+
+    def pytest_runtest_logstart(self, nodeid, location):
+        # Prevent location from being shown.
+        pass
+
+    def summary_failures(self):
+        # Prevent failure summary from being shown since we already
+        # show the failure instantly after failure has occured.
+        pass
+
+    def summary_errors(self):
+        # Prevent error summary from being shown since we already
+        # show the error instantly after error has occured.
+        pass
+
+
+@pytest.mark.trylast
+def pytest_configure(config):
+    if not config.pluginmanager.hasplugin('xdist'):
+        return
+    if getattr(config, 'slaveinput', None):
+        return
+    standard_reporter = config.pluginmanager.getplugin('terminalreporter')
+    reporter = Reporter(standard_reporter)
+    config.pluginmanager.unregister(standard_reporter)
+    config.pluginmanager.register(reporter, 'terminalreporter')
