@@ -22,6 +22,7 @@ exclude src/pip/_vendor/six
 recursive-exclude src/pip/_vendor *.pyi
 
 prune .github
+prune .tox_helpers
 prune .travis
 prune docs/_build
 prune news
