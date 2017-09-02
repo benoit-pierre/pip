@@ -1,1 +1,1 @@
-Implement PEP 517 behavior for setuptools.
+Refactor in preparation for PEP 518 and 517 implementation.
