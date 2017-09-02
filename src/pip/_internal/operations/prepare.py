@@ -100,8 +100,9 @@ class IsSDist(DistAbstraction):
         #    urls = [finder.find_requirement(InstallRequirement.from_line(r),
         #            upgrade=False).url for r in build_requirements]
         #     #    # TODO: Use single process with recursion handling
-        #  args = [sys.executable, '-m', 'pip', 'install', '--ignore-installed',
-        #            '--prefix', prefix] + list(urls)
+        #  args = [sys.executable, '-m', 'pip', 'install',
+        #           '--ignore-installed',
+        #           '--prefix', prefix] + list(urls)
         #    with open_spinner("Installing build dependencies") as spinner:
         #        call_subprocess(args, show_stdout=False, spinner=spinner)
 
