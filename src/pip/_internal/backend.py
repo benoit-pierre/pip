@@ -5,7 +5,6 @@ import logging
 from sysconfig import get_paths
 from importlib import import_module
 
-from pip._internal import pep425tags
 from pip._internal.utils.setuptools_build import SETUPTOOLS_SHIM
 from pip._internal.utils.misc import call_subprocess, ensure_dir
 from pip._internal.utils.temp_dir import TempDirectory
@@ -282,14 +281,15 @@ class BuildBackendWrapper(object):
         self.cwd = cwd
         self.env = env
         self.backend_name = backend_name
-        self.pool = ProcessPoolExecutor()
+        # self.pool = ProcessPoolExecutor()
 
     def __getattr__(self, name):
         """Handles aribrary function invokations on the build backend."""
 
         def method(**kw):
-            return self.pool.submit(
-                BuildBackend(self.cwd, self.env, self.backend_name),
-                (name, kw)).result()
+            # return self.pool.submit(
+            #     BuildBackend(self.cwd, self.env, self.backend_name),
+            #     (name, kw)).result()
+            pass
 
         return method
