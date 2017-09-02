@@ -97,14 +97,13 @@ class IsSDist(DistAbstraction):
         # with self.req.build_backend.build_envirionment as prefix:
         #    finder = copy(finder)
         #    finder.format_control = FormatControl(set(), set())
-        #        urls = [finder.find_requirement(InstallRequirement.from_line(r),
-        #                upgrade=False).url for r in build_requirements]
-        #
-        #        # TODO: Use single process with recursion handling
-        #        args = [sys.executable, '-m', 'pip', 'install', '--ignore-installed',
-        #                '--prefix', prefix] + list(urls)
-        #        with open_spinner("Installing build dependencies") as spinner:
-        #            call_subprocess(args, show_stdout=False, spinner=spinner)
+        #    urls = [finder.find_requirement(InstallRequirement.from_line(r),
+        #            upgrade=False).url for r in build_requirements]
+        #     #    # TODO: Use single process with recursion handling
+        #    args = [sys.executable, '-m', 'pip', 'install', '--ignore-installed',
+        #            '--prefix', prefix] + list(urls)
+        #    with open_spinner("Installing build dependencies") as spinner:
+        #        call_subprocess(args, show_stdout=False, spinner=spinner)
 
         self.req_to_install.run_egg_info()
         self.req_to_install.assert_source_matches_version()
