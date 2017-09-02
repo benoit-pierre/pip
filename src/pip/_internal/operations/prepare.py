@@ -3,9 +3,6 @@
 
 import logging
 import os
-import sys
-
-from copy import copy
 
 from pip._vendor import pkg_resources, requests
 
@@ -94,7 +91,7 @@ class IsSDist(DistAbstraction):
         return dist
 
     def prep_for_dist(self, finder):
-        build_requirements = self.req_to_install.build_backend.get_requires()
+        # build_requirements = self.req_to_install.build_backend.get_requires()
         logger.info("Installing build dependencies")
         # Install the build requirements
         # with self.req.build_backend.build_envirionment as prefix:
