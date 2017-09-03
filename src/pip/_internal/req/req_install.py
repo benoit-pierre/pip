@@ -453,6 +453,24 @@ class InstallRequirement(object):
 
         return pp_toml
 
+    def get_requires(self):
+        """Obtain the PEP 518 build requirements
+
+        Get a list of the packages required to build the project, if any,
+        and a flag indicating whether pyproject.toml is present, indicating
+        that the build should be isolated.
+        Build requirements can be specified in a pyproject.toml, as described
+        in PEP 518. If this file exists but doesn't specify build
+        requirements, pip will default to installing setuptools and wheel.
+        """
+        if os.path.isfile(self.pyproject_toml):
+            with open(self.pyproject_toml) as f:
+                pp_toml = pytoml.load(f)
+            return pp_toml.get('build-system', {})\
+                .get('requires', ['setuptools', 'wheel'])
+
+        return ['setuptools', 'wheel']
+
     def run_egg_info(self):
         assert self.source_dir
         if self.name:
