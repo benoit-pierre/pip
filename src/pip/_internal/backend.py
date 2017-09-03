@@ -92,7 +92,8 @@ class BuildBackend(object):
         """Obtain the PEP 517 build requirements"""
         raise NotImplementedError()
 
-    def prepare_metadata_for_build_wheel(self, metadata_directory, config_settings=None):
+    def prepare_metadata_for_build_wheel(self, metadata_directory,
+                                         config_settings=None):
         """Run the setup.py egg_info command"""
         egg_info_cmd = ['egg_info']
         # We can't put the .egg-info files at the root, because then the
