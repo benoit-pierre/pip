@@ -12,7 +12,7 @@ import zipfile
 from distutils.util import change_root
 from email.parser import FeedParser
 
-from pip._vendor import pkg_resources, six
+from pip._vendor import pkg_resources, pytoml, six
 from pip._vendor.packaging import specifiers
 from pip._vendor.packaging.markers import Marker
 from pip._vendor.packaging.requirements import InvalidRequirement, Requirement
@@ -20,9 +20,9 @@ from pip._vendor.packaging.utils import canonicalize_name
 from pip._vendor.packaging.version import parse as parse_version
 from pip._vendor.packaging.version import Version
 from pip._vendor.pkg_resources import RequirementParseError, parse_requirements
-from pip._vendor import pytoml
 
 from pip._internal import wheel
+from pip._internal.backend import BuildBackend, BuildEnvironment
 from pip._internal.compat import native_str
 from pip._internal.download import (
     is_archive_file, is_url, path_to_url, url_to_path
@@ -45,7 +45,6 @@ from pip._internal.utils.temp_dir import TempDirectory
 from pip._internal.utils.ui import open_spinner
 from pip._internal.vcs import vcs
 from pip._internal.wheel import Wheel, move_wheel_files
-from pip._internal.backend import BuildBackend, BuildEnvironment
 
 logger = logging.getLogger(__name__)
 
