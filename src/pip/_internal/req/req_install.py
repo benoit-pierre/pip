@@ -20,6 +20,7 @@ from pip._vendor.packaging.utils import canonicalize_name
 from pip._vendor.packaging.version import parse as parse_version
 from pip._vendor.packaging.version import Version
 from pip._vendor.pkg_resources import RequirementParseError, parse_requirements
+from pip._vendor import pytoml
 
 from pip._internal import wheel
 from pip._internal.compat import native_str
