@@ -30,9 +30,7 @@ from pip._internal.locations import (
     PIP_DELETE_MARKER_FILENAME, distutils_scheme
 )
 from pip._internal.utils.logging import indent_log
-from pip._internal.utils.misc import (
-    captured_stdout, ensure_dir, read_chunks
-)
+from pip._internal.utils.misc import captured_stdout, ensure_dir, read_chunks
 from pip._internal.utils.temp_dir import TempDirectory
 
 wheel_ext = '.whl'
