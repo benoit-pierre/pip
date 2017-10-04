@@ -41,6 +41,7 @@ def test_wheel_exit_status_code_when_blank_requirements_file(
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_pip_wheel_success(script, data, common_wheels):
     """
     Test 'pip wheel' success.
@@ -72,6 +73,7 @@ def test_pip_wheel_downloads_wheels(script, data, common_wheels):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_pip_wheel_builds_when_no_binary_set(script, data, common_wheels):
     script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     data.packages.join('simple-3.0-py2.py3-none-any.whl').touch()
@@ -84,6 +86,7 @@ def test_pip_wheel_builds_when_no_binary_set(script, data, common_wheels):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_pip_wheel_builds_editable_deps(script, data, common_wheels):
     """
     Test 'pip wheel' finds and builds dependencies of editables
@@ -100,6 +103,7 @@ def test_pip_wheel_builds_editable_deps(script, data, common_wheels):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_pip_wheel_builds_editable(script, data, common_wheels):
     """
     Test 'pip wheel' builds an editable package
@@ -116,6 +120,7 @@ def test_pip_wheel_builds_editable(script, data, common_wheels):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_pip_wheel_fail(script, data, common_wheels):
     """
     Test 'pip wheel' failure.
@@ -138,6 +143,7 @@ def test_pip_wheel_fail(script, data, common_wheels):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_no_clean_option_blocks_cleaning_after_wheel(
         script, data, common_wheels):
     """
@@ -156,6 +162,7 @@ def test_no_clean_option_blocks_cleaning_after_wheel(
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_pip_wheel_source_deps(script, data, common_wheels):
     """
     Test 'pip wheel' finds and builds source archive dependencies
@@ -201,6 +208,7 @@ def test_pip_wheel_fail_cause_of_previous_build_dir(
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_wheel_package_with_latin1_setup(script, data, common_wheels):
     """Create a wheel from a package with latin-1 encoded setup.py."""
     script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
@@ -211,6 +219,7 @@ def test_wheel_package_with_latin1_setup(script, data, common_wheels):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_pip_wheel_with_pep518_build_reqs(script, data):
     script.pip('install', 'wheel')
     script.pip('download', 'setuptools', 'wheel', '-d', data.packages)

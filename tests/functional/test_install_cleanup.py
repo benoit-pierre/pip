@@ -38,6 +38,7 @@ def test_no_clean_option_blocks_cleaning_after_install(script, data):
 
 @pytest.mark.network
 @need_mercurial
+@pytest.mark.slow
 def test_cleanup_after_install_editable_from_hg(script, tmpdir):
     """
     Test clean up after cloning from Mercurial.
@@ -73,6 +74,7 @@ def test_cleanup_after_install_from_local_directory(script, data):
     script.assert_no_temp()
 
 
+@pytest.mark.slow
 def test_cleanup_req_satisifed_no_name(script, data):
     """
     Test cleanup when req is already satisfied, and req has no 'name'

@@ -11,6 +11,7 @@ from tests.lib.local_repos import local_checkout
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_requirements_file(script):
     """
     Test installing from a requirements file.
@@ -53,6 +54,7 @@ def test_schema_check_in_requirements_file(script):
         )
 
 
+@pytest.mark.slow
 def test_relative_requirements_file(script, data):
     """
     Test installing from a requirements file with a relative path. For path
@@ -95,6 +97,7 @@ def test_relative_requirements_file(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_multiple_requirements_files(script, tmpdir):
     """
     Test installing from multiple nested requirements files.
@@ -126,6 +129,7 @@ def test_multiple_requirements_files(script, tmpdir):
     assert script.venv / 'src' / 'initools' in result.files_created
 
 
+@pytest.mark.slow
 def test_package_in_constraints_and_dependencies(script, data):
     script.scratch_path.join("constraints.txt").write(
         "TopoRequires2==0.0.1\nTopoRequires==0.0.1"
@@ -146,6 +150,7 @@ def test_multiple_constraints_files(script, data):
     assert 'installed Upper-1.0' in result.stdout
 
 
+@pytest.mark.slow
 def test_respect_order_in_requirements_file(script, data):
     script.scratch_path.join("frameworks-req.txt").write(textwrap.dedent("""\
         parent
@@ -172,6 +177,7 @@ def test_respect_order_in_requirements_file(script, data):
     )
 
 
+@pytest.mark.slow
 def test_install_local_editable_with_extras(script, data):
     to_install = data.packages.join("LocalExtras")
     res = script.pip(
@@ -188,6 +194,7 @@ def test_install_local_editable_with_extras(script, data):
     assert script.site_packages / 'simple' in res.files_created, str(res)
 
 
+@pytest.mark.slow
 def test_install_collected_dependencies_first(script):
     result = script.pip_install_local(
         'toporequires2',
@@ -224,6 +231,7 @@ def test_install_local_with_subdirectory(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_wheel_user_with_prefix_in_pydistutils_cfg(
         script, data, virtualenv, common_wheels):
     # Make sure wheel is available in the virtualenv
@@ -334,6 +342,7 @@ def test_constraints_constrain_to_local(script, data):
     assert 'Running setup.py install for singlemodule' in result.stdout
 
 
+@pytest.mark.slow
 def test_constrained_to_url_install_same_url(script, data):
     to_install = data.src.join("singlemodule")
     constraints = path_to_url(to_install) + "#egg=singlemodule"
@@ -346,6 +355,7 @@ def test_constrained_to_url_install_same_url(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_double_install_spurious_hash_mismatch(
         script, tmpdir, data, common_wheels):
     """Make sure installing the same hashed sdist twice doesn't throw hash
@@ -379,6 +389,7 @@ def test_double_install_spurious_hash_mismatch(
         assert 'Successfully installed simple-1.0' in str(result)
 
 
+@pytest.mark.slow
 def test_install_with_extras_from_constraints(script, data):
     to_install = data.packages.join("LocalExtras")
     script.scratch_path.join("constraints.txt").write(
@@ -389,6 +400,7 @@ def test_install_with_extras_from_constraints(script, data):
     assert script.site_packages / 'simple' in result.files_created
 
 
+@pytest.mark.slow
 def test_install_with_extras_from_install(script, data):
     to_install = data.packages.join("LocalExtras")
     script.scratch_path.join("constraints.txt").write(
@@ -399,6 +411,7 @@ def test_install_with_extras_from_install(script, data):
     assert script.site_packages / 'singlemodule.py'in result.files_created
 
 
+@pytest.mark.slow
 def test_install_with_extras_joined(script, data):
     to_install = data.packages.join("LocalExtras")
     script.scratch_path.join("constraints.txt").write(
@@ -411,6 +424,7 @@ def test_install_with_extras_joined(script, data):
     assert script.site_packages / 'singlemodule.py'in result.files_created
 
 
+@pytest.mark.slow
 def test_install_with_extras_editable_joined(script, data):
     to_install = data.packages.join("LocalExtras")
     script.scratch_path.join("constraints.txt").write(
@@ -422,6 +436,7 @@ def test_install_with_extras_editable_joined(script, data):
     assert script.site_packages / 'singlemodule.py'in result.files_created
 
 
+@pytest.mark.slow
 def test_install_distribution_full_union(script, data):
     to_install = data.packages.join("LocalExtras")
     result = script.pip_install_local(
@@ -431,6 +446,7 @@ def test_install_distribution_full_union(script, data):
     assert script.site_packages / 'singlemodule.py' in result.files_created
 
 
+@pytest.mark.slow
 def test_install_distribution_duplicate_extras(script, data):
     to_install = data.packages.join("LocalExtras")
     package_name = to_install + "[bar]"
@@ -439,6 +455,7 @@ def test_install_distribution_duplicate_extras(script, data):
         assert 'Double requirement given: %s' % package_name in result.stderr
 
 
+@pytest.mark.slow
 def test_install_distribution_union_with_constraints(script, data):
     to_install = data.packages.join("LocalExtras")
     script.scratch_path.join("constraints.txt").write(
@@ -449,6 +466,7 @@ def test_install_distribution_union_with_constraints(script, data):
     assert script.site_packages / 'singlemodule.py' in result.files_created
 
 
+@pytest.mark.slow
 def test_install_distribution_union_with_versions(script, data):
     to_install_001 = data.packages.join("LocalExtras")
     to_install_002 = data.packages.join("LocalExtras-0.0.2")
@@ -459,6 +477,7 @@ def test_install_distribution_union_with_versions(script, data):
 
 
 @pytest.mark.xfail
+@pytest.mark.slow
 def test_install_distribution_union_conflicting_extras(script, data):
     # LocalExtras requires simple==1.0, LocalExtras[bar] requires simple==2.0;
     # without a resolver, pip does not detect the conflict between simple==1.0

@@ -60,6 +60,7 @@ def test_pypi_xml_transformation():
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_search(script):
     """
     End to end test of search command.

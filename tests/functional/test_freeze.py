@@ -42,6 +42,7 @@ def _check_output(result, expected):
     )
 
 
+@pytest.mark.slow
 def test_freeze_basic(script):
     """
     Some tests of freeze, first we have to install some stuff.  Note that
@@ -164,6 +165,7 @@ def test_freeze_exclude_editable(script, tmpdir):
 
 
 @pytest.mark.git
+@pytest.mark.slow
 def test_freeze_git_clone(script, tmpdir):
     """
     Test freezing a Git clone.
@@ -227,6 +229,7 @@ def test_freeze_git_clone(script, tmpdir):
 
 
 @pytest.mark.git
+@pytest.mark.slow
 def test_freeze_git_clone_srcdir(script, tmpdir):
     """
     Test freezing a Git clone where setup.py is in a subdirectory
@@ -270,6 +273,7 @@ def test_freeze_git_clone_srcdir(script, tmpdir):
 
 
 @pytest.mark.git
+@pytest.mark.slow
 def test_freeze_git_remote(script, tmpdir):
     """
     Test freezing a Git clone.
@@ -323,6 +327,7 @@ def test_freeze_git_remote(script, tmpdir):
 
 
 @need_mercurial
+@pytest.mark.slow
 def test_freeze_mercurial_clone(script, tmpdir):
     """
     Test freezing a Mercurial clone.
@@ -365,6 +370,7 @@ def test_freeze_mercurial_clone(script, tmpdir):
 
 
 @need_bzr
+@pytest.mark.slow
 def test_freeze_bazaar_clone(script, tmpdir):
     """
     Test freezing a Bazaar clone.
@@ -419,6 +425,7 @@ _freeze_req_opts = textwrap.dedent("""\
 """)
 
 
+@pytest.mark.slow
 def test_freeze_with_requirement_option(script):
     """
     Test that new requirements are created correctly with --requirement hints
@@ -449,6 +456,7 @@ def test_freeze_with_requirement_option(script):
     ) in result.stderr
 
 
+@pytest.mark.slow
 def test_freeze_with_requirement_option_multiple(script):
     """
     Test that new requirements are created correctly with multiple
@@ -499,6 +507,7 @@ def test_freeze_with_requirement_option_multiple(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_freeze_user(script, virtualenv, data):
     """
     Testing freeze with --user, first we have to install some stuff.

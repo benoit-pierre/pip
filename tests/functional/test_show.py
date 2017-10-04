@@ -20,6 +20,7 @@ def test_show(script):
     assert 'Requires: ' in lines
 
 
+@pytest.mark.slow
 def test_show_with_files_not_found(script, data):
     """
     Test for show command with installed files listing enabled and
@@ -52,6 +53,7 @@ def test_show_with_files_from_wheel(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_show_with_all_files(script):
     """
     Test listing all files in the show command.
@@ -155,6 +157,7 @@ def test_pip_show_is_short(script):
     assert len(lines) <= 10
 
 
+@pytest.mark.slow
 def test_pip_show_divider(script, data):
     """
     Expect a divider between packages
@@ -166,6 +169,7 @@ def test_pip_show_divider(script, data):
     assert "---" in lines
 
 
+@pytest.mark.slow
 def test_package_name_is_canonicalized(script, data):
     script.pip('install', 'pip-test-package', '--no-index', '-f',
                data.packages)
@@ -177,6 +181,7 @@ def test_package_name_is_canonicalized(script, data):
     assert underscore_upper_show_result.stdout == dash_show_result.stdout
 
 
+@pytest.mark.slow
 def test_show_required_by_packages(script, data):
     """
     Test that installed packages that depend on this package are shown

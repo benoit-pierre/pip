@@ -192,6 +192,7 @@ def test_install_wheel_with_prefix(script, data):
     assert lib in result.files_created, str(result)
 
 
+@pytest.mark.slow
 def test_install_from_wheel_installs_deps(script, data):
     """
     Test can install dependencies of wheels

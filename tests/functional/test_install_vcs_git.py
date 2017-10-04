@@ -111,6 +111,7 @@ def test_check_rev_options_should_handle_ambiguous_commit(get_refs_mock):
 # TODO(pnasrat) fix all helpers to do right things with paths on windows.
 @pytest.mark.skipif("sys.platform == 'win32'")
 @pytest.mark.network
+@pytest.mark.slow
 def test_check_submodule_addition(script):
     """
     Submodules are pulled in on install and updated on upgrade.

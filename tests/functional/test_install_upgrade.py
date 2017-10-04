@@ -8,6 +8,7 @@ from tests.lib import assert_all_changes, pyversion
 from tests.lib.local_repos import local_checkout
 
 
+@pytest.mark.slow
 def test_no_upgrade_unless_requested(script):
     """
     No upgrade if not specifically requested.
@@ -34,6 +35,7 @@ def test_invalid_upgrade_strategy_causes_error(script):
     assert "invalid choice" in result.stderr
 
 
+@pytest.mark.slow
 def test_only_if_needed_does_not_upgrade_deps_when_satisfied(script):
     """
     It doesn't upgrade a dependency if it already satisfies the requirements.
@@ -55,6 +57,7 @@ def test_only_if_needed_does_not_upgrade_deps_when_satisfied(script):
     ), "should not have uninstalled simple==2.0"
 
 
+@pytest.mark.slow
 def test_only_if_needed_does_upgrade_deps_when_no_longer_satisfied(script):
     """
     It does upgrade a dependency if it no longer satisfies the requirements.
@@ -80,6 +83,7 @@ def test_only_if_needed_does_upgrade_deps_when_no_longer_satisfied(script):
     ), "should have uninstalled simple==1.0"
 
 
+@pytest.mark.slow
 def test_eager_does_upgrade_dependecies_when_currently_satisfied(script):
     """
     It does upgrade a dependency even if it already satisfies the requirements.
@@ -101,6 +105,7 @@ def test_eager_does_upgrade_dependecies_when_currently_satisfied(script):
     ), "should have uninstalled simple==2.0"
 
 
+@pytest.mark.slow
 def test_eager_does_upgrade_dependecies_when_no_longer_satisfied(script):
     """
     It does upgrade a dependency if it no longer satisfies the requirements.
@@ -127,6 +132,7 @@ def test_eager_does_upgrade_dependecies_when_no_longer_satisfied(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_upgrade_to_specific_version(script):
     """
     It does upgrade to specific version requested.
@@ -148,6 +154,7 @@ def test_upgrade_to_specific_version(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_upgrade_if_requested(script):
     """
     And it does upgrade if requested.
@@ -162,6 +169,7 @@ def test_upgrade_if_requested(script):
     )
 
 
+@pytest.mark.slow
 def test_upgrade_with_newest_already_installed(script, data):
     """
     If the newest version of a package is already installed, the package should
@@ -176,6 +184,7 @@ def test_upgrade_with_newest_already_installed(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_upgrade_force_reinstall_newest(script):
     """
     Force reinstallation of a package even if it is already at its newest
@@ -194,6 +203,7 @@ def test_upgrade_force_reinstall_newest(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_uninstall_before_upgrade(script):
     """
     Automatic uninstall-before-upgrade.
@@ -210,6 +220,7 @@ def test_uninstall_before_upgrade(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_uninstall_before_upgrade_from_url(script):
     """
     Automatic uninstall-before-upgrade from URL.
@@ -231,6 +242,7 @@ def test_uninstall_before_upgrade_from_url(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_upgrade_to_same_version_from_url(script):
     """
     When installing from a URL the same version that is already installed, no
@@ -253,6 +265,7 @@ def test_upgrade_to_same_version_from_url(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_upgrade_from_reqs_file(script):
     """
     Upgrade from a requirements file.
@@ -284,6 +297,7 @@ def test_upgrade_from_reqs_file(script):
     )
 
 
+@pytest.mark.slow
 def test_uninstall_rollback(script, data):
     """
     Test uninstall-rollback (using test package with a setup.py
@@ -312,6 +326,7 @@ def test_uninstall_rollback(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_should_not_install_always_from_cache(script):
     """
     If there is an old cached package, pip should download the newer version
@@ -331,6 +346,7 @@ def test_should_not_install_always_from_cache(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_install_with_ignoreinstalled_requested(script):
     """
     Test old conflicting package is completely ignored
@@ -348,6 +364,7 @@ def test_install_with_ignoreinstalled_requested(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_upgrade_vcs_req_with_no_dists_found(script, tmpdir):
     """It can upgrade a VCS requirement that has no distributions otherwise."""
     req = "%s#egg=pip-test-package" % local_checkout(
@@ -360,6 +377,7 @@ def test_upgrade_vcs_req_with_no_dists_found(script, tmpdir):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_upgrade_vcs_req_with_dist_found(script):
     """It can upgrade a VCS requirement that has distributions on the index."""
     # TODO(pnasrat) Using local_checkout fails on windows - oddness with the

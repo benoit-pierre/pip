@@ -64,6 +64,7 @@ def test_with_setuptools_and_import_error(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_pip_second_command_line_interface_works(script, data):
     """
     Check if ``pip<PYVERSION>`` commands behaves equally
@@ -104,6 +105,7 @@ def test_install_exit_status_code_when_blank_requirements_file(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_install_from_pypi(script):
     """
     Test installing a package from PyPI.
@@ -135,6 +137,7 @@ def test_editable_install(script):
 
 
 @pytest.mark.svn
+@pytest.mark.slow
 def test_install_editable_from_svn(script):
     """
     Test checking out from svn.
@@ -156,11 +159,13 @@ def _test_install_editable_from_git(script, tmpdir):
     result.assert_installed('testpackage', with_files=['.git'])
 
 
+@pytest.mark.slow
 def test_install_editable_from_git(script, tmpdir):
     _test_install_editable_from_git(script, tmpdir)
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_install_editable_from_git_autobuild_wheel(
         script, tmpdir, common_wheels):
     script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
@@ -168,6 +173,7 @@ def test_install_editable_from_git_autobuild_wheel(
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_install_editable_uninstalls_existing(data, script, tmpdir):
     """
     Test that installing an editable uninstalls a previously installed
@@ -194,6 +200,7 @@ def test_install_editable_uninstalls_existing(data, script, tmpdir):
     assert 'Successfully uninstalled pip-test-package' in result.stdout
 
 
+@pytest.mark.slow
 def test_install_editable_uninstalls_existing_from_path(script, data):
     """
     Test that installing an editable uninstalls a previously installed
@@ -219,6 +226,7 @@ def test_install_editable_uninstalls_existing_from_path(script, data):
 
 
 @need_mercurial
+@pytest.mark.slow
 def test_install_editable_from_hg(script, tmpdir):
     """Test cloning from Mercurial."""
     pkg_path = _create_test_package(script, name='testpackage', vcs='hg')
@@ -228,6 +236,7 @@ def test_install_editable_from_hg(script, tmpdir):
 
 
 @need_mercurial
+@pytest.mark.slow
 def test_vcs_url_final_slash_normalization(script, tmpdir):
     """
     Test that presence or absence of final slash in VCS URL is normalized.
@@ -239,6 +248,7 @@ def test_vcs_url_final_slash_normalization(script, tmpdir):
 
 
 @need_bzr
+@pytest.mark.slow
 def test_install_editable_from_bazaar(script, tmpdir):
     """Test checking out from Bazaar."""
     pkg_path = _create_test_package(script, name='testpackage', vcs='bazaar')
@@ -249,6 +259,7 @@ def test_install_editable_from_bazaar(script, tmpdir):
 
 @pytest.mark.network
 @need_bzr
+@pytest.mark.slow
 def test_vcs_url_urlquote_normalization(script, tmpdir):
     """
     Test that urlquoted characters are normalized for repo URL comparison.
@@ -278,6 +289,7 @@ def test_install_from_local_directory(script, data):
     assert egg_info_folder in result.files_created, str(result)
 
 
+@pytest.mark.slow
 def test_install_relative_directory(script, data):
     """
     Test installing a requirement using a relative path.
@@ -327,6 +339,7 @@ def test_install_quiet(script, data):
     assert result.stderr == ""
 
 
+@pytest.mark.slow
 def test_hashed_install_success(script, data, tmpdir):
     """
     Test that installing various sorts of requirements with correct hashes
@@ -420,6 +433,7 @@ def test_upgrade_argparse_shadowed(script):
     assert "Not uninstalling argparse" not in result.stdout
 
 
+@pytest.mark.slow
 def test_install_curdir(script, data):
     """
     Test installing current directory ('.').
@@ -453,6 +467,7 @@ def test_install_pardir(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_install_global_option(script):
     """
     Test using global distutils options.
@@ -502,6 +517,7 @@ def test_install_using_install_option_and_editable(script, tmpdir):
 
 @pytest.mark.network
 @need_mercurial
+@pytest.mark.slow
 def test_install_global_option_using_editable(script, tmpdir):
     """
     Test using global distutils options, but in an editable installation
@@ -583,6 +599,7 @@ def test_install_package_which_contains_dev_in_name(script):
     assert egg_info_folder in result.files_created, str(result)
 
 
+@pytest.mark.slow
 def test_install_package_with_target(script):
     """
     Test installing a package using pip install --target
@@ -621,6 +638,7 @@ def test_install_package_with_target(script):
     assert singlemodule_py in result.files_updated, str(result)
 
 
+@pytest.mark.slow
 def test_install_package_with_root(script, data):
     """
     Test installing a package using pip install --root
@@ -741,6 +759,7 @@ def test_install_package_with_latin1_setup(script, data):
     script.pip('install', to_install)
 
 
+@pytest.mark.slow
 def test_url_req_case_mismatch_no_index(script, data):
     """
     tar ball url requirements (with no egg fragment), that happen to have upper
@@ -762,6 +781,7 @@ def test_url_req_case_mismatch_no_index(script, data):
     assert egg_folder not in result.files_created, str(result)
 
 
+@pytest.mark.slow
 def test_url_req_case_mismatch_file_index(script, data):
     """
     tar ball url requirements (with no egg fragment), that happen to have upper
@@ -789,6 +809,7 @@ def test_url_req_case_mismatch_file_index(script, data):
     assert egg_folder not in result.files_created, str(result)
 
 
+@pytest.mark.slow
 def test_url_incorrect_case_no_index(script, data):
     """
     Same as test_url_req_case_mismatch_no_index, except testing for the case
@@ -806,6 +827,7 @@ def test_url_incorrect_case_no_index(script, data):
     assert egg_folder in result.files_created, str(result)
 
 
+@pytest.mark.slow
 def test_url_incorrect_case_file_index(script, data):
     """
     Same as test_url_req_case_mismatch_file_index, except testing for the case
@@ -870,6 +892,7 @@ def test_no_compiles_pyc(script):
     assert not any(exists)
 
 
+@pytest.mark.slow
 def test_install_upgrade_editable_depending_on_other_editable(script):
     script.scratch_path.join("pkga").mkdir()
     pkga_path = script.scratch_path / 'pkga'
@@ -895,6 +918,7 @@ def test_install_upgrade_editable_depending_on_other_editable(script):
     assert "pkgb==0.1" in result.stdout
 
 
+@pytest.mark.slow
 def test_install_subprocess_output_handling(script, data):
     args = ['install', data.src.join('chattymodule')]
 
@@ -933,6 +957,7 @@ def test_install_log(script, data, tmpdir):
         assert 2 == fp.read().count("HELLO FROM CHATTYMODULE")
 
 
+@pytest.mark.slow
 def test_install_topological_sort(script, data):
     args = ['install', 'TopoRequires4', '--no-index', '-f', data.packages]
     res = str(script.pip(*args, expect_error=False))
@@ -942,6 +967,7 @@ def test_install_topological_sort(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_install_wheel_broken(script, data, common_wheels):
     script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     res = script.pip(
@@ -952,6 +978,7 @@ def test_install_wheel_broken(script, data, common_wheels):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_cleanup_after_failed_wheel(script, data, common_wheels):
     script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     res = script.pip(
@@ -968,6 +995,7 @@ def test_cleanup_after_failed_wheel(script, data, common_wheels):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_install_builds_wheels(script, data, common_wheels):
     # We need to use a subprocess to get the right value on Windows.
     res = script.run('python', '-c', (
@@ -1012,6 +1040,7 @@ def test_install_builds_wheels(script, data, common_wheels):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_install_no_binary_disables_building_wheels(
         script, data, common_wheels):
     script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
@@ -1039,6 +1068,7 @@ def test_install_no_binary_disables_building_wheels(
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_install_no_binary_disables_cached_wheels(script, data, common_wheels):
     script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     # Seed the cache
@@ -1056,6 +1086,7 @@ def test_install_no_binary_disables_cached_wheels(script, data, common_wheels):
     assert "Running setup.py install for upper" in str(res), str(res)
 
 
+@pytest.mark.slow
 def test_install_editable_with_wrong_egg_name(script):
     script.scratch_path.join("pkga").mkdir()
     pkga_path = script.scratch_path / 'pkga'
@@ -1112,6 +1143,7 @@ def test_double_install_fail(script):
     assert msg in result.stderr
 
 
+@pytest.mark.slow
 def test_install_incompatible_python_requires(script, common_wheels):
     script.scratch_path.join("pkga").mkdir()
     pkga_path = script.scratch_path / 'pkga'
@@ -1130,6 +1162,7 @@ def test_install_incompatible_python_requires(script, common_wheels):
             "but the running Python is ") in result.stderr, str(result)
 
 
+@pytest.mark.slow
 def test_install_incompatible_python_requires_editable(script, common_wheels):
     script.scratch_path.join("pkga").mkdir()
     pkga_path = script.scratch_path / 'pkga'
@@ -1150,6 +1183,7 @@ def test_install_incompatible_python_requires_editable(script, common_wheels):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_install_incompatible_python_requires_wheel(script, common_wheels):
     script.scratch_path.join("pkga").mkdir()
     pkga_path = script.scratch_path / 'pkga'
@@ -1172,6 +1206,7 @@ def test_install_incompatible_python_requires_wheel(script, common_wheels):
             "but the running Python is ") in result.stderr
 
 
+@pytest.mark.slow
 def test_install_compatible_python_requires(script, common_wheels):
     script.scratch_path.join("pkga").mkdir()
     pkga_path = script.scratch_path / 'pkga'

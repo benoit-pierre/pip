@@ -12,6 +12,7 @@ from tests.lib import assert_all_changes, pyversion
 class Tests_UninstallUserSite:
 
     @pytest.mark.network
+    @pytest.mark.slow
     def test_uninstall_from_usersite(self, script, virtualenv):
         """
         Test uninstall from usersite
@@ -21,6 +22,7 @@ class Tests_UninstallUserSite:
         result2 = script.pip('uninstall', '-y', 'INITools')
         assert_all_changes(result1, result2, [script.venv / 'build', 'cache'])
 
+    @pytest.mark.slow
     def test_uninstall_from_usersite_with_dist_in_global_site(
             self, script, virtualenv):
         """
@@ -62,6 +64,7 @@ class Tests_UninstallUserSite:
         )
         assert isdir(egg_info_folder)
 
+    @pytest.mark.slow
     def test_uninstall_editable_from_usersite(self, script, virtualenv, data):
         """
         Test uninstall editable local user install

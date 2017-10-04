@@ -1,6 +1,9 @@
 import os
 
+import pytest
 
+
+@pytest.mark.slow
 def test_completion_for_bash(script):
     """
     Test getting completion for bash shell

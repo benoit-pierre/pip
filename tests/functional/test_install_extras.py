@@ -5,6 +5,7 @@ import pytest
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_simple_extras_install_from_pypi(script):
     """
     Test installing a package from PyPI using extras dependency Paste[openid].
@@ -16,6 +17,7 @@ def test_simple_extras_install_from_pypi(script):
     assert initools_folder in result.files_created, result.files_created
 
 
+@pytest.mark.slow
 def test_extras_after_wheel(script, data):
     """
     Test installing a package with extras after installing from a wheel.
@@ -36,6 +38,7 @@ def test_extras_after_wheel(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_no_extras_uninstall(script):
     """
     No extras dependency gets uninstalled when the root package is uninstalled

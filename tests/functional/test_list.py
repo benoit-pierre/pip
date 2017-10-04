@@ -4,6 +4,7 @@ import os
 import pytest
 
 
+@pytest.mark.slow
 def test_list_command(script, data):
     """
     Test default behavior of list command without format specifier.
@@ -18,6 +19,7 @@ def test_list_command(script, data):
     assert 'simple2    3.0' in result.stdout, str(result)
 
 
+@pytest.mark.slow
 def test_verbose_flag(script, data):
     """
     Test the list command with the '-v' option
@@ -35,6 +37,7 @@ def test_verbose_flag(script, data):
     assert 'simple2    3.0' in result.stdout, str(result)
 
 
+@pytest.mark.slow
 def test_columns_flag(script, data):
     """
     Test the list command with the '--format=columns' option
@@ -51,6 +54,7 @@ def test_columns_flag(script, data):
     assert 'simple2    3.0' in result.stdout, str(result)
 
 
+@pytest.mark.slow
 def test_legacy_format(script, data):
     """
     Test that legacy format
@@ -64,6 +68,7 @@ def test_legacy_format(script, data):
     assert 'simple2 (3.0)' in result.stdout, str(result)
 
 
+@pytest.mark.slow
 def test_format_priority(script, data):
     """
     Test that latest format has priority over previous ones.
@@ -88,6 +93,7 @@ def test_format_priority(script, data):
     assert 'simple2    3.0' in result.stdout, str(result)
 
 
+@pytest.mark.slow
 def test_local_flag(script, data):
     """
     Test the behavior of --local flag in the list command
@@ -98,6 +104,7 @@ def test_local_flag(script, data):
     assert {"name": "simple", "version": "1.0"} in json.loads(result.stdout)
 
 
+@pytest.mark.slow
 def test_local_columns_flag(script, data):
     """
     Test the behavior of --local --format=columns flags in the list command
@@ -111,6 +118,7 @@ def test_local_columns_flag(script, data):
     assert 'simple     1.0' in result.stdout, str(result)
 
 
+@pytest.mark.slow
 def test_local_legacy_flag(script, data):
     """
     Test the behavior of --local --format=legacy flags in the list
@@ -123,6 +131,7 @@ def test_local_legacy_flag(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_user_flag(script, data, virtualenv):
     """
     Test the behavior of --user flag in the list command
@@ -140,6 +149,7 @@ def test_user_flag(script, data, virtualenv):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_user_columns_flag(script, data, virtualenv):
     """
     Test the behavior of --user --format=columns flags in the list command
@@ -158,6 +168,7 @@ def test_user_columns_flag(script, data, virtualenv):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_user_legacy(script, data, virtualenv):
     """
     Test the behavior of --user flag in the list command
@@ -175,6 +186,7 @@ def test_user_legacy(script, data, virtualenv):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_uptodate_flag(script, data):
     """
     Test the behavior of --uptodate flag in the list command
@@ -200,6 +212,7 @@ def test_uptodate_flag(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_uptodate_columns_flag(script, data):
     """
     Test the behavior of --uptodate --format=columns flag in the list command
@@ -226,6 +239,7 @@ def test_uptodate_columns_flag(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_uptodate_legacy_flag(script, data):
     """
     Test the behavior of --uptodate --format=legacy flag in the list command
@@ -250,6 +264,7 @@ def test_uptodate_legacy_flag(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_outdated_flag(script, data):
     """
     Test the behavior of --outdated flag in the list command
@@ -281,6 +296,7 @@ def test_outdated_flag(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_outdated_columns_flag(script, data):
     """
     Test the behavior of --outdated --format=columns flag in the list command
@@ -315,6 +331,7 @@ def test_outdated_columns_flag(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_outdated_legacy(script, data):
     """
     Test the behavior of --outdated --format=legacy flag in the list command
@@ -342,6 +359,7 @@ def test_outdated_legacy(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_editables_flag(script, data):
     """
     Test the behavior of --editables flag in the list command
@@ -359,6 +377,7 @@ def test_editables_flag(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_exclude_editable_flag(script, data):
     """
     Test the behavior of --editables flag in the list command
@@ -375,6 +394,7 @@ def test_exclude_editable_flag(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_editables_columns_flag(script, data):
     """
     Test the behavior of --editables flag in the list command
@@ -394,6 +414,7 @@ def test_editables_columns_flag(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_editables_legacy(script, data):
     """
     Test the behavior of --editables flag in the list command
@@ -413,6 +434,7 @@ def test_editables_legacy(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_uptodate_editables_flag(script, data):
     """
     test the behavior of --editable --uptodate flag in the list command
@@ -433,6 +455,7 @@ def test_uptodate_editables_flag(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_uptodate_editables_columns_flag(script, data):
     """
     test the behavior of --editable --uptodate --format=columns flag in the
@@ -456,6 +479,7 @@ def test_uptodate_editables_columns_flag(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_uptodate_editables_legacy(script, data):
     """
     test the behavior of --editable --uptodate --format=columns --format=legacy
@@ -478,6 +502,7 @@ def test_uptodate_editables_legacy(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_outdated_editables_flag(script, data):
     """
     test the behavior of --editable --outdated flag in the list command
@@ -497,6 +522,7 @@ def test_outdated_editables_flag(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_outdated_editables_columns_flag(script, data):
     """
     test the behavior of --editable --outdated flag in the list command
@@ -520,6 +546,7 @@ def test_outdated_editables_columns_flag(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_outdated_editables_legacy(script, data):
     """
     test the behavior of --editable --outdated flag in the list command
@@ -541,6 +568,7 @@ def test_outdated_editables_legacy(script, data):
     )
 
 
+@pytest.mark.slow
 def test_outdated_pre(script, data):
     script.pip('install', '-f', data.find_links, '--no-index', 'simple==1.0')
 
@@ -569,6 +597,7 @@ def test_outdated_pre(script, data):
         in json.loads(result_pre.stdout)
 
 
+@pytest.mark.slow
 def test_outdated_formats(script, data):
     """ Test of different outdated formats """
     script.pip('install', '-f', data.find_links, '--no-index', 'simple==1.0')
@@ -613,6 +642,7 @@ def test_outdated_formats(script, data):
                      'latest_version': '1.1', 'latest_filetype': 'wheel'}]
 
 
+@pytest.mark.slow
 def test_not_required_flag(script, data):
     script.pip(
         'install', '-f', data.find_links, '--no-index', 'TopoRequires4'
@@ -624,6 +654,7 @@ def test_not_required_flag(script, data):
     assert 'TopoRequires3 ' not in result.stdout
 
 
+@pytest.mark.slow
 def test_list_freeze(script, data):
     """
     Test freeze formatting of list command
@@ -638,6 +669,7 @@ def test_list_freeze(script, data):
     assert 'simple2==3.0' in result.stdout, str(result)
 
 
+@pytest.mark.slow
 def test_list_json(script, data):
     """
     Test json formatting of list command

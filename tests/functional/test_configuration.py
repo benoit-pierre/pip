@@ -28,6 +28,7 @@ class TestBasicLoading(ConfigurationMixin):
 
         assert "test.hello=1" in result.stdout
 
+    @pytest.mark.slow
     def test_modification_pipeline(self, script):
         script.pip("config", "get", "test.blah", expect_error=True)
         script.pip("config", "set", "test.blah", "1")
@@ -38,6 +39,7 @@ class TestBasicLoading(ConfigurationMixin):
         script.pip("config", "unset", "test.blah")
         script.pip("config", "get", "test.blah", expect_error=True)
 
+    @pytest.mark.slow
     def test_listing_is_correct(self, script):
         script.pip("config", "set", "test.listing-beta", "2")
         script.pip("config", "set", "test.listing-alpha", "1")

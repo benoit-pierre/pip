@@ -35,6 +35,7 @@ def _patch_dist_in_site_packages(script):
 class Tests_UserSite:
 
     @pytest.mark.network
+    @pytest.mark.slow
     def test_reset_env_system_site_packages_usersite(self, script, virtualenv):
         """
         reset_env(system_site_packages=True) produces env where a --user
@@ -51,6 +52,7 @@ class Tests_UserSite:
         assert 'INITools' == project_name, project_name
 
     @pytest.mark.network
+    @pytest.mark.slow
     def test_install_subversion_usersite_editable_with_distribute(
             self, script, virtualenv, tmpdir):
         """
@@ -68,6 +70,7 @@ class Tests_UserSite:
         )
         result.assert_installed('INITools', use_user_site=True)
 
+    @pytest.mark.slow
     def test_install_curdir_usersite(self, script, virtualenv, data):
         """
         Test installing current directory ('.') into usersite
@@ -103,6 +106,7 @@ class Tests_UserSite:
         )
 
     @pytest.mark.network
+    @pytest.mark.slow
     def test_install_user_conflict_in_usersite(self, script, virtualenv):
         """
         Test user install with conflict in usersite updates usersite.
@@ -127,6 +131,7 @@ class Tests_UserSite:
         assert not isfile(initools_v3_file), initools_v3_file
 
     @pytest.mark.network
+    @pytest.mark.slow
     def test_install_user_conflict_in_globalsite(self, script, virtualenv):
         """
         Test user install with conflict in global site ignores site and
@@ -171,6 +176,7 @@ class Tests_UserSite:
         assert isdir(initools_folder)
 
     @pytest.mark.network
+    @pytest.mark.slow
     def test_upgrade_user_conflict_in_globalsite(self, script, virtualenv):
         """
         Test user install/upgrade with conflict in global site ignores site and
@@ -214,6 +220,7 @@ class Tests_UserSite:
         assert isdir(initools_folder)
 
     @pytest.mark.network
+    @pytest.mark.slow
     def test_install_user_conflict_in_globalsite_and_usersite(
             self, script, virtualenv):
         """
@@ -264,6 +271,7 @@ class Tests_UserSite:
         assert isdir(initools_folder)
 
     @pytest.mark.network
+    @pytest.mark.slow
     def test_install_user_in_global_virtualenv_with_conflict_fails(
             self, script, virtualenv):
         """

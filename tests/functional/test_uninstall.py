@@ -17,6 +17,7 @@ from tests.lib.local_repos import local_checkout, local_repo
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_simple_uninstall(script):
     """
     Test simple install and uninstall.
@@ -101,6 +102,7 @@ def test_uninstall_easy_install_after_import(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_uninstall_namespace_package(script):
     """
     Uninstall a distribution with a namespace package without clobbering
@@ -120,6 +122,7 @@ def test_uninstall_namespace_package(script):
     )
 
 
+@pytest.mark.slow
 def test_uninstall_overlapping_package(script, data):
     """
     Uninstalling a distribution that adds modules to a pre-existing package
@@ -163,6 +166,7 @@ def test_uninstall_overlapping_package(script, data):
 @pytest.mark.parametrize("console_scripts",
                          ["test_ = distutils_install",
                           "test_:test_ = distutils_install"])
+@pytest.mark.slow
 def test_uninstall_entry_point(script, console_scripts):
     """
     Test uninstall package with two or more entry points in the same section,
@@ -194,6 +198,7 @@ def test_uninstall_entry_point(script, console_scripts):
         not in json.loads(result2.stdout)
 
 
+@pytest.mark.slow
 def test_uninstall_gui_scripts(script):
     """
     Make sure that uninstall removes gui scripts
@@ -215,6 +220,7 @@ def test_uninstall_gui_scripts(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_uninstall_console_scripts(script):
     """
     Test uninstalling a package with more files (console_script entry points,
@@ -254,6 +260,7 @@ def test_uninstall_easy_installed_console_scripts(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_uninstall_editable_from_svn(script, tmpdir):
     """
     Test uninstalling an editable installation from svn.
@@ -280,6 +287,7 @@ def test_uninstall_editable_from_svn(script, tmpdir):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_uninstall_editable_with_source_outside_venv(script, tmpdir):
     """
     Test uninstalling editable install from existing source outside the venv.
@@ -324,6 +332,7 @@ def _test_uninstall_editable_with_source_outside_venv(
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_uninstall_from_reqs_file(script, tmpdir):
     """
     Test uninstall from a requirements file.
@@ -420,6 +429,7 @@ def test_uninstall_wheel(script, data):
     assert_all_changes(result, result2, [])
 
 
+@pytest.mark.slow
 def test_uninstall_setuptools_develop_install(script, data):
     """Try uninstall after setup.py develop followed of setup.py install"""
     pkg_path = data.packages.join("FSPkg")
@@ -442,6 +452,7 @@ def test_uninstall_setuptools_develop_install(script, data):
     assert "FSPkg" not in {p["name"] for p in json.loads(list_result2.stdout)}
 
 
+@pytest.mark.slow
 def test_uninstall_editable_and_pip_install(script, data):
     """Try uninstall after pip install -e after pip install"""
     # SETUPTOOLS_SYS_PATH_TECHNIQUE=raw removes the assumption that `-e`

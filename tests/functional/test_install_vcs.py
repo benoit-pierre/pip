@@ -7,6 +7,7 @@ from tests.lib.local_repos import local_checkout
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_install_editable_from_git_with_https(script, tmpdir):
     """
     Test cloning from Git with https.
@@ -24,6 +25,7 @@ def test_install_editable_from_git_with_https(script, tmpdir):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_install_noneditable_git(script, tmpdir):
     """
     Test installing from a non-editable git URL with a given tag.
@@ -44,6 +46,7 @@ def test_install_noneditable_git(script, tmpdir):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_git_with_sha1_revisions(script):
     """
     Git backend should be able to install from SHA1 revisions
@@ -65,6 +68,7 @@ def test_git_with_sha1_revisions(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_git_with_branch_name_as_revision(script):
     """
     Git backend should be able to install from branch names
@@ -85,6 +89,7 @@ def test_git_with_branch_name_as_revision(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_git_with_tag_name_as_revision(script):
     """
     Git backend should be able to install from tag names
@@ -105,6 +110,7 @@ def test_git_with_tag_name_as_revision(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_git_with_ref_as_revision(script):
     """
     Git backend should be able to install from a ref
@@ -126,6 +132,7 @@ def test_git_with_ref_as_revision(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_git_with_tag_name_and_update(script, tmpdir):
     """
     Test cloning a git repository and updating to a different version.
@@ -152,6 +159,7 @@ def test_git_with_tag_name_and_update(script, tmpdir):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_git_branch_should_not_be_changed(script, tmpdir):
     """
     Editable installations should not change branch
@@ -188,6 +196,7 @@ def test_git_with_non_editable_unpacking(script, tmpdir):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_git_with_editable_where_egg_contains_dev_string(script, tmpdir):
     """
     Test cloning a git repository from an editable url which contains "dev"
@@ -205,6 +214,7 @@ def test_git_with_editable_where_egg_contains_dev_string(script, tmpdir):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_git_with_non_editable_where_egg_contains_dev_string(script, tmpdir):
     """
     Test cloning a git repository from a non-editable url which contains "dev"
@@ -223,6 +233,7 @@ def test_git_with_non_editable_where_egg_contains_dev_string(script, tmpdir):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_git_with_ambiguous_revs(script):
     """
     Test git with two "names" (tag/branch) pointing to the same commit
@@ -241,6 +252,7 @@ def test_git_with_ambiguous_revs(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_git_works_with_editable_non_origin_repo(script):
     # set up, create a git repo and install it as editable from a local
     # directory path
@@ -256,6 +268,7 @@ def test_git_works_with_editable_non_origin_repo(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_reinstalling_works_with_editible_non_master_branch(script):
     """
     Reinstalling an editable installation should not assume that the "master"

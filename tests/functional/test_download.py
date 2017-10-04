@@ -38,6 +38,7 @@ def test_download_setuptools(script):
     )
 
 
+@pytest.mark.slow
 def test_download_wheel(script, data):
     """
     Test using "pip download" to download a *.whl archive.
@@ -73,6 +74,7 @@ def test_single_download_from_requirements_file(script):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_download_should_download_dependencies(script):
     """
     It should download dependencies (in the scratch path)
@@ -117,6 +119,7 @@ def test_download_should_download_wheel_deps(script, data):
 
 
 @pytest.mark.network
+@pytest.mark.slow
 def test_download_should_skip_existing_files(script):
     """
     It should not download files already existing in the scratch dir
@@ -167,6 +170,7 @@ def test_download_vcs_link(script):
     assert script.site_packages / 'piptestpackage' not in result.files_created
 
 
+@pytest.mark.slow
 def test_download_specify_platform_only_binary(script, data):
     """
     Confirm that specifying an interpreter/platform constraint
@@ -216,6 +220,7 @@ def test_download_specify_platform_only_binary(script, data):
     assert '--only-binary=:all:' in result.stderr
 
 
+@pytest.mark.slow
 def test_download_specify_platform(script, data):
     """
     Test using "pip download --platform" to download a .whl archive
@@ -295,6 +300,7 @@ def test_download_specify_platform(script, data):
     )
 
 
+@pytest.mark.slow
 def test_download_platform_manylinux(script, data):
     """
     Test using "pip download --platform" to download a .whl archive
@@ -345,6 +351,7 @@ def test_download_platform_manylinux(script, data):
     )
 
 
+@pytest.mark.slow
 def test_download_specify_python_version(script, data):
     """
     Test using "pip download --python-version" to download a .whl archive
@@ -434,6 +441,7 @@ def test_download_specify_python_version(script, data):
     )
 
 
+@pytest.mark.slow
 def test_download_specify_abi(script, data):
     """
     Test using "pip download --abi" to download a .whl archive
@@ -500,6 +508,7 @@ def test_download_specify_abi(script, data):
     )
 
 
+@pytest.mark.slow
 def test_download_specify_implementation(script, data):
     """
     Test using "pip download --abi" to download a .whl archive
