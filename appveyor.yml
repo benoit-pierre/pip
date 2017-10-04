@@ -35,4 +35,4 @@ test_script:
   - "if \"%RUN_INTEGRATION_TESTS%\" == \"True\" (
     tox -e py -- -m \"integration and not slow\" -n 3 --duration=5 )"
   - "if \"%RUN_INTEGRATION_TESTS%\" == \"True\" (
-    tox -e py -- -m \"integration and slow\" -n 2 --duration=5 )"
+    tox -e py -- -m \"integration and slow\" -n 3 --duration=5 )"
