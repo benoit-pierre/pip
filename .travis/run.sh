@@ -6,7 +6,7 @@ if [[ $TOXENV == py* ]]; then
     # Run unit tests
     tox -- -m unit
     # Run integration tests
-    tox -- -m integration -n 4 --duration=5
+    tox -- -m 'integration and not slow' -n 4 --duration=5
 else
     # Run once
     tox
