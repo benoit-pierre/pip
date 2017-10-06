@@ -11,10 +11,17 @@ def pip(args):
     # First things first, safeguard the environment
     # original pip so it can be used for all calls.
     if not os.path.exists(TOX_PIP_DIR):
+        # Install latest release of pip.
         cmd = (
             [sys.executable] +
             '-m pip install -t'.split() +
             [TOX_PIP_DIR, 'pip']
+        )
+        subprocess.check_call(cmd)
+        # Uninstall currently installed version.
+        cmd = (
+            [sys.executable] +
+            '-m pip uninstall -y pip'.split()
         )
         subprocess.check_call(cmd)
         # Create a very simple launcher that
