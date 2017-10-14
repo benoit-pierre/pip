@@ -17,7 +17,8 @@ from pip._internal.exceptions import (
 )
 from pip._internal.utils.hashes import MissingHashes
 from pip._internal.utils.logging import indent_log
-from pip._internal.utils.misc import display_path, normalize_path
+from pip._internal.utils.misc import display_path, normalize_path, call_subprocess
+from pip._internal.utils.ui import open_spinner
 from pip._internal.vcs import vcs
 
 logger = logging.getLogger(__name__)
