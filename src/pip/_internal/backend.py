@@ -104,5 +104,9 @@ class BuildBackendCaller(BuildBackendBase):
         """Handles aribrary function invocations on the build backend."""
         os.chdir(self.cwd)
         os.environ.update(self.env)
-        mod = importlib.import_module(self.backend_name)
+        try:
+            mod = importlib.import_module(self.backend_name)
+        except ImportError as e:
+            logger.debug("System path: " + str(sys.path))
+            raise e
         return getattr(mod, name)(*args, **kw)
