@@ -95,7 +95,7 @@ class IsSDist(DistAbstraction):
         logger.info("Installing build dependencies")
         # Install the build requirements
         # TODO: Use single process with recursion handling
-        with self.req_to_install.build_envirionment as prefix:
+        with self.req_to_install.build_environment as prefix:
             args = [sys.executable, '-m', 'pip', 'install',
                 '--ignore-installed',
                 '--prefix', prefix] + build_requirements        
