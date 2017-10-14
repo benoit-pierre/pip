@@ -360,6 +360,7 @@ class PipTestEnvironment(scripttest.TestFileEnvironment):
         if sys.platform == 'win32':
             # Partial fix for ScriptTest.run using `shell=True` on Windows.
             args = [str(a).replace('^', '^^').replace('&', '^&') for a in args]
+        kw['timeout'] = 100
         return TestPipResult(
             super(PipTestEnvironment, self).run(cwd=cwd, *args, **kw),
             verbose=self.verbose,
