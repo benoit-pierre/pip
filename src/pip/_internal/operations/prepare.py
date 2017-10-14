@@ -3,6 +3,7 @@
 
 import logging
 import os
+import sys
 
 from pip._vendor import pkg_resources, requests
 
