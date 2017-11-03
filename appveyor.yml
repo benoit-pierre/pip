@@ -33,4 +33,4 @@ test_script:
   - "set TMP=T:\\"
   - "tox -e py -- -m unit -n 3"
   - "if \"%RUN_INTEGRATION_TESTS%\" == \"True\" (
-    tox -e py -- -m integration -n 3 --duration=5 )"
+    tox -e py -- -m integration -n 3 --duration=5 tests/functional/test_freeze.py )"
