@@ -481,7 +481,7 @@ def test_freeze_with_requirement_option_multiple(script):
         simple2==1.0
     """)
     expected += "## The following requirements were added by pip freeze:"
-    expected += '\n' + textwrap.dedent("""\
+    expected += textwrap.dedent("""
         ...meta==1.0...
     """)
     _check_output(result.stdout, expected)
@@ -519,7 +519,7 @@ def test_freeze_with_requirement_option_package_repeated_one_file(script):
     """)
     expected_out += _freeze_req_opts
     expected_out += "## The following requirements were added by pip freeze:"
-    expected_out += '\n' + textwrap.dedent("""\
+    expected_out += textwrap.dedent("""
         ...meta==1.0...
     """)
     _check_output(result.stdout, expected_out)
@@ -555,7 +555,7 @@ def test_freeze_with_requirement_option_package_repeated_multi_file(script):
     """)
     expected_out += _freeze_req_opts
     expected_out += "## The following requirements were added by pip freeze:"
-    expected_out += '\n' + textwrap.dedent("""\
+    expected_out += textwrap.dedent("""
         ...meta==1.0...
     """)
     _check_output(result.stdout, expected_out)
