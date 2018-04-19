@@ -76,8 +76,11 @@ class BuildEnvironment(object):
         args = [
             sys.executable, '-m', 'pip', 'install', '--ignore-installed',
             '--no-user', '--prefix', self.path, '--no-warn-script-location',
-            '--only-binary', ':all:',
         ]
+        for format_control in ('no_binary', 'only_binary'):
+            formats = getattr(finder.format_control, format_control)
+            args.extend(('--' + format_control.replace('_', '-'),
+                         ','.join(sorted(formats or {':none:'}))))
         if finder.index_urls:
             args.extend(['-i', finder.index_urls[0]])
             for extra_index in finder.index_urls[1:]:
@@ -94,6 +97,7 @@ class BuildEnvironment(object):
             args.append('--process-dependency-links')
         args.append('--')
         args.extend(requirements)
+        print(' '.join(map(repr, args)))
         with open_spinner(message) as spinner:
             call_subprocess(args, show_stdout=False, spinner=spinner)
 
