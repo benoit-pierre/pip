@@ -1206,7 +1206,7 @@ def test_install_incompatible_python_requires_wheel(script, common_wheels):
             "but the running Python is ") in result.stderr
 
 
-def test_install_compatible_python_requires(script, common_wheels):
+def test_install_compatible_python_requires(script):
     script.scratch_path.join("pkga").mkdir()
     pkga_path = script.scratch_path / 'pkga'
     pkga_path.join("setup.py").write(textwrap.dedent("""
