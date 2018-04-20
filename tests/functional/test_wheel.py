@@ -9,22 +9,19 @@ from pip._internal.status_codes import ERROR, PREVIOUS_BUILD_DIR_ERROR
 from tests.lib import pyversion
 
 
-def test_wheel_exit_status_code_when_no_requirements(script, common_wheels):
+def test_wheel_exit_status_code_when_no_requirements(script):
     """
     Test wheel exit status code when no requirements specified
     """
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     result = script.pip('wheel', expect_error=True)
     assert "You must give at least one requirement to wheel" in result.stderr
     assert result.returncode == ERROR
 
 
-def test_wheel_exit_status_code_when_blank_requirements_file(
-        script, common_wheels):
+def test_wheel_exit_status_code_when_blank_requirements_file(script):
     """
     Test wheel exit status code when blank requirements file specified
     """
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     script.scratch_path.join("blank.txt").write("\n")
     script.pip('wheel', '-r', 'blank.txt')
 
@@ -45,12 +42,10 @@ def test_pip_wheel_success(script, data, common_wheels):
     assert "Successfully built simple" in result.stdout, result.stdout
 
 
-@pytest.mark.network
-def test_basic_pip_wheel_downloads_wheels(script, data, common_wheels):
+def test_basic_pip_wheel_downloads_wheels(script, data):
     """
     Test 'pip wheel' downloads wheels
     """
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     result = script.pip(
         'wheel', '--no-index', '-f', data.find_links, 'simple.dist',
     )
