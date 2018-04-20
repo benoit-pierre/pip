@@ -20,7 +20,9 @@ from pip._internal.req import RequirementSet, install_given_reqs
 from pip._internal.resolve import Resolver
 from pip._internal.status_codes import ERROR
 from pip._internal.utils.filesystem import check_path_owner
-from pip._internal.utils.misc import ensure_dir, get_installed_version
+from pip._internal.utils.misc import (
+    ensure_dir, get_installed_version, protect_pip_from_modification_on_windows
+)
 from pip._internal.utils.temp_dir import TempDirectory
 from pip._internal.wheel import WheelBuilder
 
@@ -196,6 +198,7 @@ class InstallCommand(RequirementCommand):
         self.parser.insert_option_group(0, cmd_opts)
 
     def run(self, options, args):
+        protect_pip_from_modification_on_windows()
         cmdoptions.check_install_build_global(options)
 
         upgrade_strategy = "to-satisfy-only"
