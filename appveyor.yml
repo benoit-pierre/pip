@@ -31,6 +31,6 @@ test_script:
   - "subst T: %TEMP%"
   - "set TEMP=T:\\"
   - "set TMP=T:\\"
-  - "tox -e py -- -m unit -n 3"
+  - "tox -e py -- -m unit -k test_pep518_with_user_pip"
   - "if \"%RUN_INTEGRATION_TESTS%\" == \"True\" (
     tox -e py -- -m integration -n 3 --duration=5 )"
