@@ -178,8 +178,7 @@ def test_basic_install_editable_from_git(script, tmpdir):
 
 @pytest.mark.network
 def test_install_editable_from_git_autobuild_wheel(
-        script, tmpdir, common_wheels):
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
+        script, tmpdir, wheel_installed):
     _test_install_editable_from_git(script, tmpdir)
 
 
@@ -638,14 +637,14 @@ def test_install_package_with_target(script):
     assert singlemodule_py in result.files_updated, str(result)
 
 
-def test_install_with_target_and_scripts_no_warning(script, common_wheels):
+def test_install_with_target_and_scripts_no_warning(script, wheel_installed):
     """
     Test that installing with --target does not trigger the "script not
     in PATH" warning (issue #5201)
+
+    Note: We need to have wheel installed so that the project builds via
+    a wheel, which is the only execution path that has the script warning.
     """
-    # We need to have wheel installed so that the project builds via a wheel,
-    # which is the only execution path that has the script warning.
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     target_dir = script.scratch_path / 'target'
     pkga_path = script.scratch_path / 'pkga'
     pkga_path.mkdir()
@@ -990,21 +989,17 @@ def test_install_topological_sort(script, data):
 
 
 @pytest.mark.network
-def test_install_wheel_broken(script, data, common_wheels):
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
+def test_install_wheel_broken(script, data, wheel_installed):
     res = script.pip(
-        'install', '--no-index', '-f', data.find_links, '-f', common_wheels,
-        'wheelbroken',
+        'install', '--no-index', '-f', data.find_links, 'wheelbroken',
         expect_stderr=True)
     assert "Successfully installed wheelbroken-0.1" in str(res), str(res)
 
 
 @pytest.mark.network
-def test_cleanup_after_failed_wheel(script, data, common_wheels):
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
+def test_cleanup_after_failed_wheel(script, data, wheel_installed):
     res = script.pip(
-        'install', '--no-index', '-f', data.find_links, '-f', common_wheels,
-        'wheelbrokenafter',
+        'install', '--no-index', '-f', data.find_links, 'wheelbrokenafter',
         expect_stderr=True)
     # One of the effects of not cleaning up is broken scripts:
     script_py = script.bin_path / "script.py"
@@ -1016,7 +1011,7 @@ def test_cleanup_after_failed_wheel(script, data, common_wheels):
 
 
 @pytest.mark.network
-def test_install_builds_wheels(script, data, common_wheels):
+def test_install_builds_wheels(script, data, wheel_installed):
     # We need to use a subprocess to get the right value on Windows.
     res = script.run('python', '-c', (
         'from pip._internal.utils import appdirs; '
@@ -1026,11 +1021,10 @@ def test_install_builds_wheels(script, data, common_wheels):
     # NB This incidentally tests a local tree + tarball inputs
     # see test_install_editable_from_git_autobuild_wheel for editable
     # vcs coverage.
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     to_install = data.packages.join('requires_wheelbroken_upper')
     res = script.pip(
-        'install', '--no-index', '-f', data.find_links, '-f', common_wheels,
-        to_install, expect_stderr=True)
+        'install', '--no-index', '-f', data.find_links, to_install,
+        expect_stderr=True)
     expected = ("Successfully installed requires-wheelbroken-upper-0"
                 " upper-2.0 wheelbroken-0.1")
     # Must have installed it all
@@ -1060,12 +1054,10 @@ def test_install_builds_wheels(script, data, common_wheels):
 
 @pytest.mark.network
 def test_install_no_binary_disables_building_wheels(
-        script, data, common_wheels):
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
+        script, data, wheel_installed):
     to_install = data.packages.join('requires_wheelbroken_upper')
     res = script.pip(
         'install', '--no-index', '--no-binary=upper', '-f', data.find_links,
-        '-f', common_wheels,
         to_install, expect_stderr=True)
     expected = ("Successfully installed requires-wheelbroken-upper-0"
                 " upper-2.0 wheelbroken-0.1")
@@ -1085,12 +1077,9 @@ def test_install_no_binary_disables_building_wheels(
 
 
 @pytest.mark.network
-def test_install_no_binary_disables_cached_wheels(script, data, common_wheels):
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
+def test_install_no_binary_disables_cached_wheels(script, data, wheel_installed):
     # Seed the cache
-    script.pip(
-        'install', '--no-index', '-f', data.find_links, '-f', common_wheels,
-        'upper')
+    script.pip('install', '--no-index', '-f', data.find_links, 'upper')
     script.pip('uninstall', 'upper', '-y')
     res = script.pip(
         'install', '--no-index', '--no-binary=:all:', '-f', data.find_links,
@@ -1188,7 +1177,7 @@ def test_install_incompatible_python_requires_editable(script, common_wheels):
 
 
 @pytest.mark.network
-def test_install_incompatible_python_requires_wheel(script, common_wheels):
+def test_install_incompatible_python_requires_wheel(script, wheel_installed):
     script.scratch_path.join("pkga").mkdir()
     pkga_path = script.scratch_path / 'pkga'
     pkga_path.join("setup.py").write(textwrap.dedent("""
@@ -1197,7 +1186,6 @@ def test_install_incompatible_python_requires_wheel(script, common_wheels):
               python_requires='<1.0',
               version='0.1')
     """))
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     script.run(
         'python', 'setup.py', 'bdist_wheel', '--universal', cwd=pkga_path)
     result = script.pip('install', './pkga/dist/pkga-0.1-py2.py3-none-any.whl',

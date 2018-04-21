@@ -267,6 +267,11 @@ def common_wheels(tmpdir_factory):
 
 
 @pytest.fixture
+def wheel_installed(script, common_wheels):
+    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
+
+
+@pytest.fixture
 def data(tmpdir):
     return TestData.copy(tmpdir.join("data"))
 

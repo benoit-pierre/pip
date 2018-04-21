@@ -70,12 +70,11 @@ class Tests_UserSite:
 
     @pytest.mark.network
     def test_install_from_current_directory_into_usersite(
-            self, script, virtualenv, data, common_wheels):
+            self, script, virtualenv, data, wheel_installed):
         """
         Test installing current directory ('.') into usersite
         """
         virtualenv.system_site_packages = True
-        script.pip("install", "wheel", '--no-index', '-f', common_wheels)
 
         run_from = data.packages.join("FSPkg")
         result = script.pip(

@@ -225,9 +225,7 @@ def test_install_local_with_subdirectory(script):
 
 @pytest.mark.network
 def test_wheel_user_with_prefix_in_pydistutils_cfg(
-        script, data, virtualenv, common_wheels):
-    # Make sure wheel is available in the virtualenv
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
+        script, data, virtualenv, wheel_installed):
     virtualenv.system_site_packages = True
     if os.name == 'posix':
         user_filename = ".pydistutils.cfg"
@@ -242,8 +240,7 @@ def test_wheel_user_with_prefix_in_pydistutils_cfg(
 
     result = script.pip(
         'install', '--user', '--no-index',
-        '-f', data.find_links, '-f', common_wheels,
-        'requiresupper')
+        '-f', data.find_links, 'requiresupper')
     # Check that we are really installing a wheel
     assert 'Running setup.py install for requiresupper' not in result.stdout
     assert 'installed requiresupper' in result.stdout
@@ -355,7 +352,7 @@ def test_constrained_to_url_install_same_url(script, data):
 
 @pytest.mark.network
 def test_double_install_spurious_hash_mismatch(
-        script, tmpdir, data, common_wheels):
+        script, tmpdir, data, wheel_installed):
     """Make sure installing the same hashed sdist twice doesn't throw hash
     mismatch errors.
 
@@ -365,14 +362,12 @@ def test_double_install_spurious_hash_mismatch(
     causes spurious mismatch errors.
 
     """
-    # Install wheel package, otherwise, it won't try to build wheels.
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     with requirements_file('simple==1.0 --hash=sha256:393043e672415891885c9a2a'
                            '0929b1af95fb866d6ca016b42d2e6ce53619b653',
                            tmpdir) as reqs_file:
         # Install a package (and build its wheel):
         result = script.pip_install_local(
-            '--find-links', data.find_links, '-f', common_wheels,
+            '--find-links', data.find_links,
             '-r', reqs_file.abspath, expect_error=False)
         assert 'Successfully installed simple-1.0' in str(result)
 
@@ -382,7 +377,7 @@ def test_double_install_spurious_hash_mismatch(
         # Then install it again. We should not hit a hash mismatch, and the
         # package should install happily.
         result = script.pip_install_local(
-            '--find-links', data.find_links, '-f', common_wheels,
+            '--find-links', data.find_links,
             '-r', reqs_file.abspath, expect_error=False)
         assert 'Successfully installed simple-1.0' in str(result)
 

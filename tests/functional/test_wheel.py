@@ -27,14 +27,12 @@ def test_wheel_exit_status_code_when_blank_requirements_file(script):
 
 
 @pytest.mark.network
-def test_pip_wheel_success(script, data, common_wheels):
+def test_pip_wheel_success(script, data, wheel_installed):
     """
     Test 'pip wheel' success.
     """
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     result = script.pip(
-        'wheel', '--no-index', '-f', data.find_links, '-f', common_wheels,
-        'simple==3.0',
+        'wheel', '--no-index', '-f', data.find_links, 'simple==3.0',
     )
     wheel_file_name = 'simple-3.0-py%s-none-any.whl' % pyversion[0]
     wheel_file_path = script.scratch / wheel_file_name
@@ -47,7 +45,7 @@ def test_basic_pip_wheel_downloads_wheels(script, data):
     Test 'pip wheel' downloads wheels
     """
     result = script.pip(
-        'wheel', '--no-index', '-f', data.find_links, 'simple.dist',
+        'wheel', '--no-index', '-f', data.find_links, 'simple.dist'
     )
     wheel_file_name = 'simple.dist-0.1-py2.py3-none-any.whl'
     wheel_file_path = script.scratch / wheel_file_name
@@ -56,26 +54,24 @@ def test_basic_pip_wheel_downloads_wheels(script, data):
 
 
 @pytest.mark.network
-def test_pip_wheel_builds_when_no_binary_set(script, data, common_wheels):
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
+def test_pip_wheel_builds_when_no_binary_set(script, data, wheel_installed):
     data.packages.join('simple-3.0-py2.py3-none-any.whl').touch()
     # Check that the wheel package is ignored
     res = script.pip(
         'wheel', '--no-index', '--no-binary', ':all:',
-        '-f', data.find_links, '-f', common_wheels,
-        'simple==3.0')
+        '-f', data.find_links, 'simple==3.0'
+    )
     assert "Running setup.py bdist_wheel for simple" in str(res), str(res)
 
 
 @pytest.mark.network
-def test_pip_wheel_builds_editable_deps(script, data, common_wheels):
+def test_pip_wheel_builds_editable_deps(script, data, wheel_installed):
     """
     Test 'pip wheel' finds and builds dependencies of editables
     """
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     editable_path = os.path.join(data.src, 'requires_simple')
     result = script.pip(
-        'wheel', '--no-index', '-f', data.find_links, '-f', common_wheels,
+        'wheel', '--no-index', '-f', data.find_links,
         '-e', editable_path
     )
     wheel_file_name = 'simple-1.0-py%s-none-any.whl' % pyversion[0]
@@ -84,14 +80,13 @@ def test_pip_wheel_builds_editable_deps(script, data, common_wheels):
 
 
 @pytest.mark.network
-def test_pip_wheel_builds_editable(script, data, common_wheels):
+def test_pip_wheel_builds_editable(script, data, wheel_installed):
     """
     Test 'pip wheel' builds an editable package
     """
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     editable_path = os.path.join(data.src, 'simplewheel-1.0')
     result = script.pip(
-        'wheel', '--no-index', '-f', data.find_links, '-f', common_wheels,
+        'wheel', '--no-index', '-f', data.find_links,
         '-e', editable_path
     )
     wheel_file_name = 'simplewheel-1.0-py%s-none-any.whl' % pyversion[0]
@@ -100,14 +95,12 @@ def test_pip_wheel_builds_editable(script, data, common_wheels):
 
 
 @pytest.mark.network
-def test_pip_wheel_fail(script, data, common_wheels):
+def test_pip_wheel_fail(script, data, wheel_installed):
     """
     Test 'pip wheel' failure.
     """
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     result = script.pip(
-        'wheel', '--no-index', '-f', data.find_links, '-f', common_wheels,
-        'wheelbroken==0.1',
+        'wheel', '--no-index', '-f', data.find_links, 'wheelbroken==0.1',
         expect_error=True,
     )
     wheel_file_name = 'wheelbroken-0.1-py%s-none-any.whl' % pyversion[0]
@@ -123,16 +116,14 @@ def test_pip_wheel_fail(script, data, common_wheels):
 
 @pytest.mark.network
 def test_no_clean_option_blocks_cleaning_after_wheel(
-        script, data, common_wheels):
+        script, data, wheel_installed):
     """
     Test --no-clean option blocks cleaning after wheel build
     """
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     build = script.venv_path / 'build'
     result = script.pip(
         'wheel', '--no-clean', '--no-index', '--build', build,
-        '--find-links=%s' % data.find_links, '-f', common_wheels,
-        'simple',
+        '--find-links', data.find_links, 'simple',
         expect_temp=True,
     )
     build = build / 'simple'
@@ -140,16 +131,14 @@ def test_no_clean_option_blocks_cleaning_after_wheel(
 
 
 @pytest.mark.network
-def test_pip_wheel_source_deps(script, data, common_wheels):
+def test_pip_wheel_source_deps(script, data, wheel_installed):
     """
     Test 'pip wheel' finds and builds source archive dependencies
     of wheels
     """
     # 'requires_source' is a wheel that depends on the 'source' project
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     result = script.pip(
-        'wheel', '--no-index', '-f', data.find_links, '-f', common_wheels,
-        'requires_source',
+        'wheel', '--no-index', '-f', data.find_links, 'requires_source',
     )
     wheel_file_name = 'source-1.0-py%s-none-any.whl' % pyversion[0]
     wheel_file_path = script.scratch / wheel_file_name
@@ -159,13 +148,11 @@ def test_pip_wheel_source_deps(script, data, common_wheels):
 
 @pytest.mark.network
 def test_pip_wheel_fail_cause_of_previous_build_dir(
-        script, data, common_wheels):
+        script, data, wheel_installed):
     """
     Test when 'pip wheel' tries to install a package that has a previous build
     directory
     """
-
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
 
     # Given that I have a previous build dir of the `simple` package
     build = script.venv_path / 'build' / 'simple'
@@ -185,10 +172,8 @@ def test_pip_wheel_fail_cause_of_previous_build_dir(
 
 
 @pytest.mark.network
-def test_wheel_package_with_latin1_setup(script, data, common_wheels):
+def test_wheel_package_with_latin1_setup(script, data, wheel_installed):
     """Create a wheel from a package with latin-1 encoded setup.py."""
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
-
     pkg_to_wheel = data.packages.join("SetupPyLatin1")
     result = script.pip('wheel', pkg_to_wheel)
     assert 'Successfully built SetupPyUTF8' in result.stdout
@@ -221,13 +206,11 @@ def test_pip_wheel_with_pep518_build_reqs_no_isolation(script, data,
     assert "Installing build dependencies" not in result.stdout, result.stdout
 
 
-def test_pip_wheel_with_user_set_in_config(script, data):
-    script.pip('install', 'wheel')
-    script.pip('download', 'setuptools', 'wheel', '-d', data.packages)
+def test_pip_wheel_with_user_set_in_config(script, data, common_wheels, wheel_installed):
     config_file = script.scratch_path / 'pip.conf'
     script.environ['PIP_CONFIG_FILE'] = str(config_file)
     config_file.write("[install]\nuser = true")
     result = script.pip(
-        'wheel', data.src / 'withpyproject',
+        'wheel', '-f', common_wheels, data.src / 'withpyproject',
     )
     assert "Successfully built withpyproject" in result.stdout, result.stdout
