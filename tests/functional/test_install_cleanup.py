@@ -9,13 +9,11 @@ from tests.lib import need_mercurial
 from tests.lib.local_repos import local_checkout
 
 
-def test_cleanup_after_install(script, data):
+def test_cleanup_after_install(script):
     """
     Test clean up after installing a package.
     """
-    script.pip(
-        'install', '--no-index', '--find-links=%s' % data.find_links, 'simple'
-    )
+    script.pip_install_local('simple')
     build = script.venv_path / "build"
     src = script.venv_path / "src"
     assert not exists(build), "build/ dir still exists: %s" % build
@@ -24,14 +22,14 @@ def test_cleanup_after_install(script, data):
 
 
 @pytest.mark.network
-def test_no_clean_option_blocks_cleaning_after_install(script, data):
+def test_no_clean_option_blocks_cleaning_after_install(script):
     """
     Test --no-clean option blocks cleaning after install
     """
     build = script.base_path / 'pip-build'
-    script.pip(
-        'install', '--no-clean', '--no-index', '--build', build,
-        '--find-links=%s' % data.find_links, 'simple', expect_temp=True,
+    script.pip_install_local(
+        '--no-clean', '--build', build,
+        'simple', expect_temp=True,
     )
     assert exists(build)
 
@@ -93,13 +91,13 @@ def test_cleanup_req_satisifed_no_name(script, data):
     script.assert_no_temp()
 
 
-def test_cleanup_after_install_exception(script, data):
+def test_cleanup_after_install_exception(script):
     """
     Test clean up after a 'setup.py install' exception.
     """
     # broken==0.2broken fails during install; see packages readme file
-    result = script.pip(
-        'install', '-f', data.find_links, '--no-index', 'broken==0.2broken',
+    result = script.pip_install_local(
+        'broken==0.2broken',
         expect_error=True,
     )
     build = script.venv_path / 'build'
@@ -107,13 +105,13 @@ def test_cleanup_after_install_exception(script, data):
     script.assert_no_temp()
 
 
-def test_cleanup_after_egg_info_exception(script, data):
+def test_cleanup_after_egg_info_exception(script):
     """
     Test clean up after a 'setup.py egg_info' exception.
     """
     # brokenegginfo fails during egg_info; see packages readme file
-    result = script.pip(
-        'install', '-f', data.find_links, '--no-index', 'brokenegginfo==0.1',
+    result = script.pip_install_local(
+        'brokenegginfo==0.1',
         expect_error=True,
     )
     build = script.venv_path / 'build'
@@ -122,7 +120,7 @@ def test_cleanup_after_egg_info_exception(script, data):
 
 
 @pytest.mark.network
-def test_cleanup_prevented_upon_build_dir_exception(script, data):
+def test_cleanup_prevented_upon_build_dir_exception(script):
     """
     Test no cleanup occurs after a PreviousBuildDirError
     """
@@ -131,9 +129,8 @@ def test_cleanup_prevented_upon_build_dir_exception(script, data):
     os.makedirs(build_simple)
     write_delete_marker_file(build)
     build_simple.join("setup.py").write("#")
-    result = script.pip(
-        'install', '-f', data.find_links, '--no-index', 'simple',
-        '--build', build,
+    result = script.pip_install_local(
+        'simple', '--build', build,
         expect_error=True, expect_temp=True,
     )
 

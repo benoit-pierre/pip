@@ -126,37 +126,35 @@ def test_multiple_requirements_files(script, tmpdir):
     assert script.venv / 'src' / 'initools' in result.files_created
 
 
-def test_package_in_constraints_and_dependencies(script, data):
+def test_package_in_constraints_and_dependencies(script):
     script.scratch_path.join("constraints.txt").write(
         "TopoRequires2==0.0.1\nTopoRequires==0.0.1"
     )
-    result = script.pip('install', '--no-index', '-f',
-                        data.find_links, '-c', script.scratch_path /
-                        'constraints.txt', 'TopoRequires2')
+    result = script.pip_install_local(
+        '-c', script.scratch_path / 'constraints.txt',
+        'TopoRequires2')
     assert 'installed TopoRequires-0.0.1' in result.stdout
 
 
-def test_multiple_constraints_files(script, data):
+def test_multiple_constraints_files(script):
     script.scratch_path.join("outer.txt").write("-c inner.txt")
     script.scratch_path.join("inner.txt").write(
         "Upper==1.0")
-    result = script.pip(
-        'install', '--no-index', '-f', data.find_links, '-c',
-        script.scratch_path / 'outer.txt', 'Upper')
+    result = script.pip_install_local(
+        '-c', script.scratch_path / 'outer.txt',
+        'Upper')
     assert 'installed Upper-1.0' in result.stdout
 
 
-def test_respect_order_in_requirements_file(script, data):
+def test_respect_order_in_requirements_file(script):
     script.scratch_path.join("frameworks-req.txt").write(textwrap.dedent("""\
         parent
         child
         simple
         """))
 
-    result = script.pip(
-        'install', '--no-index', '-f', data.find_links, '-r',
-        script.scratch_path / 'frameworks-req.txt'
-    )
+    result = script.pip_install_local(
+        '-r', script.scratch_path / 'frameworks-req.txt')
 
     downloaded = [line for line in result.stdout.split('\n')
                   if 'Collecting' in line]
@@ -225,7 +223,7 @@ def test_install_local_with_subdirectory(script):
 
 @pytest.mark.network
 def test_wheel_user_with_prefix_in_pydistutils_cfg(
-        script, data, virtualenv, wheel_installed):
+        script, virtualenv, wheel_installed):
     virtualenv.system_site_packages = True
     if os.name == 'posix':
         user_filename = ".pydistutils.cfg"
@@ -238,15 +236,13 @@ def test_wheel_user_with_prefix_in_pydistutils_cfg(
             [install]
             prefix=%s""" % script.scratch_path))
 
-    result = script.pip(
-        'install', '--user', '--no-index',
-        '-f', data.find_links, 'requiresupper')
+    result = script.pip_install_local('--user', 'requiresupper')
     # Check that we are really installing a wheel
     assert 'Running setup.py install for requiresupper' not in result.stdout
     assert 'installed requiresupper' in result.stdout
 
 
-def test_install_option_in_requirements_file(script, data, virtualenv):
+def test_install_option_in_requirements_file(script):
     """
     Test --install-option in requirements file overrides same option in cli
     """
@@ -259,9 +255,8 @@ def test_install_option_in_requirements_file(script, data, virtualenv):
             """simple --install-option='--home=%s'"""
             % script.scratch_path.join("home1")))
 
-    result = script.pip(
-        'install', '--no-index', '-f', data.find_links, '-r',
-        script.scratch_path / 'reqs.txt',
+    result = script.pip_install_local(
+        '-r', script.scratch_path / 'reqs.txt',
         '--install-option=--home=%s' % script.scratch_path.join("home2"),
         expect_stderr=True)
 
@@ -269,19 +264,18 @@ def test_install_option_in_requirements_file(script, data, virtualenv):
     assert package_dir in result.files_created
 
 
-def test_constraints_not_installed_by_default(script, data):
+def test_constraints_not_installed_by_default(script):
     script.scratch_path.join("c.txt").write("requiresupper")
-    result = script.pip(
-        'install', '--no-index', '-f', data.find_links, '-c',
-        script.scratch_path / 'c.txt', 'Upper')
+    result = script.pip_install_local(
+        '-c', script.scratch_path / 'c.txt', 'Upper')
     assert 'requiresupper' not in result.stdout
 
 
-def test_constraints_only_causes_error(script, data):
+def test_constraints_only_causes_error(script):
     script.scratch_path.join("c.txt").write("requiresupper")
-    result = script.pip(
-        'install', '--no-index', '-f', data.find_links, '-c',
-        script.scratch_path / 'c.txt', expect_error=True)
+    result = script.pip_install_local(
+        '-c', script.scratch_path / 'c.txt',
+        expect_error=True)
     assert 'installed requiresupper' not in result.stdout
 
 
@@ -352,7 +346,7 @@ def test_constrained_to_url_install_same_url(script, data):
 
 @pytest.mark.network
 def test_double_install_spurious_hash_mismatch(
-        script, tmpdir, data, wheel_installed):
+        script, tmpdir, wheel_installed):
     """Make sure installing the same hashed sdist twice doesn't throw hash
     mismatch errors.
 
@@ -367,7 +361,6 @@ def test_double_install_spurious_hash_mismatch(
                            tmpdir) as reqs_file:
         # Install a package (and build its wheel):
         result = script.pip_install_local(
-            '--find-links', data.find_links,
             '-r', reqs_file.abspath, expect_error=False)
         assert 'Successfully installed simple-1.0' in str(result)
 
@@ -377,7 +370,6 @@ def test_double_install_spurious_hash_mismatch(
         # Then install it again. We should not hit a hash mismatch, and the
         # package should install happily.
         result = script.pip_install_local(
-            '--find-links', data.find_links,
             '-r', reqs_file.abspath, expect_error=False)
         assert 'Successfully installed simple-1.0' in str(result)
 
@@ -510,7 +502,7 @@ def test_install_unsupported_wheel_file(script, data):
     assert len(result.files_created) == 0
 
 
-def test_install_options_local_to_package(script, data):
+def test_install_options_local_to_package(script):
     """Make sure --install-options does not leak across packages.
 
     A requirements.txt file can have per-package --install-options; these
@@ -527,9 +519,7 @@ def test_install_options_local_to_package(script, data):
             simple --install-option='--home=%s'
             INITools
             """ % home_simple))
-    result = script.pip(
-        'install',
-        '--no-index', '-f', data.find_links,
+    result = script.pip_install_local(
         '-r', reqs_file,
         expect_error=True,
     )
