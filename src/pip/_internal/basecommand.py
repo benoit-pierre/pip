@@ -12,7 +12,6 @@ from pip._internal import cmdoptions
 from pip._internal.baseparser import (
     ConfigOptionParser, UpdatingDefaultsHelpFormatter,
 )
-from pip._internal.compat import WINDOWS
 from pip._internal.download import PipSession
 from pip._internal.exceptions import (
     BadCommand, CommandError, InstallationError, PreviousBuildDirError,

@@ -25,8 +25,10 @@ from pip._vendor.retrying import retry  # type: ignore
 from pip._vendor.six import PY2
 from pip._vendor.six.moves import input
 
-from pip._internal.compat import console_to_str, expanduser, stdlib_pkgs
-from pip._internal.exceptions import InstallationError
+from pip._internal.compat import (
+    WINDOWS, console_to_str, expanduser, stdlib_pkgs,
+)
+from pip._internal.exceptions import CommandError, InstallationError
 from pip._internal.locations import (
     running_under_virtualenv, site_packages, user_site, virtualenv_no_global,
     write_delete_marker_file,
@@ -851,13 +853,16 @@ def enum(*sequential, **named):
     return type('Enum', (), enums)
 
 
-def protect_pip_from_modification_on_windows():
-    # On Windows, any operation modifying pip should be run as:
-    #     python -m pip ...
+def protect_pip_from_modification_on_windows(modifying_pip):
+    """Protection of pip.exe from modification on Windows
+
+    On Windows, any operation modifying pip should be run as:
+        python -m pip ...
+    """
     # See https://github.com/pypa/pip/issues/1299 for more discussion
     should_show_use_python_msg = (
+        modifying_pip and
         WINDOWS and
-        requirement_set.has_requirement("pip") and
         os.path.basename(sys.argv[0]).startswith("pip")
     )
     if should_show_use_python_msg:
