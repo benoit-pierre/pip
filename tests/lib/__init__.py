@@ -390,12 +390,18 @@ class PipTestEnvironment(scripttest.TestFileEnvironment):
             exe = 'pip'
         return self.run(exe, *args, **kwargs)
 
-    def pip_install_local(self, *args, **kwargs):
+    def pip_local(self, *args, **kwargs):
         return self.pip(
-            "install", "--no-index",
+            args[0], "--no-index",
             "--find-links", path_to_url(os.path.join(DATA_DIR, "packages")),
-            *args, **kwargs
+            *args[1:], **kwargs
         )
+
+    def pip_install_local(self, *args, **kwargs):
+        return self.pip_local('install', *args, **kwargs)
+
+    def pip_wheel_local(self, *args, **kwargs):
+        return self.pip_local('wheel', *args, **kwargs)
 
 
 # FIXME ScriptTest does something similar, but only within a single
