@@ -396,13 +396,15 @@ class PipSession(requests.Session):
         return super(PipSession, self).request(method, url, *args, **kwargs)
 
 
-def get_file_content(url, comes_from=None, session=None):
+def get_file_content(url, comes_from=None, session=None, encoding=None):
     """Gets the content of a file; it may be a filename, file: URL, or
     http: URL.  Returns (location, content).  Content is unicode.
 
     :param url:         File path or url.
     :param comes_from:  Origin description of requirements.
     :param session:     Instance of pip.download.PipSession.
+    :param encoding:    Encoding for decoding contents
+                        (automatically guessed if None)
     """
     if session is None:
         raise TypeError(
@@ -434,7 +436,11 @@ def get_file_content(url, comes_from=None, session=None):
             return resp.url, resp.text
     try:
         with open(url, 'rb') as f:
-            content = auto_decode(f.read())
+            content = f.read()
+            if encoding is None:
+                content = auto_decode(content)
+            else:
+                content = content.decode(encoding)
     except IOError as exc:
         raise InstallationError(
             'Could not open requirements file: %s' % str(exc)

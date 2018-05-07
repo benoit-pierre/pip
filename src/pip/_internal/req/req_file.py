@@ -10,12 +10,13 @@ import re
 import shlex
 import sys
 
+from pip._vendor import pytoml
 from pip._vendor.six.moves import filterfalse
 from pip._vendor.six.moves.urllib import parse as urllib_parse
 
 from pip._internal import cmdoptions
 from pip._internal.download import get_file_content
-from pip._internal.exceptions import RequirementsFileParseError
+from pip._internal.exceptions import InstallationError, RequirementsFileParseError
 from pip._internal.req.req_install import InstallRequirement
 
 __all__ = ['parse_requirements']
@@ -56,6 +57,55 @@ SUPPORTED_OPTIONS_REQ = [
 # the 'dest' string values
 SUPPORTED_OPTIONS_REQ_DEST = [o().dest for o in SUPPORTED_OPTIONS_REQ]
 
+TOML_REQUIREMENTS_RX = re.compile(
+    r'''
+    (?P<filename>.+\.toml)  # filename
+    (?:\[(?P<keys>          # keys: [identifier(,identifier)*]
+        \s*[a-zA-Z0-9][-_.a-zA-Z0-9]*\s*
+        (?:,\s*[a-zA-Z0-9][-_.a-zA-Z0-9]*\s*)*
+    )\])?$
+    ''', re.X)
+
+def is_toml_requirements(filename):
+    return TOML_REQUIREMENTS_RX.match(filename) is not None
+
+def parse_toml_requirements(filename, comes_from=None, options=None,
+                            session=None, constraint=False, wheel_cache=None):
+    m = TOML_REQUIREMENTS_RX.match(filename)
+    filename = m['filename']
+    keys_list = m['keys']
+    if keys_list is None:
+        if os.path.basename(filename) != 'pyproject.toml':
+            spec = '%s %s' % ('-c' if constraint else '-r', filename)
+            if comes_from:
+                spec += ' (from %s)' % comes_from
+            raise InstallationError(
+                'Invalid TOML requirements `%s` '
+                'is missing a list of keys' % spec
+            )
+        keys_list = 'build-system.requires'
+    _, content = get_file_content(
+        filename, encoding='UTF-8', comes_from=comes_from, session=session
+    )
+    data = pytoml.loads(content)
+    reqs_list = []
+    for key in keys_list.split(','):
+        key_data = data
+        for sub_key in key.strip().split('.'):
+            key_data = key_data[sub_key]
+        reqs_list.extend(key_data)
+    req_comes_from = '%s %s[%s]' % (
+        '-c' if constraint else '-r', filename, keys_list
+    )
+    isolated = options.isolated_mode if options else False
+    if options:
+        cmdoptions.check_install_build_global(options)
+    for req_str in reqs_list:
+        yield InstallRequirement.from_line(
+            req_str, req_comes_from, constraint=constraint,
+            isolated=isolated, wheel_cache=wheel_cache
+        )
+
 
 def parse_requirements(filename, finder=None, comes_from=None, options=None,
                        session=None, constraint=False, wheel_cache=None):
@@ -75,6 +125,15 @@ def parse_requirements(filename, finder=None, comes_from=None, options=None,
             "parse_requirements() missing 1 required keyword argument: "
             "'session'"
         )
+
+    if is_toml_requirements(filename):
+        for req in parse_toml_requirements(filename, comes_from=comes_from,
+                                           options=options, session=session,
+                                           constraint=constraint,
+                                           wheel_cache=wheel_cache):
+            yield req
+        return
+
 
     _, content = get_file_content(
         filename, comes_from=comes_from, session=session
