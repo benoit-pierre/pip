@@ -282,19 +282,30 @@ def install_req_from_req(
     except InvalidRequirement:
         raise InstallationError("Invalid requirement: '%s'" % req)
 
+    link = None
+
     domains_not_allowed = [
         PyPI.file_storage_domain,
         TestPyPI.file_storage_domain,
     ]
-    if req.url and comes_from and comes_from.link \
-       and comes_from.link.netloc in domains_not_allowed:
-        # Explicitly disallow pypi packages that depend on external urls
-        raise InstallationError(
-            "Packages installed from PyPI cannot depend on packages "
-            "which are not also hosted on PyPI.\n"
-            "%s depends on %s " % (comes_from.name, req)
-        )
+    if req.url:
+        if comes_from and comes_from.link \
+           and comes_from.link.netloc in domains_not_allowed:
+            # Explicitly disallow pypi packages that depend on external urls
+            raise InstallationError(
+                "Packages installed from PyPI cannot depend on packages "
+                "which are not also hosted on PyPI.\n"
+                "%s depends on %s " % (comes_from.name, req)
+            )
+        link = Link(req.url)
+        if link.is_wheel:
+            wheel = Wheel(link.filename)
+            if wheel.name != req.name:
+                raise InstallationError("Invalid requirement: '%s'" % req)
+            req = Requirement("%s==%s" % (wheel.name, wheel.version))
+        else:
+            req.url = None
 
     return InstallRequirement(
-        req, comes_from, isolated=isolated, wheel_cache=wheel_cache
+        req, comes_from, link=link, isolated=isolated, wheel_cache=wheel_cache
     )

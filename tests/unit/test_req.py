@@ -751,6 +751,18 @@ INSTALL_REQ_CONSTRUCTORS_TESTS = (
          'foo from file://localhost/archive.zip', 'foo',
          'foo', 'file://localhost/archive.zip', (),
          '"win32" in sys_platform')),
+    # PEP 508 direct URL to a wheel.
+    (install_req_from_req,
+     'foo @ http://host/foo-1.0-py3-none-any.whl', (
+         'foo==1.0 from http://host/foo-1.0-py3-none-any.whl',
+         'foo==1.0', 'foo==1.0', 'http://host/foo-1.0-py3-none-any.whl',
+         (), None)),
+    # PEP 508 direct URL to a wheel with an invalid filename.
+    (install_req_from_req,
+     'foo @ http://host/foo-1.0.whl', InvalidWheelFilename),
+    # PEP 508 direct URL to a wheel with a non-matching package name.
+    (install_req_from_req,
+     'foo @ http://host/bar-1.0-py3-none-any.whl', InstallationError),
     # Looks like a wheel, not one!
     (install_req_from_req, 'not_a.whl', (
         'not_a.whl', 'not_a.whl', 'not_a.whl', None, (), None)),
