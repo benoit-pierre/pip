@@ -65,6 +65,7 @@ class RequirementTracker(object):
         remove = self._temp_dir is not None
         if remove:
             self._temp_dir.cleanup()
+            del os.environ['PIP_REQ_TRACKER']
         logger.debug('%s build tracker %r',
                      'Removed' if remove else 'Cleaned',
                      self._root)
