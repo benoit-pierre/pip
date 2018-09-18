@@ -20,6 +20,7 @@ class RequirementTracker(object):
             self._temp_dir.create()
             self._root = os.environ['PIP_REQ_TRACKER'] = self._temp_dir.path
             logger.debug('Created requirements tracker %r', self._root)
+            open(os.path.join(self._root, 'not_empty'), 'w').close()
         else:
             self._temp_dir = None
             logger.debug('Re-using requirements tracker %r', self._root)
