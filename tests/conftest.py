@@ -1,3 +1,5 @@
+import compileall
+import distutils
 import io
 import os
 import shutil
@@ -6,6 +8,7 @@ import sys
 
 import pytest
 import six
+import virtualenv as _virtualenv
 
 import pip._internal
 from tests.lib import SRC_DIR, TestData
@@ -164,14 +167,16 @@ def pip_src(tmpdir_factory):
 
 
 @pytest.yield_fixture(scope='session')
-def virtualenv_template(tmpdir_factory, pip_src):
-    tmpdir = Path(str(tmpdir_factory.mktemp('virtualenv')))
+def virtualenv_template(tmpdir_factory, pip_src, common_wheels):
+
     # Create the virtual environment
-    venv = VirtualEnvironment.create(
-        tmpdir.join("venv_orig"),
-        pip_source_dir=pip_src,
-        relocatable=True,
-    )
+    tmpdir = Path(str(tmpdir_factory.mktemp('virtualenv')))
+    venv = VirtualEnvironment.create(tmpdir.join("venv_orig"))
+
+    # FIXME: some tests rely on 'easy-install.pth' being already present.
+    site_packages = distutils.sysconfig.get_python_lib(prefix=venv.location)
+    Path(site_packages, 'easy-install.pth').touch()
+
     # Fix `site.py`.
     site_py = venv.lib / 'site.py'
     with open(site_py) as fp:
@@ -205,6 +210,16 @@ def virtualenv_template(tmpdir_factory, pip_src):
         site_contents = site_contents.replace(pattern, replace)
     with open(site_py, 'w') as fp:
         fp.write(site_contents)
+    # Make sure bytecode is up-to-date too.
+    assert compileall.compile_file(str(site_py), force=True)
+
+    # Update setuptools and install pip.
+    _virtualenv.install_wheel(['-f', str(common_wheels),
+                               'setuptools', pip_src],
+                              venv.bin.join("python"))
+
+    # Make sure it's relocatable.
+    _virtualenv.make_environment_relocatable(venv.location)
     if sys.platform == 'win32':
         # Work around setuptools' easy_install.exe
         # not working properly after relocation.
@@ -231,9 +246,7 @@ def virtualenv(virtualenv_template, tmpdir, isolate):
     ``tests.lib.venv.VirtualEnvironment`` object.
     """
     venv_location = tmpdir.join("workspace", "venv")
-    shutil.copytree(virtualenv_template, venv_location, symlinks=True)
-    venv = VirtualEnvironment(venv_location)
-    yield venv
+    yield VirtualEnvironment.create(venv_location, virtualenv_template)
     venv_location.rmtree(noerrors=True)
 
 

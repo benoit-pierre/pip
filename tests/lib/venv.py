@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 
-import distutils
+import os
+import shutil
+import sys
 
 import virtualenv as _virtualenv
 
@@ -14,9 +16,10 @@ class VirtualEnvironment(object):
     virtualenv but in the future it could use pyvenv.
     """
 
-    def __init__(self, location, system_site_packages=False):
+    def __init__(self, location, template=None):
         self.location = Path(location)
-        self._system_site_packages = system_site_packages
+        self._system_site_packages = False
+        self._template = template
         home, lib, inc, bin = _virtualenv.path_locations(self.location)
         self.lib = Path(virtualenv_lib_path(home, lib))
         self.bin = Path(bin)
@@ -25,30 +28,29 @@ class VirtualEnvironment(object):
         return "<VirtualEnvironment {}>".format(self.location)
 
     @classmethod
-    def create(cls, location, clear=False,
-               pip_source_dir=None, relocatable=False):
-        obj = cls(location)
-        obj._create(clear=clear,
-                    pip_source_dir=pip_source_dir,
-                    relocatable=relocatable)
+    def create(cls, location, template=None):
+        obj = cls(location, template)
+        obj._create()
         return obj
 
-    def _create(self, clear=False, pip_source_dir=None, relocatable=False):
-        # Create the actual virtual environment
-        _virtualenv.create_environment(
-            self.location,
-            clear=clear,
-            download=False,
-            no_pip=True,
-            no_wheel=True,
-        )
-        _virtualenv.install_wheel([pip_source_dir or '.'],
-                                  self.bin.join("python"))
-        if relocatable:
-            _virtualenv.make_environment_relocatable(self.location)
-        # FIXME: some tests rely on 'easy-install.pth' being already present.
-        site_package = distutils.sysconfig.get_python_lib(prefix=self.location)
-        Path(site_package).join('easy-install.pth').touch()
+    def _create(self, clear=False):
+        if clear:
+            shutil.rmtree(self.location)
+        if self._template:
+            # On Windows, calling `_virtualenv.path_locations(target)`
+            # will have created the `target` directory...
+            if sys.platform == 'win32' and os.path.exists(self.location):
+                os.rmdir(self.location)
+            # Clone virtual environment from template.
+            shutil.copytree(self._template, self.location, symlinks=True)
+        else:
+            # Create a new virtual environment.
+            _virtualenv.create_environment(
+                self.location,
+                no_pip=True,
+                no_wheel=True,
+                no_setuptools=True,
+            )
 
     def clear(self):
         self._create(clear=True)
