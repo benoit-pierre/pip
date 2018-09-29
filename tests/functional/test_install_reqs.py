@@ -223,7 +223,6 @@ def test_install_local_with_subdirectory(script):
     result.assert_installed('version_subpkg.py', editable=False)
 
 
-@pytest.mark.network
 def test_wheel_user_with_prefix_in_pydistutils_cfg(
         script, data, virtualenv, common_wheels):
     # Make sure wheel is available in the virtualenv
@@ -353,7 +352,6 @@ def test_constrained_to_url_install_same_url(script, data):
             in result.stdout), str(result)
 
 
-@pytest.mark.network
 def test_double_install_spurious_hash_mismatch(
         script, tmpdir, data, common_wheels):
     """Make sure installing the same hashed sdist twice doesn't throw hash

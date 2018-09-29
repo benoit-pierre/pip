@@ -114,7 +114,6 @@ def test_install_from_wheel_with_headers(script, data):
                                                       result.stdout)
 
 
-@pytest.mark.network
 def test_install_wheel_with_target(script, data, common_wheels):
     """
     Test installing a wheel using pip install --target
@@ -130,7 +129,6 @@ def test_install_wheel_with_target(script, data, common_wheels):
     )
 
 
-@pytest.mark.network
 def test_install_wheel_with_target_and_data_files(script, data, common_wheels):
     """
     Test for issue #4092. It will be checked that a data_files specification in
@@ -234,7 +232,6 @@ def test_wheel_record_lines_in_deterministic_order(script, data):
     assert record_lines == sorted(record_lines)
 
 
-@pytest.mark.network
 def test_install_user_wheel(script, virtualenv, data, common_wheels):
     """
     Test user install from wheel (that has a script)

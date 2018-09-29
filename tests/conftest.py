@@ -3,7 +3,6 @@ import distutils
 import io
 import os
 import shutil
-import subprocess
 import sys
 
 import pytest
@@ -11,7 +10,7 @@ import six
 import virtualenv as _virtualenv
 
 import pip._internal
-from tests.lib import SRC_DIR, TestData
+from tests.lib import DATA_DIR, SRC_DIR, TestData
 from tests.lib.path import Path
 from tests.lib.scripttest import PipTestEnvironment
 from tests.lib.venv import VirtualEnvironment
@@ -279,15 +278,9 @@ def script(tmpdir, virtualenv):
 
 
 @pytest.fixture(scope="session")
-def common_wheels(tmpdir_factory):
+def common_wheels():
     """Provide a directory with latest setuptools and wheel wheels"""
-    wheels_dir = tmpdir_factory.mktemp('common_wheels')
-    subprocess.check_call([
-        'pip', 'download', 'wheel', 'setuptools',
-        '-d', str(wheels_dir),
-    ])
-    yield wheels_dir
-    wheels_dir.remove(ignore_errors=True)
+    return DATA_DIR.join('common_wheels')
 
 
 @pytest.fixture

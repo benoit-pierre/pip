@@ -68,7 +68,6 @@ class Tests_UserSite:
         )
         result.assert_installed('INITools', use_user_site=True)
 
-    @pytest.mark.network
     def test_install_from_current_directory_into_usersite(
             self, script, virtualenv, data, common_wheels):
         """

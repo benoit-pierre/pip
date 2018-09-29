@@ -216,7 +216,6 @@ def test_basic_install_editable_from_git(script, tmpdir):
     _test_install_editable_from_git(script, tmpdir)
 
 
-@pytest.mark.network
 def test_install_editable_from_git_autobuild_wheel(
         script, tmpdir, common_wheels):
     script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
@@ -1090,7 +1089,6 @@ def test_install_topological_sort(script, data):
     assert order1 in res or order2 in res, res
 
 
-@pytest.mark.network
 def test_install_wheel_broken(script, data, common_wheels):
     script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     res = script.pip(
@@ -1100,7 +1098,6 @@ def test_install_wheel_broken(script, data, common_wheels):
     assert "Successfully installed wheelbroken-0.1" in str(res), str(res)
 
 
-@pytest.mark.network
 def test_cleanup_after_failed_wheel(script, data, common_wheels):
     script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     res = script.pip(
@@ -1116,7 +1113,6 @@ def test_cleanup_after_failed_wheel(script, data, common_wheels):
     assert "Running setup.py clean for wheelbrokenafter" in str(res), str(res)
 
 
-@pytest.mark.network
 def test_install_builds_wheels(script, data, common_wheels):
     # We need to use a subprocess to get the right value on Windows.
     res = script.run('python', '-c', (
@@ -1159,7 +1155,6 @@ def test_install_builds_wheels(script, data, common_wheels):
     ]
 
 
-@pytest.mark.network
 def test_install_no_binary_disables_building_wheels(
         script, data, common_wheels):
     script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
@@ -1185,7 +1180,6 @@ def test_install_no_binary_disables_building_wheels(
     assert "Running setup.py install for upper" in str(res), str(res)
 
 
-@pytest.mark.network
 def test_install_no_binary_disables_cached_wheels(script, data, common_wheels):
     script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     # Seed the cache
@@ -1288,7 +1282,6 @@ def test_install_incompatible_python_requires_editable(script):
             "but the running Python is ") in result.stderr, str(result)
 
 
-@pytest.mark.network
 def test_install_incompatible_python_requires_wheel(script, common_wheels):
     script.scratch_path.join("pkga").mkdir()
     pkga_path = script.scratch_path / 'pkga'

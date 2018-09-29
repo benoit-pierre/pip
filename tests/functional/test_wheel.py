@@ -2,8 +2,6 @@
 import os
 from os.path import exists
 
-import pytest
-
 from pip._internal.cli.status_codes import ERROR, PREVIOUS_BUILD_DIR_ERROR
 from pip._internal.locations import write_delete_marker_file
 from tests.lib import pyversion
@@ -29,7 +27,6 @@ def test_wheel_exit_status_code_when_blank_requirements_file(
     script.pip('wheel', '-r', 'blank.txt')
 
 
-@pytest.mark.network
 def test_pip_wheel_success(script, data, common_wheels):
     """
     Test 'pip wheel' success.
@@ -45,7 +42,6 @@ def test_pip_wheel_success(script, data, common_wheels):
     assert "Successfully built simple" in result.stdout, result.stdout
 
 
-@pytest.mark.network
 def test_basic_pip_wheel_downloads_wheels(script, data, common_wheels):
     """
     Test 'pip wheel' downloads wheels
@@ -60,7 +56,6 @@ def test_basic_pip_wheel_downloads_wheels(script, data, common_wheels):
     assert "Saved" in result.stdout, result.stdout
 
 
-@pytest.mark.network
 def test_pip_wheel_builds_when_no_binary_set(script, data, common_wheels):
     script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     data.packages.join('simple-3.0-py2.py3-none-any.whl').touch()
@@ -72,7 +67,6 @@ def test_pip_wheel_builds_when_no_binary_set(script, data, common_wheels):
     assert "Running setup.py bdist_wheel for simple" in str(res), str(res)
 
 
-@pytest.mark.network
 def test_pip_wheel_builds_editable_deps(script, data, common_wheels):
     """
     Test 'pip wheel' finds and builds dependencies of editables
@@ -88,7 +82,6 @@ def test_pip_wheel_builds_editable_deps(script, data, common_wheels):
     assert wheel_file_path in result.files_created, result.stdout
 
 
-@pytest.mark.network
 def test_pip_wheel_builds_editable(script, data, common_wheels):
     """
     Test 'pip wheel' builds an editable package
@@ -104,7 +97,6 @@ def test_pip_wheel_builds_editable(script, data, common_wheels):
     assert wheel_file_path in result.files_created, result.stdout
 
 
-@pytest.mark.network
 def test_pip_wheel_fail(script, data, common_wheels):
     """
     Test 'pip wheel' failure.
@@ -126,7 +118,6 @@ def test_pip_wheel_fail(script, data, common_wheels):
     assert result.returncode != 0
 
 
-@pytest.mark.network
 def test_no_clean_option_blocks_cleaning_after_wheel(
         script, data, common_wheels):
     """
@@ -144,7 +135,6 @@ def test_no_clean_option_blocks_cleaning_after_wheel(
     assert exists(build), "build/simple should still exist %s" % str(result)
 
 
-@pytest.mark.network
 def test_pip_wheel_source_deps(script, data, common_wheels):
     """
     Test 'pip wheel' finds and builds source archive dependencies
@@ -162,7 +152,6 @@ def test_pip_wheel_source_deps(script, data, common_wheels):
     assert "Successfully built source" in result.stdout, result.stdout
 
 
-@pytest.mark.network
 def test_pip_wheel_fail_cause_of_previous_build_dir(
         script, data, common_wheels):
     """
@@ -189,7 +178,6 @@ def test_pip_wheel_fail_cause_of_previous_build_dir(
     assert result.returncode == PREVIOUS_BUILD_DIR_ERROR, result
 
 
-@pytest.mark.network
 def test_wheel_package_with_latin1_setup(script, data, common_wheels):
     """Create a wheel from a package with latin-1 encoded setup.py."""
     script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
@@ -199,7 +187,6 @@ def test_wheel_package_with_latin1_setup(script, data, common_wheels):
     assert 'Successfully built SetupPyUTF8' in result.stdout
 
 
-@pytest.mark.network
 def test_pip_wheel_with_pep518_build_reqs(script, data, common_wheels):
     script.pip_install_local('-f', common_wheels, 'wheel')
     result = script.pip('wheel', '--no-index', '-f', data.find_links,
@@ -211,7 +198,6 @@ def test_pip_wheel_with_pep518_build_reqs(script, data, common_wheels):
     assert "Installing build dependencies" in result.stdout, result.stdout
 
 
-@pytest.mark.network
 def test_pip_wheel_with_pep518_build_reqs_no_isolation(script, data,
                                                        common_wheels):
     script.pip_install_local('-f', common_wheels, 'wheel', 'simplewheel==2.0')
@@ -226,7 +212,6 @@ def test_pip_wheel_with_pep518_build_reqs_no_isolation(script, data,
     assert "Installing build dependencies" not in result.stdout, result.stdout
 
 
-@pytest.mark.network
 def test_pip_wheel_with_user_set_in_config(script, data, common_wheels):
     script.pip_install_local('-f', common_wheels, 'wheel')
     config_file = script.scratch_path / 'pip.conf'
