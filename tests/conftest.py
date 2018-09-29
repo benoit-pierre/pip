@@ -215,7 +215,7 @@ def virtualenv_template(tmpdir_factory, pip_src, common_wheels):
 
     # Update setuptools and install pip.
     _virtualenv.install_wheel(['-f', str(common_wheels),
-                               'setuptools', pip_src],
+                               'setuptools', '-e', pip_src],
                               venv.bin.join("python"))
 
     # Make sure it's relocatable.
