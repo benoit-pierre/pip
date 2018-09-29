@@ -73,7 +73,6 @@ def test_incorrect_case_file_index(data):
     assert link.url.endswith("Dinner-2.0.tar.gz")
 
 
-@pytest.mark.network
 def test_finder_detects_latest_already_satisfied_find_links(data):
     """Test PackageFinder detects latest already satisfied using find-links"""
     req = install_req_from_line('simple', None)
@@ -91,7 +90,6 @@ def test_finder_detects_latest_already_satisfied_find_links(data):
         finder.find_requirement(req, True)
 
 
-@pytest.mark.network
 def test_finder_detects_latest_already_satisfied_pypi_links():
     """Test PackageFinder detects latest already satisfied using pypi links"""
     req = install_req_from_line('initools', None)

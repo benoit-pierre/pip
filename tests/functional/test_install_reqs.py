@@ -197,7 +197,6 @@ def test_install_collected_dependencies_first(script):
     assert text.endswith('toporequires2')
 
 
-@pytest.mark.network
 def test_install_local_editable_with_subdirectory(script):
     version_pkg_path = _create_test_package_with_subdirectory(script,
                                                               'version_subdir')
@@ -210,7 +209,6 @@ def test_install_local_editable_with_subdirectory(script):
     result.assert_installed('version-subpkg', sub_dir='version_subdir')
 
 
-@pytest.mark.network
 def test_install_local_with_subdirectory(script):
     version_pkg_path = _create_test_package_with_subdirectory(script,
                                                               'version_subdir')
