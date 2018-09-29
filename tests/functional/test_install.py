@@ -77,7 +77,9 @@ def test_pep518_allows_missing_requires(script, data, common_wheels):
 def test_pep518_with_user_pip(script, virtualenv, pip_src,
                               data, common_wheels):
     virtualenv.system_site_packages = True
-    script.pip("install", "--ignore-installed", "--user", pip_src,
+    script.pip("install", "--ignore-installed",
+               "-f", common_wheels,
+               "--user", pip_src,
                use_module=True)
     system_pip_dir = script.site_packages_path / 'pip'
     system_pip_dir.rmtree()
@@ -977,13 +979,12 @@ def test_url_incorrect_case_file_index(script, data):
     assert "Looking in links: " not in result.stdout
 
 
-@pytest.mark.network
 def test_compiles_pyc(script):
     """
     Test installing with --compile on
     """
     del script.environ["PYTHONDONTWRITEBYTECODE"]
-    script.pip("install", "--compile", "--no-binary=:all:", "INITools==0.2")
+    script.pip_install_local("--compile", "--no-binary=:all:", "INITools==0.2")
 
     # There are many locations for the __init__.pyc file so attempt to find
     #   any of them
@@ -998,13 +999,13 @@ def test_compiles_pyc(script):
     assert any(exists)
 
 
-@pytest.mark.network
 def test_no_compiles_pyc(script):
     """
     Test installing from wheel with --compile on
     """
     del script.environ["PYTHONDONTWRITEBYTECODE"]
-    script.pip("install", "--no-compile", "--no-binary=:all:", "INITools==0.2")
+    script.pip_install_local("--no-compile", "--no-binary=:all:",
+                             "INITools==0.2")
 
     # There are many locations for the __init__.pyc file so attempt to find
     #   any of them
