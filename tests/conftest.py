@@ -10,6 +10,7 @@ import six
 import virtualenv as _virtualenv
 
 import pip._internal
+from pip._internal.utils.misc import unpack_file
 from tests.lib import DATA_DIR, SRC_DIR, TestData
 from tests.lib.path import Path
 from tests.lib.scripttest import PipTestEnvironment
@@ -165,8 +166,17 @@ def pip_src(tmpdir_factory):
     return pip_src
 
 
+@pytest.fixture(scope='session')
+def setuptools_src(tmpdir_factory):
+    src = Path(str(tmpdir_factory.mktemp('setuptools'))).join('setuptools_src')
+    arc = list(sorted(DATA_DIR.join('common_src').glob('setuptools-*')))[-1]
+    unpack_file(arc, src, None, None)
+    return src
+
+
 @pytest.yield_fixture(scope='session')
-def virtualenv_template(tmpdir_factory, pip_src, common_wheels):
+def virtualenv_template(tmpdir_factory, pip_src,
+                        setuptools_src, common_wheels):
 
     # Create the virtual environment
     tmpdir = Path(str(tmpdir_factory.mktemp('virtualenv')))
@@ -214,7 +224,8 @@ def virtualenv_template(tmpdir_factory, pip_src, common_wheels):
 
     # Update setuptools and install pip.
     _virtualenv.install_wheel(['-f', str(common_wheels),
-                               'setuptools', '-e', pip_src],
+                               '-e', setuptools_src,
+                               '-e', pip_src],
                               venv.bin.join("python"))
 
     # Make sure it's relocatable.
