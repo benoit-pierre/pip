@@ -13,7 +13,7 @@ from pip._internal.cli.status_codes import ERROR, SUCCESS
 from pip._internal.models.index import PyPI, TestPyPI
 from pip._internal.utils.misc import rmtree
 from tests.lib import (
-    _create_svn_repo, _create_test_package, create_test_package_with_setup,
+    _create_svn_repo, _create_test_package, create_basic_wheel_for_package,
     need_bzr, need_mercurial, path_to_url, pyversion, pyversion_tuple,
     requirements_file,
 )
@@ -1336,9 +1336,9 @@ def test_install_pep508_with_url(script):
 
 @pytest.mark.network
 def test_install_pep508_with_url_in_install_requires(script):
-    pkga_path = create_test_package_with_setup(
+    pkga_path = create_basic_wheel_for_package(
         script, name='pkga', version='1.0',
-        install_requires=[
+        depends=[
             'packaging@https://files.pythonhosted.org/packages/2f/2b/'
             'c681de3e1dbcd469537aefb15186b800209aa1f299d933d23b48d85c9d56/'
             'packaging-15.3-py2.py3-none-any.whl#sha256='
@@ -1418,11 +1418,11 @@ def test_installed_files_recorded_in_deterministic_order(script, data):
 
 
 def test_install_conflict_results_in_warning(script, data):
-    pkgA_path = create_test_package_with_setup(
+    pkgA_path = create_basic_wheel_for_package(
         script,
-        name='pkgA', version='1.0', install_requires=['pkgb == 1.0'],
+        name='pkgA', version='1.0', depends=['pkgb == 1.0'],
     )
-    pkgB_path = create_test_package_with_setup(
+    pkgB_path = create_basic_wheel_for_package(
         script,
         name='pkgB', version='2.0',
     )
@@ -1441,11 +1441,11 @@ def test_install_conflict_results_in_warning(script, data):
 
 
 def test_install_conflict_warning_can_be_suppressed(script, data):
-    pkgA_path = create_test_package_with_setup(
+    pkgA_path = create_basic_wheel_for_package(
         script,
-        name='pkgA', version='1.0', install_requires=['pkgb == 1.0'],
+        name='pkgA', version='1.0', depends=['pkgb == 1.0'],
     )
-    pkgB_path = create_test_package_with_setup(
+    pkgB_path = create_basic_wheel_for_package(
         script,
         name='pkgB', version='2.0',
     )

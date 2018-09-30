@@ -1,4 +1,4 @@
-from tests.lib import create_test_package_with_setup
+from tests.lib import create_basic_wheel_for_package
 
 
 def matches_expected_lines(string, expected_lines):
@@ -6,17 +6,17 @@ def matches_expected_lines(string, expected_lines):
 
 
 def test_check_install_canonicalization(script):
-    pkga_path = create_test_package_with_setup(
+    pkga_path = create_basic_wheel_for_package(
         script,
         name='pkgA',
         version='1.0',
-        install_requires=['normal-missing', 'SPECIAL.missing'],
+        depends=['normal-missing', 'SPECIAL.missing'],
     )
-    normal_path = create_test_package_with_setup(
+    normal_path = create_basic_wheel_for_package(
         script,
         name='normal-missing', version='0.1',
     )
-    special_path = create_test_package_with_setup(
+    special_path = create_basic_wheel_for_package(
         script,
         name='SPECIAL.missing', version='0.1',
     )
@@ -55,18 +55,18 @@ def test_check_install_canonicalization(script):
 
 
 def test_check_install_does_not_warn_for_out_of_graph_issues(script):
-    pkg_broken_path = create_test_package_with_setup(
+    pkg_broken_path = create_basic_wheel_for_package(
         script,
         name='broken',
         version='1.0',
-        install_requires=['missing', 'conflict < 1.0'],
+        depends=['missing', 'conflict < 1.0'],
     )
-    pkg_unrelated_path = create_test_package_with_setup(
+    pkg_unrelated_path = create_basic_wheel_for_package(
         script,
         name='unrelated',
         version='1.0',
     )
-    pkg_conflict_path = create_test_package_with_setup(
+    pkg_conflict_path = create_basic_wheel_for_package(
         script,
         name='conflict',
         version='1.0',

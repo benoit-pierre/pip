@@ -9,6 +9,7 @@ import site
 import shutil
 import subprocess
 
+import pkg_resources
 import pytest
 import scripttest
 import six
@@ -683,7 +684,8 @@ def create_test_package_with_setup(script, **setup_kwargs):
     return pkg_path
 
 
-def create_basic_wheel_for_package(script, name, version, depends, extras):
+def create_basic_wheel_for_package(script, name='foo', version='1.0',
+                                   depends=[], extras={}):
     files = {
         "{name}/__init__.py": """
             def hello():
@@ -722,12 +724,17 @@ def create_basic_wheel_for_package(script, name, version, depends, extras):
         "{dist_info}/RECORD": ""
     }
 
+    name = pkg_resources.safe_name(name)
+    version = pkg_resources.safe_version(version)
+    extras = dict((pkg_resources.safe_extra(extra), reqs)
+                  for extra, req in extras.items())
+
     # Some useful shorthands
     archive_name = "{name}-{version}-py2.py3-none-any.whl".format(
-        name=name, version=version
+        name=pkg_resources.to_filename(name), version=version
     )
     dist_info = "{name}-{version}.dist-info".format(
-        name=name, version=version
+        name=pkg_resources.to_filename(name), version=version
     )
 
     requires_dist = "\n".join([

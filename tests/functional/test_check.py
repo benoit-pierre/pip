@@ -1,4 +1,4 @@
-from tests.lib import create_test_package_with_setup
+from tests.lib import create_basic_wheel_for_package
 
 
 def matches_expected_lines(string, expected_lines):
@@ -23,9 +23,9 @@ def test_basic_check_clean(script):
 
 def test_basic_check_missing_dependency(script):
     # Setup a small project
-    pkga_path = create_test_package_with_setup(
+    pkga_path = create_basic_wheel_for_package(
         script,
-        name='pkga', version='1.0', install_requires=['missing==0.1'],
+        name='pkga', version='1.0', depends=['missing==0.1'],
     )
     # Let's install pkga without its dependency
     res = script.pip('install', '--no-index', pkga_path, '--no-deps')
@@ -42,16 +42,16 @@ def test_basic_check_missing_dependency(script):
 
 def test_basic_check_broken_dependency(script):
     # Setup pkga depending on pkgb>=1.0
-    pkga_path = create_test_package_with_setup(
+    pkga_path = create_basic_wheel_for_package(
         script,
-        name='pkga', version='1.0', install_requires=['broken>=1.0'],
+        name='pkga', version='1.0', depends=['broken>=1.0'],
     )
     # Let's install pkga without its dependency
     res = script.pip('install', '--no-index', pkga_path, '--no-deps')
     assert "Successfully installed pkga-1.0" in res.stdout, str(res)
 
     # Setup broken==0.1
-    broken_path = create_test_package_with_setup(
+    broken_path = create_basic_wheel_for_package(
         script,
         name='broken', version='0.1',
     )
@@ -71,18 +71,18 @@ def test_basic_check_broken_dependency(script):
 
 
 def test_basic_check_broken_dependency_and_missing_dependency(script):
-    pkga_path = create_test_package_with_setup(
+    pkga_path = create_basic_wheel_for_package(
         script,
-        name='pkga', version='1.0', install_requires=['broken>=1.0'],
+        name='pkga', version='1.0', depends=['broken>=1.0'],
     )
     # Let's install pkga without its dependency
     res = script.pip('install', '--no-index', pkga_path, '--no-deps')
     assert "Successfully installed pkga-1.0" in res.stdout, str(res)
 
     # Setup broken==0.1
-    broken_path = create_test_package_with_setup(
+    broken_path = create_basic_wheel_for_package(
         script,
-        name='broken', version='0.1', install_requires=['missing'],
+        name='broken', version='0.1', depends=['missing'],
     )
     # Let's install broken==0.1
     res = script.pip('install', '--no-index', broken_path, '--no-deps')
@@ -100,10 +100,10 @@ def test_basic_check_broken_dependency_and_missing_dependency(script):
 
 
 def test_check_complicated_name_missing(script):
-    package_a_path = create_test_package_with_setup(
+    package_a_path = create_basic_wheel_for_package(
         script,
         name='package_A', version='1.0',
-        install_requires=['Dependency-B>=1.0'],
+        depends=['Dependency-B>=1.0'],
     )
 
     # Without dependency
@@ -119,12 +119,12 @@ def test_check_complicated_name_missing(script):
 
 
 def test_check_complicated_name_broken(script):
-    package_a_path = create_test_package_with_setup(
+    package_a_path = create_basic_wheel_for_package(
         script,
         name='package_A', version='1.0',
-        install_requires=['Dependency-B>=1.0'],
+        depends=['Dependency-B>=1.0'],
     )
-    dependency_b_path_incompatible = create_test_package_with_setup(
+    dependency_b_path_incompatible = create_basic_wheel_for_package(
         script,
         name='dependency-b', version='0.1',
     )
@@ -148,12 +148,12 @@ def test_check_complicated_name_broken(script):
 
 
 def test_check_complicated_name_clean(script):
-    package_a_path = create_test_package_with_setup(
+    package_a_path = create_basic_wheel_for_package(
         script,
         name='package_A', version='1.0',
-        install_requires=['Dependency-B>=1.0'],
+        depends=['Dependency-B>=1.0'],
     )
-    dependency_b_path = create_test_package_with_setup(
+    dependency_b_path = create_basic_wheel_for_package(
         script,
         name='dependency-b', version='1.0',
     )
@@ -175,10 +175,10 @@ def test_check_complicated_name_clean(script):
 
 
 def test_check_considers_conditional_reqs(script):
-    package_a_path = create_test_package_with_setup(
+    package_a_path = create_basic_wheel_for_package(
         script,
         name='package_A', version='1.0',
-        install_requires=[
+        depends=[
             "Dependency-B>=1.0; python_version != '2.7'",
             "Dependency-B>=2.0; python_version == '2.7'",
         ],
@@ -197,16 +197,16 @@ def test_check_considers_conditional_reqs(script):
 
 def test_check_development_versions_are_also_considered(script):
     # Setup pkga depending on pkgb>=1.0
-    pkga_path = create_test_package_with_setup(
+    pkga_path = create_basic_wheel_for_package(
         script,
-        name='pkga', version='1.0', install_requires=['depend>=1.0'],
+        name='pkga', version='1.0', depends=['depend>=1.0'],
     )
     # Let's install pkga without its dependency
     res = script.pip('install', '--no-index', pkga_path, '--no-deps')
     assert "Successfully installed pkga-1.0" in res.stdout, str(res)
 
     # Setup depend==1.1.0.dev0
-    depend_path = create_test_package_with_setup(
+    depend_path = create_basic_wheel_for_package(
         script,
         name='depend', version='1.1.0.dev0',
     )
