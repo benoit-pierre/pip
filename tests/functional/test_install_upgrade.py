@@ -130,14 +130,13 @@ def test_eager_does_upgrade_dependencies_when_no_longer_satisfied(script):
     ), "should have uninstalled simple==1.0"
 
 
-@pytest.mark.network
 def test_upgrade_to_specific_version(script):
     """
     It does upgrade to specific version requested.
 
     """
-    script.pip('install', 'INITools==0.1', expect_error=True)
-    result = script.pip('install', 'INITools==0.2', expect_error=True)
+    script.pip_install_local('INITools==0.1', expect_error=True)
+    result = script.pip_install_local('INITools==0.2', expect_error=True)
     assert result.files_created, (
         'pip install with specific version did not upgrade'
     )
@@ -151,14 +150,13 @@ def test_upgrade_to_specific_version(script):
     )
 
 
-@pytest.mark.network
 def test_upgrade_if_requested(script):
     """
     And it does upgrade if requested.
 
     """
-    script.pip('install', 'INITools==0.1', expect_error=True)
-    result = script.pip('install', '--upgrade', 'INITools', expect_error=True)
+    script.pip_install_local('INITools==0.1', expect_error=True)
+    result = script.pip_install_local('--upgrade', 'INITools', expect_error=True)
     assert result.files_created, 'pip install --upgrade did not upgrade'
     assert (
         script.site_packages / 'INITools-0.1-py%s.egg-info' %
@@ -199,17 +197,16 @@ def test_upgrade_force_reinstall_newest(script):
     assert created == updated
 
 
-@pytest.mark.network
 def test_uninstall_before_upgrade(script):
     """
     Automatic uninstall-before-upgrade.
 
     """
-    result = script.pip('install', 'INITools==0.2', expect_error=True)
+    result = script.pip_install_local('INITools==0.2', expect_error=True)
     assert script.site_packages / 'initools' in result.files_created, (
         sorted(result.files_created.keys())
     )
-    result2 = script.pip('install', 'INITools==0.3', expect_error=True)
+    result2 = script.pip_install_local('INITools==0.3', expect_error=True)
     assert result2.files_created, 'upgrade to INITools 0.3 failed'
     result3 = script.pip('uninstall', 'initools', '-y', expect_error=True)
     assert_all_changes(result, result3, [script.venv / 'build', 'cache'])
@@ -323,7 +320,7 @@ def test_should_not_install_always_from_cache(script):
     If there is an old cached package, pip should download the newer version
     Related to issue #175
     """
-    script.pip('install', 'INITools==0.2', expect_error=True)
+    script.pip_install_local('INITools==0.2', expect_error=True)
     script.pip('uninstall', '-y', 'INITools')
     result = script.pip('install', 'INITools==0.1', expect_error=True)
     assert (
@@ -336,13 +333,12 @@ def test_should_not_install_always_from_cache(script):
     )
 
 
-@pytest.mark.network
 def test_install_with_ignoreinstalled_requested(script):
     """
     Test old conflicting package is completely ignored
     """
-    script.pip('install', 'INITools==0.1', expect_error=True)
-    result = script.pip('install', '-I', 'INITools==0.3', expect_error=True)
+    script.pip_install_local('INITools==0.1', expect_error=True)
+    result = script.pip_install_local('-I', 'INITools==0.3', expect_error=True)
     assert result.files_created, 'pip install -I did not install'
     # both the old and new metadata should be present.
     assert os.path.exists(
