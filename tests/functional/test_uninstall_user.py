@@ -11,13 +11,12 @@ from tests.lib import assert_all_changes, pyversion
 
 class Tests_UninstallUserSite:
 
-    @pytest.mark.network
     def test_uninstall_from_usersite(self, script, virtualenv):
         """
         Test uninstall from usersite
         """
         virtualenv.system_site_packages = True
-        result1 = script.pip('install', '--user', 'INITools==0.3')
+        result1 = script.pip_install_local('--user', 'INITools==0.3')
         result2 = script.pip('uninstall', '-y', 'INITools')
         assert_all_changes(result1, result2, [script.venv / 'build', 'cache'])
 

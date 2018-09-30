@@ -51,12 +51,11 @@ def test_show_with_files_from_wheel(script, data):
     assert re.search(r"Files:\n(  .+\n)+", result.stdout)
 
 
-@pytest.mark.network
 def test_show_with_all_files(script):
     """
     Test listing all files in the show command.
     """
-    script.pip('install', 'initools==0.2')
+    script.pip_install_local('initools==0.2')
     result = script.pip('show', '--files', 'initools')
     lines = result.stdout.splitlines()
     assert 'Cannot locate installed-files.txt' not in lines[6], lines[6]
