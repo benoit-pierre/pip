@@ -13,7 +13,10 @@ import pytest
 
 from pip._internal.req.constructors import install_req_from_line
 from pip._internal.utils.misc import rmtree
-from tests.lib import assert_all_changes, create_test_package_with_setup
+from tests.lib import (
+    assert_all_changes, create_basic_wheel_for_package,
+    create_test_package_with_setup,
+)
 from tests.lib.local_repos import local_checkout, local_repo
 
 
@@ -233,11 +236,15 @@ def test_uninstall_gui_scripts(script):
     Make sure that uninstall removes gui scripts
     """
     pkg_name = "gui_pkg"
-    pkg_path = create_test_package_with_setup(
+    pkg_path = create_basic_wheel_for_package(
         script,
         name=pkg_name,
         version='0.1',
-        entry_points={"gui_scripts": ["test_ = distutils_install", ], }
+        entry_points=textwrap.dedent(
+            '''
+            [gui_scripts]
+            test_ = distutils:install
+            '''),
     )
     script_name = script.bin_path.join('test_')
     if sys.platform == 'win32':

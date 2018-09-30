@@ -685,7 +685,7 @@ def create_test_package_with_setup(script, **setup_kwargs):
 
 
 def create_basic_wheel_for_package(script, name='foo', version='1.0',
-                                   depends=[], extras={}):
+                                   depends=[], extras={}, entry_points=None):
     files = {
         "{name}/__init__.py": """
             def hello():
@@ -723,11 +723,13 @@ def create_basic_wheel_for_package(script, name='foo', version='1.0',
         # Have an empty RECORD because we don't want to be checking hashes.
         "{dist_info}/RECORD": ""
     }
+    if entry_points is not None:
+        files["{dist_info}/entry_points.txt"] = entry_points
 
     name = pkg_resources.safe_name(name)
     version = pkg_resources.safe_version(version)
     extras = dict((pkg_resources.safe_extra(extra), reqs)
-                  for extra, req in extras.items())
+                  for extra, reqs in extras.items())
 
     # Some useful shorthands
     archive_name = "{name}-{version}-py2.py3-none-any.whl".format(
