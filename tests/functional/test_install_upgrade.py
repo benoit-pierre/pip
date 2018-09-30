@@ -179,22 +179,24 @@ def test_upgrade_with_newest_already_installed(script, data):
     assert 'already up-to-date' in result.stdout, result.stdout
 
 
-@pytest.mark.network
 def test_upgrade_force_reinstall_newest(script):
     """
     Force reinstallation of a package even if it is already at its newest
     version if --force-reinstall is supplied.
     """
-    result = script.pip('install', 'INITools')
-    assert script.site_packages / 'initools' in result.files_created, (
-        sorted(result.files_created.keys())
+    def filter_files(files):
+        return [f.path for f in files if f.file]
+    result = script.pip_install_local('INITools')
+    created = set(filter_files(result.files_created.values()))
+    assert str(script.site_packages / 'initools' / '__init__.py') in created
+    for root, dirs, files in script.site_packages_path.walk():
+        for f in files:
+            root.join(f).touch()
+    result2 = script.pip_install_local(
+        '--upgrade', '--force-reinstall', 'INITools'
     )
-    result2 = script.pip(
-        'install', '--upgrade', '--force-reinstall', 'INITools'
-    )
-    assert result2.files_updated, 'upgrade to INITools 0.3 failed'
-    result3 = script.pip('uninstall', 'initools', '-y', expect_error=True)
-    assert_all_changes(result, result3, [script.venv / 'build', 'cache'])
+    updated = set(filter_files(result2.files_updated.values()))
+    assert created == updated
 
 
 @pytest.mark.network
