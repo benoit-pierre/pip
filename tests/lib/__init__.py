@@ -380,7 +380,7 @@ class PipTestEnvironment(scripttest.TestFileEnvironment):
         if (pyversion_tuple < (2, 7, 9) and
                 args and args[0] in ('search', 'install', 'download')):
             kwargs['expect_stderr'] = True
-        if kwargs.pop('use_module', False):
+        if kwargs.pop('use_module', True):
             exe = 'python'
             args = ('-m', 'pip') + args
         else:
@@ -393,6 +393,10 @@ class PipTestEnvironment(scripttest.TestFileEnvironment):
             "--find-links", path_to_url(os.path.join(DATA_DIR, "packages")),
             *args, **kwargs
         )
+
+    def easy_install(self, *args, **kwargs):
+        args = ('-m', 'easy_install') + args
+        return self.run('python', *args, **kwargs)
 
 
 # FIXME ScriptTest does something similar, but only within a single

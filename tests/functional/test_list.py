@@ -95,7 +95,7 @@ def test_local_columns_flag(script, data):
     assert 'Package' in result.stdout
     assert 'Version' in result.stdout
     assert 'simple (1.0)' not in result.stdout
-    assert 'simple     1.0' in result.stdout, str(result)
+    assert 'simple  1.0' in result.stdout, str(result)
 
 
 @pytest.mark.network

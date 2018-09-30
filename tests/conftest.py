@@ -1,16 +1,15 @@
 import compileall
-import distutils
 import io
 import os
 import shutil
+import subprocess
 import sys
+from distutils.sysconfig import get_python_lib
 
 import pytest
 import six
-import virtualenv as _virtualenv
 
 import pip._internal
-from pip._internal.utils.misc import unpack_file
 from tests.lib import DATA_DIR, SRC_DIR, TestData
 from tests.lib.path import Path
 from tests.lib.scripttest import PipTestEnvironment
@@ -163,28 +162,34 @@ def pip_src(tmpdir_factory):
             "tests", "pip.egg-info", "build", "dist", ".tox", ".git",
         ),
     )
+    subprocess.check_call((sys.executable, 'setup.py', '-q', 'egg_info'),
+                          cwd=pip_src)
+    assert compileall.compile_dir(str(pip_src), quiet=1, force=True)
     return pip_src
 
 
 @pytest.fixture(scope='session')
-def setuptools_src(tmpdir_factory):
-    src = Path(str(tmpdir_factory.mktemp('setuptools'))).join('setuptools_src')
-    arc = list(sorted(DATA_DIR.join('common_src').glob('setuptools-*')))[-1]
-    unpack_file(arc, src, None, None)
-    return src
+def setuptools_install(tmpdir_factory, common_wheels):
+    install = Path(str(tmpdir_factory.mktemp('setuptools')))
+    subprocess.check_call((sys.executable, '-m', 'pip', 'install',
+                           '--no-index', '-t', install,
+                           '-f', common_wheels,
+                           'setuptools'))
+    shutil.rmtree(install.abspath / 'bin')
+    return install
 
 
 @pytest.yield_fixture(scope='session')
 def virtualenv_template(tmpdir_factory, pip_src,
-                        setuptools_src, common_wheels):
+                        setuptools_install, common_wheels):
 
     # Create the virtual environment
     tmpdir = Path(str(tmpdir_factory.mktemp('virtualenv')))
     venv = VirtualEnvironment.create(tmpdir.join("venv_orig"))
 
     # FIXME: some tests rely on 'easy-install.pth' being already present.
-    site_packages = distutils.sysconfig.get_python_lib(prefix=venv.location)
-    Path(site_packages, 'easy-install.pth').touch()
+    site_packages = Path(get_python_lib(prefix=venv.location))
+    (site_packages / 'easy-install.pth').touch()
 
     # Fix `site.py`.
     site_py = venv.lib / 'site.py'
@@ -220,24 +225,19 @@ def virtualenv_template(tmpdir_factory, pip_src,
     with open(site_py, 'w') as fp:
         fp.write(site_contents)
     # Make sure bytecode is up-to-date too.
-    assert compileall.compile_file(str(site_py), force=True)
+    assert compileall.compile_file(str(site_py), quiet=1, force=True)
 
-    # Update setuptools and install pip.
-    _virtualenv.install_wheel(['-f', str(common_wheels),
-                               '-e', setuptools_src,
-                               '-e', pip_src],
-                              venv.bin.join("python"))
+    # Install setuptools/pip.
+    with open(site_packages / 'easy-install.pth', 'a') as fp:
+        fp.write(str(pip_src / 'src') + '\n' +
+                 str(setuptools_install) + '\n')
 
-    # Make sure it's relocatable.
-    _virtualenv.make_environment_relocatable(venv.location)
-    if sys.platform == 'win32':
-        # Work around setuptools' easy_install.exe
-        # not working properly after relocation.
-        for exe in os.listdir(venv.bin):
-            if exe.startswith('easy_install'):
-                (venv.bin / exe).remove()
-        with open(venv.bin / 'easy_install.bat', 'w') as fp:
-            fp.write('python.exe -m easy_install %*\n')
+    # Drop (non-relocatable) launchers.
+    for exe in os.listdir(venv.bin):
+        if exe.startswith('activate') \
+           or exe.startswith('easy_install') \
+           or exe.startswith('pip'):
+            (venv.bin / exe).remove()
 
     # Rename original virtualenv directory to make sure
     # it's not reused by mistake from one of the copies.

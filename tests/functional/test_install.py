@@ -121,7 +121,7 @@ def test_pep518_forkbombs(script, data, common_wheels, command, package):
     ) in result.stdout, str(result)
 
 
-@pytest.mark.network
+@pytest.mark.skip
 def test_pip_second_command_line_interface_works(script, data):
     """
     Check if ``pip<PYVERSION>`` commands behaves equally
@@ -134,7 +134,7 @@ def test_pip_second_command_line_interface_works(script, data):
 
     args = ['pip%s' % pyversion]
     args.extend(['install', 'INITools==0.2'])
-    args.extend(['-f', data.packages])
+    args.extend(['--no-index', '-f', data.packages])
     result = script.run(*args, **kwargs)
     egg_info_folder = (
         script.site_packages / 'INITools-0.2-py%s.egg-info' % pyversion
