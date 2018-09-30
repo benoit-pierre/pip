@@ -27,9 +27,8 @@ def test_pep518_uses_build_env(script, data, common_wheels, command, variant):
     if variant == 'missing_setuptools':
         script.pip("uninstall", "-y", "setuptools")
     elif variant == 'bad_setuptools':
-        setuptools_init_path = script.site_packages_path.join(
-            "setuptools", "__init__.py")
-        with open(setuptools_init_path, 'a') as f:
+        setuptools_mod = script.site_packages_path.join("setuptools.py")
+        with open(setuptools_mod, 'a') as f:
             f.write('\nraise ImportError("toto")')
     else:
         raise ValueError(variant)
