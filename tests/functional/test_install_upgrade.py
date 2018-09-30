@@ -156,7 +156,8 @@ def test_upgrade_if_requested(script):
 
     """
     script.pip_install_local('INITools==0.1', expect_error=True)
-    result = script.pip_install_local('--upgrade', 'INITools', expect_error=True)
+    result = script.pip_install_local('--upgrade', 'INITools',
+                                      expect_error=True)
     assert result.files_created, 'pip install --upgrade did not upgrade'
     assert (
         script.site_packages / 'INITools-0.1-py%s.egg-info' %
