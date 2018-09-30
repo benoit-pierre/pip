@@ -1061,14 +1061,12 @@ def test_install_subprocess_output_handling(script, data):
     # Regular install should not show output from the chatty setup.py
     result = script.pip(*args)
     assert 0 == result.stdout.count("HELLO FROM CHATTYMODULE")
-    script.pip("uninstall", "-y", "chattymodule")
 
     # With --verbose we should show the output.
     # Only count examples with sys.argv[1] == egg_info, because we call
     # setup.py multiple times, which should not count as duplicate output.
     result = script.pip(*(args + ["--verbose"]))
     assert 1 == result.stdout.count("HELLO FROM CHATTYMODULE egg_info")
-    script.pip("uninstall", "-y", "chattymodule")
 
     # If the install fails, then we *should* show the output... but only once,
     # even if --verbose is given.
@@ -1198,10 +1196,9 @@ def test_install_no_binary_disables_cached_wheels(script, data, common_wheels):
     script.pip(
         'install', '--no-index', '-f', data.find_links, '-f', common_wheels,
         'upper')
-    script.pip('uninstall', 'upper', '-y')
     res = script.pip(
         'install', '--no-index', '--no-binary=:all:', '-f', data.find_links,
-        'upper', expect_stderr=True)
+        '--force-reinstall', 'upper', expect_stderr=True)
     assert "Successfully installed upper-2.0" in str(res), str(res)
     # No wheel building for upper, which was blacklisted
     assert "Running setup.py bdist_wheel for upper" not in str(res), str(res)
