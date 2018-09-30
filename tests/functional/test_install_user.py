@@ -34,14 +34,13 @@ def _patch_dist_in_site_packages(script):
 
 class Tests_UserSite:
 
-    @pytest.mark.network
     def test_reset_env_system_site_packages_usersite(self, script, virtualenv):
         """
         reset_env(system_site_packages=True) produces env where a --user
         install can be found using pkg_resources
         """
         virtualenv.system_site_packages = True
-        script.pip('install', '--user', 'INITools==0.2')
+        script.pip_install_local('--user', 'INITools==0.2')
         result = script.run(
             'python', '-c',
             "import pkg_resources; print(pkg_resources.get_distribution"
@@ -106,17 +105,16 @@ class Tests_UserSite:
             "visible in this virtualenv." in result.stderr
         )
 
-    @pytest.mark.network
     def test_install_user_conflict_in_usersite(self, script, virtualenv):
         """
         Test user install with conflict in usersite updates usersite.
         """
         virtualenv.system_site_packages = True
 
-        script.pip('install', '--user', 'INITools==0.3', '--no-binary=:all:')
+        script.pip_install_local('--user', 'INITools==0.3', '--no-binary=:all:')
 
-        result2 = script.pip(
-            'install', '--user', 'INITools==0.1', '--no-binary=:all:')
+        result2 = script.pip_install_local(
+            '--user', 'INITools==0.1', '--no-binary=:all:')
 
         # usersite has 0.1
         egg_info_folder = (
@@ -130,7 +128,6 @@ class Tests_UserSite:
         assert egg_info_folder in result2.files_created, str(result2)
         assert not isfile(initools_v3_file), initools_v3_file
 
-    @pytest.mark.network
     def test_install_user_conflict_in_globalsite(self, script, virtualenv):
         """
         Test user install with conflict in global site ignores site and
@@ -152,10 +149,10 @@ class Tests_UserSite:
         script.environ["PYTHONPATH"] = script.base_path / script.user_site
         _patch_dist_in_site_packages(script)
 
-        script.pip('install', 'INITools==0.2', '--no-binary=:all:')
+        script.pip_install_local('INITools==0.2', '--no-binary=:all:')
 
-        result2 = script.pip(
-            'install', '--user', 'INITools==0.1', '--no-binary=:all:')
+        result2 = script.pip_install_local(
+            '--user', 'INITools==0.1', '--no-binary=:all:')
 
         # usersite has 0.1
         egg_info_folder = (
@@ -174,7 +171,6 @@ class Tests_UserSite:
         assert isdir(egg_info_folder)
         assert isdir(initools_folder)
 
-    @pytest.mark.network
     def test_upgrade_user_conflict_in_globalsite(self, script, virtualenv):
         """
         Test user install/upgrade with conflict in global site ignores site and
@@ -196,9 +192,9 @@ class Tests_UserSite:
         script.environ["PYTHONPATH"] = script.base_path / script.user_site
         _patch_dist_in_site_packages(script)
 
-        script.pip('install', 'INITools==0.2', '--no-binary=:all:')
-        result2 = script.pip(
-            'install', '--user', '--upgrade', 'INITools', '--no-binary=:all:')
+        script.pip_install_local('INITools==0.2', '--no-binary=:all:')
+        result2 = script.pip_install_local(
+            '--user', '--upgrade', 'INITools', '--no-binary=:all:')
 
         # usersite has 0.3.1
         egg_info_folder = (
@@ -217,7 +213,6 @@ class Tests_UserSite:
         assert isdir(egg_info_folder), result2.stdout
         assert isdir(initools_folder)
 
-    @pytest.mark.network
     def test_install_user_conflict_in_globalsite_and_usersite(
             self, script, virtualenv):
         """
@@ -240,11 +235,11 @@ class Tests_UserSite:
         script.environ["PYTHONPATH"] = script.base_path / script.user_site
         _patch_dist_in_site_packages(script)
 
-        script.pip('install', 'INITools==0.2', '--no-binary=:all:')
-        script.pip('install', '--user', 'INITools==0.3', '--no-binary=:all:')
+        script.pip_install_local('INITools==0.2', '--no-binary=:all:')
+        script.pip_install_local('--user', 'INITools==0.3', '--no-binary=:all:')
 
-        result3 = script.pip(
-            'install', '--user', 'INITools==0.1', '--no-binary=:all:')
+        result3 = script.pip_install_local(
+            '--user', 'INITools==0.1', '--no-binary=:all:')
 
         # usersite has 0.1
         egg_info_folder = (
@@ -267,7 +262,6 @@ class Tests_UserSite:
         assert isdir(egg_info_folder)
         assert isdir(initools_folder)
 
-    @pytest.mark.network
     def test_install_user_in_global_virtualenv_with_conflict_fails(
             self, script, virtualenv):
         """
@@ -276,10 +270,10 @@ class Tests_UserSite:
         """
         virtualenv.system_site_packages = True
 
-        script.pip('install', 'INITools==0.2')
+        script.pip_install_local('INITools==0.2')
 
-        result2 = script.pip(
-            'install', '--user', 'INITools==0.1',
+        result2 = script.pip_install_local(
+            '--user', 'INITools==0.1',
             expect_error=True,
         )
         resultp = script.run(
