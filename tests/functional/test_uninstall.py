@@ -14,19 +14,22 @@ import pytest
 from pip._internal.req.constructors import install_req_from_line
 from pip._internal.utils.misc import rmtree
 from tests.lib import (
-    assert_all_changes, create_basic_wheel_for_package,
+    DATA_DIR, assert_all_changes, create_basic_wheel_for_package,
     create_test_package_with_setup,
 )
 from tests.lib.local_repos import local_checkout, local_repo
 
+DISCOVER_SRC_DIST = DATA_DIR / 'packages' / 'discover-0.4.0.tar.gz'
+INITOOLS_SRC_DIST = DATA_DIR / 'packages' / 'INITools-0.2.tar.gz'
+PYLOGO_SRC_DIST = DATA_DIR / 'packages' / 'PyLogo-0.4.tar.gz'
 
-@pytest.mark.network
+
 def test_basic_uninstall(script):
     """
     Test basic install and uninstall.
 
     """
-    result = script.pip('install', 'INITools==0.2')
+    result = script.pip('install', INITOOLS_SRC_DIST)
     assert join(script.site_packages, 'initools') in result.files_created, (
         sorted(result.files_created.keys())
     )
@@ -64,13 +67,12 @@ def test_basic_uninstall_distutils(script):
     ) in result.stderr
 
 
-@pytest.mark.network
 def test_basic_uninstall_with_scripts(script):
     """
     Uninstall an easy_installed package with scripts.
 
     """
-    result = script.easy_install('PyLogo', expect_stderr=True)
+    result = script.easy_install(PYLOGO_SRC_DIST, expect_stderr=True)
     easy_install_pth = script.site_packages / 'easy-install.pth'
     pylogo = sys.platform == 'win32' and 'pylogo' or 'PyLogo'
     assert(pylogo in result.files_updated[easy_install_pth].bytes)
@@ -82,13 +84,13 @@ def test_basic_uninstall_with_scripts(script):
     )
 
 
-@pytest.mark.network
-def test_uninstall_easy_install_after_import(script):
+def test_uninstall_easy_install_after_import(script, data):
     """
     Uninstall an easy_installed package after it's been imported
 
     """
-    result = script.easy_install('INITools==0.2', expect_stderr=True)
+    result = script.easy_install('--always-unzip', INITOOLS_SRC_DIST,
+                                 expect_stderr=True)
     # the import forces the generation of __pycache__ if the version of python
     # supports it
     script.run('python', '-c', "import initools")
@@ -104,15 +106,14 @@ def test_uninstall_easy_install_after_import(script):
     )
 
 
-@pytest.mark.network
 def test_uninstall_trailing_newline(script):
     """
     Uninstall behaves appropriately if easy-install.pth
     lacks a trailing newline
 
     """
-    script.easy_install('INITools==0.2', expect_stderr=True)
-    script.easy_install('PyLogo', expect_stderr=True)
+    script.easy_install(INITOOLS_SRC_DIST, expect_stderr=True)
+    script.easy_install(PYLOGO_SRC_DIST, expect_stderr=True)
     easy_install_pth = script.site_packages_path / 'easy-install.pth'
 
     # trim trailing newline from easy-install.pth
@@ -255,15 +256,12 @@ def test_uninstall_gui_scripts(script):
     assert not script_name.exists
 
 
-@pytest.mark.network
 def test_uninstall_console_scripts(script):
     """
     Test uninstalling a package with more files (console_script entry points,
     extra directories).
     """
-    args = ['install']
-    args.append('discover')
-    result = script.pip(*args, **{"expect_error": True})
+    result = script.easy_install(DISCOVER_SRC_DIST, expect_error=True)
     assert script.bin / 'discover' + script.exe in result.files_created, (
         sorted(result.files_created.keys())
     )
@@ -271,14 +269,11 @@ def test_uninstall_console_scripts(script):
     assert_all_changes(result, result2, [script.venv / 'build', 'cache'])
 
 
-@pytest.mark.network
 def test_uninstall_easy_installed_console_scripts(script):
     """
     Test uninstalling package with console_scripts that is easy_installed.
     """
-    args = ['python', '-m', 'easy_install']
-    args.append('discover')
-    result = script.run(*args, **{"expect_stderr": True})
+    result = script.easy_install(DISCOVER_SRC_DIST, expect_error=True)
     assert script.bin / 'discover' + script.exe in result.files_created, (
         sorted(result.files_created.keys())
     )
