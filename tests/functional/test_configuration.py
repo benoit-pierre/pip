@@ -18,10 +18,12 @@ class TestBasicLoading(ConfigurationMixin):
 
         config_file = script.scratch_path / 'config'
         with open(config_file, 'w') as fp:
-            fp.write("""
-                     [test]
-                     hello = 1
-                     """)
+            fp.write(textwrap.dedent(
+                """
+                [test]
+                hello = 1
+                """
+            ))
         script.environ['PIP_CONFIG_FILE'] = config_file
 
         result = script.pip("config", "list")
