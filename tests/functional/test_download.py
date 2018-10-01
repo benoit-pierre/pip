@@ -152,12 +152,12 @@ def test_download_should_skip_existing_files(script):
 
 
 @pytest.mark.network
-def test_download_vcs_link(script):
+def test_download_vcs_link(script, pip_test_package_clone):
     """
     It should allow -d flag for vcs links, regression test for issue #798.
     """
     result = script.pip(
-        'download', '-d', '.', 'git+git://github.com/pypa/pip-test-package.git'
+        'download', '-d', '.', pip_test_package_clone
     )
     assert (
         Path('scratch') / 'pip-test-package-0.1.1.zip'

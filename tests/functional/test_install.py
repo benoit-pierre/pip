@@ -545,16 +545,14 @@ def test_install_with_hacked_egg_info(script, data):
 
 
 @pytest.mark.network
-def test_install_using_install_option_and_editable(script, tmpdir):
+def test_install_using_install_option_and_editable(script, pip_test_package_clone):
     """
     Test installing a tool using -e and --install-option
     """
     folder = 'script_folder'
     script.scratch_path.join(folder).mkdir()
-    url = 'git+git://github.com/pypa/pip-test-package'
     result = script.pip(
-        'install', '-e', '%s#egg=pip-test-package' %
-        local_checkout(url, tmpdir.join("cache")),
+        'install', '-e', '%s#egg=pip-test-package' % pip_test_package_clone
         '--install-option=--script-dir=%s' % folder,
         expect_stderr=True)
     script_file = (
