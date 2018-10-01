@@ -488,7 +488,8 @@ def assert_distributions_installed(script, reqs, user=False):
         only=True,
     ))
     for req in pkg_resources.parse_requirements(reqs):
-        assert any(dist in req for dist in installed), '`%s` is missing' % req
+        assert any(dist in req for dist in installed), \
+                'installed: %s' % ', '.join(sorted(map(str, installed)))
 
 
 def _create_test_package_with_subdirectory(script, subdirectory):
