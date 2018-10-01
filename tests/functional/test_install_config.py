@@ -17,25 +17,25 @@ def test_options_from_env_vars(script):
     )
 
 
-def test_command_line_options_override_env_vars(script, virtualenv):
+def test_command_line_options_override_env_vars(script, data):
     """
     Test that command line options override environmental variables.
 
     """
-    script.environ['PIP_INDEX_URL'] = 'https://example.com/simple/'
-    result = script.pip('install', '-vvv', 'INITools', expect_error=True)
+    script.environ['PIP_INDEX_URL'] = data.index_url(index='datarequire')
+    result = script.pip('download', '-vvv', 'simple', expect_error=True)
     assert (
-        "Getting page https://example.com/simple/initools"
+        "Looking in indexes: %s" % script.environ['PIP_INDEX_URL']
         in result.stdout
     )
-    virtualenv.clear()
     result = script.pip(
-        'install', '-vvv', '--index-url', 'https://download.zope.org/ppix',
-        'INITools',
+        'download', '-vvv', '--index-url', data.index_url(), 'simple',
         expect_error=True,
     )
-    assert "example.com" not in result.stdout
-    assert "Getting page https://download.zope.org/ppix" in result.stdout
+    assert (
+        "Looking in indexes: %s" % data.index_url()
+        in result.stdout
+    )
 
 
 def test_env_vars_override_config_file(script, data):
