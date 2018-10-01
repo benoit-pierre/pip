@@ -41,11 +41,13 @@ class Tests_UserSite:
 
     def test_reset_env_system_site_packages_usersite(self, script, virtualenv):
         """
-        reset_env(system_site_packages=True) produces env where a --user
+        `virtualenv.system_site_packages = True` produces env where a --user
         install can be found using pkg_resources
         """
         virtualenv.system_site_packages = True
-        script.pip_install_local('--user', 'INITools==0.2')
+        pkg = create_basic_wheel_for_package(script, name='INITools',
+                                             version='0.1')
+        script.pip_install_local('--user', pkg)
         result = script.run(
             'python', '-c',
             "import pkg_resources; print(pkg_resources.get_distribution"

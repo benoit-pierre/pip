@@ -14,9 +14,12 @@ def test_no_upgrade_unless_requested(script):
     No upgrade if not specifically requested.
 
     """
-    script.pip('install', 'INITools==0.1', expect_error=True)
-    result = script.pip('install', 'INITools', expect_error=True)
-    assert not result.files_created, (
+    create_basic_wheel_for_package(script, name='INITools', version='0.1')
+    create_basic_wheel_for_package(script, name='INITools', version='0.3')
+    script.pip_install_local('INITools==0.1', links=script.scratch_path)
+    assert_distributions_installed(script, system='INITools-0.1')
+    result = script.pip_install_local('INITools', links=script.scratch_path)
+    assert not (result.files_created or result.files_deleted), (
         'pip install INITools upgraded when it should not have'
     )
 
@@ -136,19 +139,12 @@ def test_upgrade_to_specific_version(script):
     It does upgrade to specific version requested.
 
     """
-    script.pip_install_local('INITools==0.1', expect_error=True)
-    result = script.pip_install_local('INITools==0.2', expect_error=True)
-    assert result.files_created, (
-        'pip install with specific version did not upgrade'
-    )
-    assert (
-        script.site_packages / 'INITools-0.1-py%s.egg-info' %
-        pyversion in result.files_deleted
-    )
-    assert (
-        script.site_packages / 'INITools-0.2-py%s.egg-info' %
-        pyversion in result.files_created
-    )
+    create_basic_wheel_for_package(script, name='INITools', version='0.1')
+    create_basic_wheel_for_package(script, name='INITools', version='0.2')
+    script.pip_install_local('INITools==0.1', links=script.scratch_path)
+    assert_distributions_installed(script, system='INITools-0.1')
+    script.pip_install_local('INITools==0.2', links=script.scratch_path)
+    assert_distributions_installed(script, system='INITools-0.2')
 
 
 def test_upgrade_if_requested(script):
@@ -156,14 +152,13 @@ def test_upgrade_if_requested(script):
     And it does upgrade if requested.
 
     """
-    script.pip_install_local('INITools==0.1', expect_error=True)
-    result = script.pip_install_local('--upgrade', 'INITools',
-                                      expect_error=True)
-    assert result.files_created, 'pip install --upgrade did not upgrade'
-    assert (
-        script.site_packages / 'INITools-0.1-py%s.egg-info' %
-        pyversion not in result.files_created
-    )
+    create_basic_wheel_for_package(script, name='INITools', version='0.1')
+    create_basic_wheel_for_package(script, name='INITools', version='0.2')
+    script.pip_install_local('INITools==0.1', links=script.scratch_path)
+    assert_distributions_installed(script, system='INITools-0.1')
+    script.pip_install_local('--upgrade', 'INITools',
+                             links=script.scratch_path)
+    assert_distributions_installed(script, system='INITools-0.2')
 
 
 def test_upgrade_with_newest_already_installed(script, data):
@@ -186,35 +181,34 @@ def test_upgrade_force_reinstall_newest(script):
     """
     def filter_files(files):
         return [f.path for f in files if f.file]
-    result = script.pip_install_local('INITools')
+    pkg = create_basic_wheel_for_package(script, name='INITools')
+    result = script.pip_install_local(pkg)
     created = set(filter_files(result.files_created.values()))
-    assert str(script.site_packages / 'initools' / '__init__.py') in created
+    assert str(script.site_packages / 'INITools' / '__init__.py') in created
     for root, dirs, files in script.site_packages_path.walk():
         for f in files:
             Path(root, f).touch()
-    result2 = script.pip_install_local(
-        '--upgrade', '--force-reinstall', 'INITools'
-    )
+    result2 = script.pip_install_local('--upgrade', '--force-reinstall', pkg)
     updated = set(filter_files(result2.files_updated.values()))
     assert created == updated
 
 
+@pytest.mark.skip(reason='same test as test_upgrade_to_specific_version')
 def test_uninstall_before_upgrade(script):
     """
     Automatic uninstall-before-upgrade.
 
     """
-    result = script.pip_install_local('INITools==0.2', expect_error=True)
-    assert script.site_packages / 'initools' in result.files_created, (
-        sorted(result.files_created.keys())
-    )
-    result2 = script.pip_install_local('INITools==0.3', expect_error=True)
-    assert result2.files_created, 'upgrade to INITools 0.3 failed'
-    result3 = script.pip('uninstall', 'initools', '-y', expect_error=True)
-    assert_all_changes(result, result3, [script.venv / 'build', 'cache'])
+    create_basic_wheel_for_package(script, name='INITools', version='0.2')
+    create_basic_wheel_for_package(script, name='INITools', version='0.3')
+    script.pip_install_local('INITools==0.2', links=script.scratch_path)
+    assert_distributions_installed(script, system='INITools-0.2')
+    script.pip_install_local('INITools==0.3', links=script.scratch_path)
+    assert_distributions_installed(script, system='INITools-0.3')
 
 
 @pytest.mark.network
+@pytest.mark.skip(reason='same test as test_upgrade_to_specific_version')
 def test_uninstall_before_upgrade_from_url(script):
     """
     Automatic uninstall-before-upgrade from URL.
@@ -272,8 +266,7 @@ def test_upgrade_from_reqs_file(script):
         INITools==0.3
         """))
     script.pip_install_local(
-        '-f', script.scratch_path, '-r', script.scratch_path / 'test-req.txt'
-    )
+        '-r', script.scratch_path / 'test-req.txt', links=script.scratch_path)
     assert_distributions_installed(script, system='PyLogo-0.2 INITools-0.3')
     script.scratch_path.join("test-req.txt").write(textwrap.dedent("""\
         PyLogo
@@ -281,9 +274,8 @@ def test_upgrade_from_reqs_file(script):
         INITools
         """))
     script.pip_install_local(
-        '-f', script.scratch_path, '--upgrade', '-r',
-        script.scratch_path / 'test-req.txt'
-    )
+        '--upgrade', '-r', script.scratch_path / 'test-req.txt',
+        links=script.scratch_path)
     assert_distributions_installed(script, system='PyLogo-0.4 INITools-0.3.1')
 
 
@@ -339,8 +331,8 @@ def test_install_with_ignoreinstalled_requested(script):
     """
     create_basic_wheel_for_package(script, name='INITools', version='0.1')
     create_basic_wheel_for_package(script, name='INITools', version='0.3')
-    script.pip_install_local('-f', script.scratch_path, 'INITools==0.1')
-    script.pip_install_local('-f', script.scratch_path, '-I', 'INITools==0.3')
+    script.pip_install_local('INITools==0.1', links=script.scratch_path)
+    script.pip_install_local('-I', 'INITools==0.3', links=script.scratch_path)
     # both the old and new metadata should be present.
     assert_distributions_installed(script, system='INITools-0.1 INITools-0.3')
 
