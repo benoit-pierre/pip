@@ -229,7 +229,7 @@ def virtualenv_template(tmpdir_factory, pip_src,
     # Install setuptools/pip.
     site_packages = Path(get_python_lib(prefix=venv.location))
     with open(site_packages / 'easy-install.pth', 'w') as fp:
-        fp.write(str(pip_src / 'src') + '\n' + 
+        fp.write(str(pip_src / 'src') + '\n' +
                  str(setuptools_install) + '\n')
     with open(site_packages / 'pip.egg-link', 'w') as fp:
         fp.write(str(pip_src / 'src') + '\n..')

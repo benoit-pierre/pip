@@ -8,9 +8,11 @@ from pip._internal.cli.status_codes import ERROR, PREVIOUS_BUILD_DIR_ERROR
 from pip._internal.locations import write_delete_marker_file
 from tests.lib import pyversion
 
+
 @pytest.fixture(autouse=True)
 def auto_with_wheel(with_wheel):
     pass
+
 
 def test_wheel_exit_status_code_when_no_requirements(script):
     """
