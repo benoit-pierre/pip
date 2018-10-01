@@ -479,7 +479,7 @@ def test_reinstalling_works_with_editable_non_master_branch(script):
 
 
 # TODO(pnasrat) fix all helpers to do right things with paths on windows.
-# @pytest.mark.skipif("sys.platform == 'win32'")
+@pytest.mark.skipif("sys.platform == 'win32'")
 def test_check_submodule_addition(script):
     """
     Submodules are pulled in on install and updated on upgrade.

@@ -1,19 +1,19 @@
 environment:
   matrix:
     # Unit and integration tests.
-    # - PYTHON: "C:\\Python27"
-    # - PYTHON: "C:\\Python36-x64"
+    - PYTHON: "C:\\Python27"
+    - PYTHON: "C:\\Python36-x64"
     - PYTHON: "C:\\Python27"
       RUN_INTEGRATION_TESTS: "True"
     - PYTHON: "C:\\Python36-x64"
       RUN_INTEGRATION_TESTS: "True"
     # Unit tests only.
-    # - PYTHON: "C:\\Python27-x64"
-    # - PYTHON: "C:\\Python34"
-    # - PYTHON: "C:\\Python34-x64"
-    # - PYTHON: "C:\\Python35"
-    # - PYTHON: "C:\\Python35-x64"
-    # - PYTHON: "C:\\Python36"
+    - PYTHON: "C:\\Python27-x64"
+    - PYTHON: "C:\\Python34"
+    - PYTHON: "C:\\Python34-x64"
+    - PYTHON: "C:\\Python35"
+    - PYTHON: "C:\\Python35-x64"
+    - PYTHON: "C:\\Python36"
 
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
@@ -61,7 +61,7 @@ test_script:
             $env:TEMP = "T:\"
             $env:TMP = "T:\"
             if ($env:RUN_INTEGRATION_TESTS -eq "True") {
-                tox -e py -- -m integration -n 3 --duration=5 -k test_check_submodule_addition
+                tox -e py -- -m integration -n 3 --duration=5
             }
             else {
                 tox -e py -- -m unit -n 3
