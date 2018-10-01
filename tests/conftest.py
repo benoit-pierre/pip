@@ -11,6 +11,7 @@ import six
 
 import pip._internal
 from tests.lib import DATA_DIR, SRC_DIR, TestData
+from tests.lib.local_repos import local_checkout, local_repo
 from tests.lib.path import Path
 from tests.lib.scripttest import PipTestEnvironment
 from tests.lib.venv import VirtualEnvironment
@@ -352,3 +353,11 @@ class InMemoryPip(object):
 @pytest.fixture
 def in_memory_pip():
     return InMemoryPip()
+
+
+@pytest.fixture(scope="session")
+def pip_test_package_clone(tmpdir_factory):
+    return local_checkout(
+        'git+https://github.com/pypa/pip-test-package.git',
+        Path(str(tmpdir_factory.mktemp('pip-test-package.git')))
+    )

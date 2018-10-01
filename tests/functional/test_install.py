@@ -224,7 +224,7 @@ def test_install_editable_from_git_autobuild_wheel(
 
 
 @pytest.mark.network
-def test_install_editable_uninstalls_existing(data, script, tmpdir):
+def test_install_editable_uninstalls_existing(data, script, pip_test_package_clone):
     """
     Test that installing an editable uninstalls a previously installed
     non-editable version.
@@ -238,11 +238,7 @@ def test_install_editable_uninstalls_existing(data, script, tmpdir):
 
     result = script.pip(
         'install', '-e',
-        '%s#egg=pip-test-package' %
-        local_checkout(
-            'git+https://github.com/pypa/pip-test-package.git',
-            tmpdir.join("cache"),
-        ),
+        '%s#egg=pip-test-package' % pip_test_package_clone,
     )
     result.assert_installed('pip-test-package', with_files=['.git'])
     assert 'Found existing installation: pip-test-package 0.1' in result.stdout
