@@ -552,7 +552,7 @@ def test_install_using_install_option_and_editable(script, pip_test_package_clon
     folder = 'script_folder'
     script.scratch_path.join(folder).mkdir()
     result = script.pip(
-        'install', '-e', '%s#egg=pip-test-package' % pip_test_package_clone
+        'install', '-e', '%s#egg=pip-test-package' % pip_test_package_clone,
         '--install-option=--script-dir=%s' % folder,
         expect_stderr=True)
     script_file = (
