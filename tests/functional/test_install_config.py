@@ -67,67 +67,56 @@ def _test_env_vars_override_config_file(script, virtualenv, config_file):
         [global]
         no-index = 1
         """))
-    result = script.pip('install', '-vvv', 'INITools', expect_error=True)
+    result = script.pip('download', '-vvv', 'INITools', expect_error=True)
     assert (
         "DistributionNotFound: No matching distribution found for INITools"
         in result.stdout
     )
     script.environ['PIP_NO_INDEX'] = '0'
-    virtualenv.clear()
-    result = script.pip('install', '-vvv', 'INITools', expect_error=True)
-    assert "Successfully installed INITools" in result.stdout
+    result = script.pip('download', '-vvv', 'INITools')
+    assert "Successfully downloaded INITools" in result.stdout
 
 
-@pytest.mark.network
 def test_command_line_append_flags(script, virtualenv, data):
     """
     Test command line flags that append to defaults set by environmental
     variables.
 
     """
-    script.environ['PIP_FIND_LINKS'] = 'https://test.pypi.org'
+    script.environ['PIP_FIND_LINKS'] = data.find_links
     result = script.pip(
-        'install', '-vvv', 'INITools', '--trusted-host',
-        'test.pypi.org',
-        expect_error=True,
+        'download', '-vvv', '--no-index', 'INITools',
     )
     assert (
-        "Analyzing links from page https://test.pypi.org"
+        "Looking in links: %s" % data.find_links
         in result.stdout
     ), str(result)
-    virtualenv.clear()
     result = script.pip(
-        'install', '-vvv', '--find-links', data.find_links, 'INITools',
-        '--trusted-host', 'test.pypi.org',
-        expect_error=True,
+        'download', '-vvv', '--no-index', 'INITools',
+        '--find-links', data.find_links2,
     )
     assert (
-        "Analyzing links from page https://test.pypi.org"
+        "Looking in links: %s, %s" % (data.find_links, data.find_links2)
         in result.stdout
-    )
-    assert "Skipping link %s" % data.find_links in result.stdout
+    ), str(result)
 
 
-@pytest.mark.network
 def test_command_line_appends_correctly(script, data):
     """
     Test multiple appending options set by environmental variables.
 
     """
     script.environ['PIP_FIND_LINKS'] = (
-        'https://test.pypi.org %s' % data.find_links
+        '%s %s' % (data.find_links, data.find_links2)
     )
     result = script.pip(
-        'install', '-vvv', 'INITools', '--trusted-host',
-        'test.pypi.org',
-        expect_error=True,
+        'download', '-vvv', '--no-index', 'INITools',
     )
 
     assert (
-        "Analyzing links from page https://test.pypi.org"
+        "Looking in links: %s, %s" % (data.find_links, data.find_links2)
         in result.stdout
     ), result.stdout
-    assert "Skipping link %s" % data.find_links in result.stdout
 
 
 def test_config_file_override_stack(script, virtualenv):
