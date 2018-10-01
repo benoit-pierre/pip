@@ -4,7 +4,7 @@ import textwrap
 
 import pytest
 
-from tests.lib import assert_all_changes, pyversion
+from tests.lib import Path, assert_all_changes, pyversion
 from tests.lib.local_repos import local_checkout
 
 
@@ -190,7 +190,7 @@ def test_upgrade_force_reinstall_newest(script):
     assert str(script.site_packages / 'initools' / '__init__.py') in created
     for root, dirs, files in script.site_packages_path.walk():
         for f in files:
-            root.join(f).touch()
+            Path(root, f).touch()
     result2 = script.pip_install_local(
         '--upgrade', '--force-reinstall', 'INITools'
     )
