@@ -224,7 +224,8 @@ def test_install_editable_from_git_autobuild_wheel(
 
 
 @pytest.mark.network
-def test_install_editable_uninstalls_existing(data, script, pip_test_package_clone):
+def test_install_editable_uninstalls_existing(
+        data, script, pip_test_package_clone):
     """
     Test that installing an editable uninstalls a previously installed
     non-editable version.
@@ -545,7 +546,8 @@ def test_install_with_hacked_egg_info(script, data):
 
 
 @pytest.mark.network
-def test_install_using_install_option_and_editable(script, pip_test_package_clone):
+def test_install_using_install_option_and_editable(
+        script, pip_test_package_clone):
     """
     Test installing a tool using -e and --install-option
     """

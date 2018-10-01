@@ -79,7 +79,3 @@ def local_checkout(remote_repo, directory):
     if remote_repo.startswith('svn'):
         _create_svn_repository_for_initools(directory)
     return _get_vcs_and_checkout_url(remote_repo, directory)
-
-
-def local_repo(remote_repo, directory):
-    return local_checkout(remote_repo, directory).split('+', 1)[1]

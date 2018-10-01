@@ -11,7 +11,7 @@ import six
 
 import pip._internal
 from tests.lib import DATA_DIR, SRC_DIR, TestData
-from tests.lib.local_repos import local_checkout, local_repo
+from tests.lib.local_repos import local_checkout
 from tests.lib.path import Path
 from tests.lib.scripttest import PipTestEnvironment
 from tests.lib.venv import VirtualEnvironment

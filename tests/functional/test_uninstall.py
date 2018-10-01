@@ -6,18 +6,16 @@ import os
 import sys
 import textwrap
 from os.path import join, normpath
-from tempfile import mkdtemp
 
 import pretend
 import pytest
 
 from pip._internal.req.constructors import install_req_from_line
-from pip._internal.utils.misc import rmtree
 from tests.lib import (
     DATA_DIR, assert_all_changes, create_basic_wheel_for_package,
     create_test_package_with_setup,
 )
-from tests.lib.local_repos import local_checkout, local_repo
+from tests.lib.local_repos import local_checkout
 
 DISCOVER_SRC_DIST = DATA_DIR / 'packages' / 'discover-0.4.0.tar.gz'
 INITOOLS_SRC_DIST = DATA_DIR / 'packages' / 'INITools-0.2.tar.gz'
@@ -316,7 +314,8 @@ def test_uninstall_editable_from_svn(script, tmpdir):
 
 
 @pytest.mark.network
-def test_uninstall_editable_with_source_outside_venv(script, tmpdir, pip_test_package_clone):
+def test_uninstall_editable_with_source_outside_venv(
+        script, tmpdir, pip_test_package_clone):
     """
     Test uninstalling editable install from existing source outside the venv.
 

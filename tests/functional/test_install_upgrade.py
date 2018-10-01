@@ -7,7 +7,6 @@ from tests.lib import (
     Path, assert_all_changes, assert_distributions_installed,
     create_basic_wheel_for_package, pyversion,
 )
-from tests.lib.local_repos import local_checkout
 
 
 def test_no_upgrade_unless_requested(script):
