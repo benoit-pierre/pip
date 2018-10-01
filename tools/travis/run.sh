@@ -40,6 +40,7 @@ echo "TOXENV=${TOXENV}"
 # Print the commands run for this test.
 set -x
 cat /proc/cpuinfo
+python -c "print(__import__('multiprocessing').cpu_count())"
 if [[ "$GROUP" == "1" ]]; then
     # Unit tests
     tox -- -m unit -n3

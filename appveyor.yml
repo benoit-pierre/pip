@@ -60,6 +60,7 @@ test_script:
             subst T: $env:TEMP
             $env:TEMP = "T:\"
             $env:TMP = "T:\"
+            python -c "print(__import__('multiprocessing').cpu_count())"
             if ($env:RUN_INTEGRATION_TESTS -eq "True") {
                 tox -e py -- -m integration -n 3 --duration=10
             }
