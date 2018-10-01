@@ -2,8 +2,6 @@ import os
 import tempfile
 import textwrap
 
-import pytest
-
 
 def test_options_from_env_vars(script):
     """
@@ -40,15 +38,14 @@ def test_command_line_options_override_env_vars(script, virtualenv):
     assert "Getting page https://download.zope.org/ppix" in result.stdout
 
 
-@pytest.mark.network
-def test_env_vars_override_config_file(script, virtualenv):
+def test_env_vars_override_config_file(script, data):
     """
     Test that environmental variables override settings in config files.
 
     """
     fd, config_file = tempfile.mkstemp('-pip.cfg', 'test-')
     try:
-        _test_env_vars_override_config_file(script, virtualenv, config_file)
+        _test_env_vars_override_config_file(script, data, config_file)
     finally:
         # `os.close` is a workaround for a bug in subprocess
         # https://bugs.python.org/issue3210
@@ -56,7 +53,7 @@ def test_env_vars_override_config_file(script, virtualenv):
         os.remove(config_file)
 
 
-def _test_env_vars_override_config_file(script, virtualenv, config_file):
+def _test_env_vars_override_config_file(script, data, config_file):
     # set this to make pip load it
     script.environ['PIP_CONFIG_FILE'] = config_file
     # It's important that we test this particular config value ('no-index')
@@ -67,14 +64,15 @@ def _test_env_vars_override_config_file(script, virtualenv, config_file):
         [global]
         no-index = 1
         """))
-    result = script.pip('download', '-vvv', 'INITools', expect_error=True)
+    args = ('download', '-vvv', '-i', data.index_url(), 'simple')
+    result = script.pip(*args, expect_error=True)
     assert (
-        "DistributionNotFound: No matching distribution found for INITools"
+        "DistributionNotFound: No matching distribution found for simple"
         in result.stdout
     )
     script.environ['PIP_NO_INDEX'] = '0'
-    result = script.pip('download', '-vvv', 'INITools')
-    assert "Successfully downloaded INITools" in result.stdout
+    result = script.pip(*args)
+    assert "Successfully downloaded simple" in result.stdout
 
 
 def test_command_line_append_flags(script, virtualenv, data):
