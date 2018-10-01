@@ -3,7 +3,6 @@ tests specific to "pip install --user"
 """
 import os
 import textwrap
-from os.path import curdir
 
 import pytest
 
@@ -79,30 +78,19 @@ class Tests_UserSite:
         Test installing current directory ('.') into usersite
         """
         virtualenv.system_site_packages = True
-
-        run_from = data.packages.join("FSPkg")
-        result = script.pip(
-            'install', '-vvv', '--user', curdir,
-            cwd=run_from,
-            expect_error=False,
+        script.pip(
+            'install', '-vvv', '--user', os.path.curdir,
+            cwd=data.packages.join("FSPkg"),
         )
-
-        fspkg_folder = script.user_site / 'fspkg'
-        assert fspkg_folder in result.files_created, result.stdout
-
-        dist_info_folder = (
-            script.user_site / 'FSPkg-0.1.dev0.dist-info'
-        )
-        assert dist_info_folder in result.files_created
+        assert_distributions_installed(script, user='FSPkg-0.1.dev0')
 
     def test_install_user_venv_nositepkgs_fails(self, script, data):
         """
         user install in virtualenv (with no system packages) fails with message
         """
-        run_from = data.packages.join("FSPkg")
         result = script.pip(
-            'install', '--user', curdir,
-            cwd=run_from,
+            'install', '--user', '.',
+            cwd=data.packages.join("FSPkg"),
             expect_error=True,
         )
         assert (
@@ -172,7 +160,6 @@ class Tests_UserSite:
         Test user install with conflict in globalsite and usersite ignores
         global site and updates usersite.
         """
-
         virtualenv.system_site_packages = True
         _patch_dist_in_site_packages(script)
 
