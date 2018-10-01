@@ -1,4 +1,3 @@
-import os
 import sys
 import textwrap
 
@@ -6,7 +5,7 @@ import pytest
 
 from tests.lib import (
     Path, assert_all_changes, assert_distributions_installed,
-    create_basic_wheel_for_package, pyversion
+    create_basic_wheel_for_package, pyversion,
 )
 from tests.lib.local_repos import local_checkout
 
@@ -276,17 +275,17 @@ def test_upgrade_from_reqs_file(script):
     script.pip_install_local(
         '-f', script.scratch_path, '-r', script.scratch_path / 'test-req.txt'
     )
-    assert_distributions_installed(script, ['PyLogo==0.2', 'INITools==0.3'])
+    assert_distributions_installed(script, system='PyLogo-0.2 INITools-0.3')
     script.scratch_path.join("test-req.txt").write(textwrap.dedent("""\
         PyLogo
         # and something else to test out:
         INITools
         """))
-    r = script.pip_install_local(
+    script.pip_install_local(
         '-f', script.scratch_path, '--upgrade', '-r',
         script.scratch_path / 'test-req.txt'
     )
-    assert_distributions_installed(script, ['PyLogo==0.4', 'INITools==0.3.1'])
+    assert_distributions_installed(script, system='PyLogo-0.4 INITools-0.3.1')
 
 
 def test_uninstall_rollback(script, data):
@@ -344,7 +343,7 @@ def test_install_with_ignoreinstalled_requested(script):
     script.pip_install_local('-f', script.scratch_path, 'INITools==0.1')
     script.pip_install_local('-f', script.scratch_path, '-I', 'INITools==0.3')
     # both the old and new metadata should be present.
-    assert_distributions_installed(script, ['INITools==0.1', 'INITools==0.3'])
+    assert_distributions_installed(script, system='INITools-0.1 INITools-0.3')
 
 
 @pytest.mark.network

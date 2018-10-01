@@ -480,16 +480,41 @@ def assert_all_changes(start_state, end_state, expected_changes):
     return diff
 
 
-def assert_distributions_installed(script, reqs, user=False):
+def assert_distributions_installed(script, system=(), user=(),
+                                   ignore='pip setuptools wheel'):
+
     __tracebackhide__ = operator.methodcaller('errisinstance',
                                               AssertionError)
-    installed = list(pkg_resources.find_distributions(
-        script.user_site_path if user else script.site_packages_path,
-        only=True,
-    ))
-    for req in pkg_resources.parse_requirements(reqs):
-        assert any(dist in req for dist in installed), \
-                'installed: %s' % ', '.join(sorted(map(str, installed)))
+
+    def yield_words(strs):
+        if isinstance(strs, six.string_types):
+            for s in strs.split():
+                s = s.strip()
+                if s and not s.startswith('#'):
+                    yield s
+        else:
+            for ss in strs:
+                for s in yield_words(ss):
+                    yield s
+
+    ignore = set(yield_words(ignore))
+    installed = {}
+    expected = {}
+    for location in ('system', 'user'):
+        installed[location] = {
+            '%s-%s' % (dist.project_name, dist.version)
+            for dist in pkg_resources.find_distributions(
+                {
+                    'system': script.site_packages_path,
+                    'user': script.user_site_path,
+                }[location]
+            ) if dist.project_name not in ignore
+        }
+        expected[location] = set(yield_words(locals()[location]))
+
+    assert installed == expected, 'installed: system=(%s) user=(%s)' % (
+        ', '.join(installed['system']), ', '.join(installed['user'])
+    )
 
 
 def _create_test_package_with_subdirectory(script, subdirectory):
