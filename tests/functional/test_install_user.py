@@ -201,5 +201,5 @@ class Tests_UserSite:
         assert (
             "Will not install to the user site because it will lack sys.path "
             "precedence to %s in %s" %
-            ('INITools', script.site_packages_path) in result.stderr
+            ('INITools', script.site_packages_path.normcase) in result.stderr
         )

@@ -287,9 +287,9 @@ class PipTestEnvironment(scripttest.TestFileEnvironment):
         path_locations = virtualenv.path_locations(_virtualenv)
         # Make sure we have test.lib.path.Path objects
         venv, lib, include, bin = map(Path, path_locations)
-        self.venv_path = venv.normcase
-        self.lib_path = virtualenv_lib_path(venv, lib).normcase
-        self.include_path = include.normcase
+        self.venv_path = venv
+        self.lib_path = virtualenv_lib_path(venv, lib)
+        self.include_path = include
         self.bin_path = bin
 
         if hasattr(sys, "pypy_version_info"):
