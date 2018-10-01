@@ -175,6 +175,9 @@ def setuptools_install(tmpdir_factory, common_wheels):
                            '--no-index', '-t', install,
                            '-f', common_wheels,
                            'setuptools'))
+    egg_info = install / 'setuptools.egg-info'
+    os.rename(next(install.glob('*.dist-info')), egg_info)
+    os.rename(egg_info / 'METADATA', egg_info / 'PKG-INFO')
     shutil.rmtree(install.abspath / 'bin')
     return install
 
@@ -186,10 +189,6 @@ def virtualenv_template(tmpdir_factory, pip_src,
     # Create the virtual environment
     tmpdir = Path(str(tmpdir_factory.mktemp('virtualenv')))
     venv = VirtualEnvironment.create(tmpdir.join("venv_orig"))
-
-    # FIXME: some tests rely on 'easy-install.pth' being already present.
-    site_packages = Path(get_python_lib(prefix=venv.location))
-    (site_packages / 'easy-install.pth').touch()
 
     # Fix `site.py`.
     site_py = venv.lib / 'site.py'
@@ -228,9 +227,14 @@ def virtualenv_template(tmpdir_factory, pip_src,
     assert compileall.compile_file(str(site_py), quiet=1, force=True)
 
     # Install setuptools/pip.
-    with open(site_packages / 'easy-install.pth', 'a') as fp:
-        fp.write(str(pip_src / 'src') + '\n' +
+    site_packages = Path(get_python_lib(prefix=venv.location))
+    with open(site_packages / 'easy-install.pth', 'w') as fp:
+        fp.write(str(pip_src / 'src') + '\n' + 
                  str(setuptools_install) + '\n')
+    with open(site_packages / 'pip.egg-link', 'w') as fp:
+        fp.write(str(pip_src / 'src') + '\n..')
+    with open(site_packages / 'setuptools.egg-link', 'w') as fp:
+        fp.write(str(setuptools_install) + '\n.')
 
     # Drop (non-relocatable) launchers.
     for exe in os.listdir(venv.bin):
@@ -258,6 +262,29 @@ def virtualenv(virtualenv_template, tmpdir, isolate):
     venv_location = tmpdir.join("workspace", "venv")
     yield VirtualEnvironment.create(venv_location, virtualenv_template)
     venv_location.rmtree(noerrors=True)
+
+
+@pytest.fixture(scope='session')
+def wheel_install(tmpdir_factory, common_wheels):
+    install = Path(str(tmpdir_factory.mktemp('wheel')))
+    subprocess.check_call((sys.executable, '-m', 'pip', 'install',
+                           '--no-index', '-t', install,
+                           '-f', common_wheels,
+                           'wheel'))
+    egg_info = install / 'wheel.egg-info'
+    os.rename(next(install.glob('*.dist-info')), egg_info)
+    os.rename(egg_info / 'METADATA', egg_info / 'PKG-INFO')
+    shutil.rmtree(install.abspath / 'bin')
+    return install
+
+
+@pytest.fixture
+def with_wheel(virtualenv, wheel_install):
+    site_packages = Path(get_python_lib(prefix=virtualenv.location))
+    with open(site_packages / 'easy-install.pth', 'a') as fp:
+        fp.write(str(wheel_install) + '\n')
+    with open(site_packages / 'wheel.egg-link', 'w') as fp:
+        fp.write(str(wheel_install) + '\n.')
 
 
 @pytest.fixture
