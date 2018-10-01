@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from contextlib import contextmanager
+import operator
 import os
 import sys
 import re
@@ -477,6 +478,17 @@ def assert_all_changes(start_state, end_state, expected_changes):
 
     # Don't throw away this potentially useful information
     return diff
+
+
+def assert_distributions_installed(script, reqs, user=False):
+    __tracebackhide__ = operator.methodcaller('errisinstance',
+                                              AssertionError)
+    installed = list(pkg_resources.find_distributions(
+        script.user_site_path if user else script.site_packages_path,
+        only=True,
+    ))
+    for req in pkg_resources.parse_requirements(reqs):
+        assert any(dist in req for dist in installed), '`%s` is missing' % req
 
 
 def _create_test_package_with_subdirectory(script, subdirectory):

@@ -4,7 +4,10 @@ import textwrap
 
 import pytest
 
-from tests.lib import Path, assert_all_changes, pyversion
+from tests.lib import (
+    Path, assert_all_changes, assert_distributions_installed,
+    create_basic_wheel_for_package, pyversion
+)
 from tests.lib.local_repos import local_checkout
 
 
@@ -256,36 +259,34 @@ def test_upgrade_to_same_version_from_url(script):
     assert_all_changes(result, result3, [script.venv / 'build', 'cache'])
 
 
-@pytest.mark.network
 def test_upgrade_from_reqs_file(script):
     """
     Upgrade from a requirements file.
 
     """
+    create_basic_wheel_for_package(script, name='PyLogo', version='0.2')
+    create_basic_wheel_for_package(script, name='PyLogo', version='0.4')
+    create_basic_wheel_for_package(script, name='INITools', version='0.3')
+    create_basic_wheel_for_package(script, name='INITools', version='0.3.1')
     script.scratch_path.join("test-req.txt").write(textwrap.dedent("""\
         PyLogo<0.4
         # and something else to test out:
         INITools==0.3
         """))
-    install_result = script.pip(
-        'install', '-r', script.scratch_path / 'test-req.txt'
+    script.pip_install_local(
+        '-f', script.scratch_path, '-r', script.scratch_path / 'test-req.txt'
     )
+    assert_distributions_installed(script, ['PyLogo==0.2', 'INITools==0.3'])
     script.scratch_path.join("test-req.txt").write(textwrap.dedent("""\
         PyLogo
         # and something else to test out:
         INITools
         """))
-    script.pip(
-        'install', '--upgrade', '-r', script.scratch_path / 'test-req.txt'
+    r = script.pip_install_local(
+        '-f', script.scratch_path, '--upgrade', '-r',
+        script.scratch_path / 'test-req.txt'
     )
-    uninstall_result = script.pip(
-        'uninstall', '-r', script.scratch_path / 'test-req.txt', '-y'
-    )
-    assert_all_changes(
-        install_result,
-        uninstall_result,
-        [script.venv / 'build', 'cache', script.scratch / 'test-req.txt'],
-    )
+    assert_distributions_installed(script, ['PyLogo==0.4', 'INITools==0.3.1'])
 
 
 def test_uninstall_rollback(script, data):
@@ -338,16 +339,12 @@ def test_install_with_ignoreinstalled_requested(script):
     """
     Test old conflicting package is completely ignored
     """
-    script.pip_install_local('INITools==0.1', expect_error=True)
-    result = script.pip_install_local('-I', 'INITools==0.3', expect_error=True)
-    assert result.files_created, 'pip install -I did not install'
+    create_basic_wheel_for_package(script, name='INITools', version='0.1')
+    create_basic_wheel_for_package(script, name='INITools', version='0.3')
+    script.pip_install_local('-f', script.scratch_path, 'INITools==0.1')
+    script.pip_install_local('-f', script.scratch_path, '-I', 'INITools==0.3')
     # both the old and new metadata should be present.
-    assert os.path.exists(
-        script.site_packages_path / 'INITools-0.1-py%s.egg-info' % pyversion
-    )
-    assert os.path.exists(
-        script.site_packages_path / 'INITools-0.3-py%s.egg-info' % pyversion
-    )
+    assert_distributions_installed(script, ['INITools==0.1', 'INITools==0.3'])
 
 
 @pytest.mark.network
