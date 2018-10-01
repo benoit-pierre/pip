@@ -3,10 +3,8 @@
 
 import textwrap
 
-import pytest
-
 from pip._internal.cli.status_codes import ERROR
-from tests.lib.configuration_helpers import ConfigurationMixin, kinds
+from tests.lib.configuration_helpers import ConfigurationMixin
 
 
 def test_no_options_passed_should_error(script):
@@ -16,17 +14,19 @@ def test_no_options_passed_should_error(script):
 
 class TestBasicLoading(ConfigurationMixin):
 
-    @pytest.mark.skip("Can't modify underlying file for any mode")
     def test_reads_file_appropriately(self, script):
-        contents = """
-            [test]
-            hello = 1
-        """
 
-        with self.patched_file(kinds.USER, contents):
-            result = script.pip("config", "list")
+        config_file = script.scratch_path / 'config'
+        with open(config_file, 'w') as fp:
+            fp.write("""
+                     [test]
+                     hello = 1
+                     """)
+        script.environ['PIP_CONFIG_FILE'] = config_file
 
-        assert "test.hello=1" in result.stdout
+        result = script.pip("config", "list")
+
+        assert "test.hello='1'" in result.stdout
 
     def test_basic_modification_pipeline(self, script):
         script.pip("config", "get", "test.blah", expect_error=True)
