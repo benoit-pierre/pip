@@ -8,7 +8,9 @@ from os.path import curdir, isdir, isfile
 import pytest
 
 from pip._internal.utils.compat import cache_from_source, uses_pycache
-from tests.lib import pyversion
+from tests.lib import (
+    assert_distributions_installed, create_basic_wheel_for_package, pyversion
+)
 from tests.lib.local_repos import local_checkout
 
 
@@ -149,27 +151,17 @@ class Tests_UserSite:
         script.environ["PYTHONPATH"] = script.base_path / script.user_site
         _patch_dist_in_site_packages(script)
 
-        script.pip_install_local('INITools==0.2', '--no-binary=:all:')
+        create_basic_wheel_for_package(script, name='INITools', version='0.1')
+        create_basic_wheel_for_package(script, name='INITools', version='0.2')
 
-        result2 = script.pip_install_local(
-            '--user', 'INITools==0.1', '--no-binary=:all:')
+        script.pip_install_local('-f', script.scratch_path, 'INITools==0.2')
+        assert_distributions_installed(script, 'INITools==0.2')
 
-        # usersite has 0.1
-        egg_info_folder = (
-            script.user_site / 'INITools-0.1-py%s.egg-info' % pyversion
-        )
-        initools_folder = script.user_site / 'initools'
-        assert egg_info_folder in result2.files_created, str(result2)
-        assert initools_folder in result2.files_created, str(result2)
+        result2 = script.pip_install_local('-f', script.scratch_path,
+                                           '--user', 'INITools==0.1')
+        assert_distributions_installed(script, 'INITools==0.2')
+        assert_distributions_installed(script, 'INITools==0.1', user=True)
 
-        # site still has 0.2 (can't look in result1; have to check)
-        egg_info_folder = (
-            script.base_path / script.site_packages /
-            'INITools-0.2-py%s.egg-info' % pyversion
-        )
-        initools_folder = script.base_path / script.site_packages / 'initools'
-        assert isdir(egg_info_folder)
-        assert isdir(initools_folder)
 
     def test_upgrade_user_conflict_in_globalsite(self, script, virtualenv):
         """
