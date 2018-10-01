@@ -114,11 +114,10 @@ def test_install_from_wheel_with_headers(script, data):
                                                       result.stdout)
 
 
-def test_install_wheel_with_target(script, data, common_wheels):
+def test_install_wheel_with_target(script, data, with_wheel):
     """
     Test installing a wheel using pip install --target
     """
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     target_dir = script.scratch_path / 'target'
     result = script.pip(
         'install', 'simple.dist==0.1', '-t', target_dir,
@@ -129,7 +128,7 @@ def test_install_wheel_with_target(script, data, common_wheels):
     )
 
 
-def test_install_wheel_with_target_and_data_files(script, data, common_wheels):
+def test_install_wheel_with_target_and_data_files(script, data, with_wheel):
     """
     Test for issue #4092. It will be checked that a data_files specification in
     setup.py is handled correctly when a wheel is installed with the --target
@@ -148,7 +147,6 @@ def test_install_wheel_with_target_and_data_files(script, data, common_wheels):
             ]
         )
     """
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     target_dir = script.scratch_path / 'prjwithdatafile'
     package = data.packages.join("prjwithdatafile-1.0-py2.py3-none-any.whl")
     result = script.pip('install', package,
@@ -232,12 +230,11 @@ def test_wheel_record_lines_in_deterministic_order(script, data):
     assert record_lines == sorted(record_lines)
 
 
-def test_install_user_wheel(script, virtualenv, data, common_wheels):
+def test_install_user_wheel(script, virtualenv, data, with_wheel):
     """
     Test user install from wheel (that has a script)
     """
     virtualenv.system_site_packages = True
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     result = script.pip(
         'install', 'has.script==1.0', '--user', '--no-index',
         '--find-links=' + data.find_links,

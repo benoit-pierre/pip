@@ -68,12 +68,11 @@ class Tests_UserSite:
         result.assert_installed('INITools', use_user_site=True)
 
     def test_install_from_current_directory_into_usersite(
-            self, script, virtualenv, data, common_wheels):
+            self, script, virtualenv, data, with_wheel):
         """
         Test installing current directory ('.') into usersite
         """
         virtualenv.system_site_packages = True
-        script.pip("install", "wheel", '--no-index', '-f', common_wheels)
 
         run_from = data.packages.join("FSPkg")
         result = script.pip(

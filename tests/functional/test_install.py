@@ -48,9 +48,9 @@ def test_pep518_refuses_invalid_requires(script, data, common_wheels):
     assert "does not comply with PEP 518" in result.stderr
 
 
-def test_pep518_refuses_invalid_build_system(script, data, common_wheels):
+def test_pep518_refuses_invalid_build_system(script, data):
     result = script.pip(
-        'install', '-f', common_wheels,
+        'install',
         data.src.join("pep518_invalid_build_system"),
         expect_error=True
     )
@@ -58,9 +58,9 @@ def test_pep518_refuses_invalid_build_system(script, data, common_wheels):
     assert "does not comply with PEP 518" in result.stderr
 
 
-def test_pep518_allows_missing_requires(script, data, common_wheels):
+def test_pep518_allows_missing_requires(script, data):
     result = script.pip(
-        'install', '-f', common_wheels,
+        'install',
         data.src.join("pep518_missing_requires"),
         expect_stderr=True
     )
@@ -219,8 +219,7 @@ def test_basic_install_editable_from_git(script, tmpdir):
 
 
 def test_install_editable_from_git_autobuild_wheel(
-        script, tmpdir, common_wheels):
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
+        script, tmpdir, with_wheel):
     _test_install_editable_from_git(script, tmpdir)
 
 
@@ -751,14 +750,13 @@ def test_install_nonlocal_compatible_wheel_path(script, data):
     assert result.returncode == ERROR
 
 
-def test_install_with_target_and_scripts_no_warning(script, common_wheels):
+def test_install_with_target_and_scripts_no_warning(script, with_wheel):
     """
     Test that installing with --target does not trigger the "script not
     in PATH" warning (issue #5201)
     """
     # We need to have wheel installed so that the project builds via a wheel,
     # which is the only execution path that has the script warning.
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     target_dir = script.scratch_path / 'target'
     pkga_path = script.scratch_path / 'pkga'
     pkga_path.mkdir()
@@ -1099,19 +1097,17 @@ def test_install_topological_sort(script, data):
     assert order1 in res or order2 in res, res
 
 
-def test_install_wheel_broken(script, data, common_wheels):
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
+def test_install_wheel_broken(script, data, with_wheel):
     res = script.pip(
-        'install', '--no-index', '-f', data.find_links, '-f', common_wheels,
+        'install', '--no-index', '-f', data.find_links,
         'wheelbroken',
         expect_stderr=True)
     assert "Successfully installed wheelbroken-0.1" in str(res), str(res)
 
 
-def test_cleanup_after_failed_wheel(script, data, common_wheels):
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
+def test_cleanup_after_failed_wheel(script, data, with_wheel):
     res = script.pip(
-        'install', '--no-index', '-f', data.find_links, '-f', common_wheels,
+        'install', '--no-index', '-f', data.find_links,
         'wheelbrokenafter',
         expect_stderr=True)
     # One of the effects of not cleaning up is broken scripts:
@@ -1123,7 +1119,7 @@ def test_cleanup_after_failed_wheel(script, data, common_wheels):
     assert "Running setup.py clean for wheelbrokenafter" in str(res), str(res)
 
 
-def test_install_builds_wheels(script, data, common_wheels):
+def test_install_builds_wheels(script, data, with_wheel):
     # We need to use a subprocess to get the right value on Windows.
     res = script.run('python', '-c', (
         'from pip._internal.utils import appdirs; '
@@ -1133,10 +1129,9 @@ def test_install_builds_wheels(script, data, common_wheels):
     # NB This incidentally tests a local tree + tarball inputs
     # see test_install_editable_from_git_autobuild_wheel for editable
     # vcs coverage.
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     to_install = data.packages.join('requires_wheelbroken_upper')
     res = script.pip(
-        'install', '--no-index', '-f', data.find_links, '-f', common_wheels,
+        'install', '--no-index', '-f', data.find_links,
         to_install, expect_stderr=True)
     expected = ("Successfully installed requires-wheelbroken-upper-0"
                 " upper-2.0 wheelbroken-0.1")
@@ -1166,12 +1161,10 @@ def test_install_builds_wheels(script, data, common_wheels):
 
 
 def test_install_no_binary_disables_building_wheels(
-        script, data, common_wheels):
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
+        script, data, with_wheel):
     to_install = data.packages.join('requires_wheelbroken_upper')
     res = script.pip(
         'install', '--no-index', '--no-binary=upper', '-f', data.find_links,
-        '-f', common_wheels,
         to_install, expect_stderr=True)
     expected = ("Successfully installed requires-wheelbroken-upper-0"
                 " upper-2.0 wheelbroken-0.1")
@@ -1190,11 +1183,10 @@ def test_install_no_binary_disables_building_wheels(
     assert "Running setup.py install for upper" in str(res), str(res)
 
 
-def test_install_no_binary_disables_cached_wheels(script, data, common_wheels):
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
+def test_install_no_binary_disables_cached_wheels(script, data, with_wheel):
     # Seed the cache
     script.pip(
-        'install', '--no-index', '-f', data.find_links, '-f', common_wheels,
+        'install', '--no-index', '-f', data.find_links,
         'upper')
     res = script.pip(
         'install', '--no-index', '--no-binary=:all:', '-f', data.find_links,
@@ -1291,7 +1283,7 @@ def test_install_incompatible_python_requires_editable(script):
             "but the running Python is ") in result.stderr, str(result)
 
 
-def test_install_incompatible_python_requires_wheel(script, common_wheels):
+def test_install_incompatible_python_requires_wheel(script, with_wheel):
     script.scratch_path.join("pkga").mkdir()
     pkga_path = script.scratch_path / 'pkga'
     pkga_path.join("setup.py").write(textwrap.dedent("""
@@ -1300,7 +1292,6 @@ def test_install_incompatible_python_requires_wheel(script, common_wheels):
               python_requires='<1.0',
               version='0.1')
     """))
-    script.pip('install', 'wheel', '--no-index', '-f', common_wheels)
     script.run(
         'python', 'setup.py', 'bdist_wheel', '--universal', cwd=pkga_path)
     result = script.pip('install', './pkga/dist/pkga-0.1-py2.py3-none-any.whl',
