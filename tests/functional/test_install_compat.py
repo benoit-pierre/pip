@@ -4,12 +4,9 @@ Tests for compatibility workarounds.
 """
 import os
 
-import pytest
-
 from tests.lib import assert_all_changes, pyversion
 
 
-@pytest.mark.network
 def test_debian_egg_name_workaround(script):
     """
     We can uninstall packages installed with the pyversion removed from the
@@ -21,7 +18,7 @@ def test_debian_egg_name_workaround(script):
     https://bitbucket.org/ianb/pip/issue/104/pip-uninstall-on-ubuntu-linux
 
     """
-    result = script.pip('install', 'INITools==0.2', expect_error=True)
+    result = script.pip_install_local('INITools==0.2', expect_error=True)
 
     egg_info = os.path.join(
         script.site_packages, "INITools-0.2-py%s.egg-info" % pyversion)

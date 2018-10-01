@@ -58,9 +58,9 @@ def test_pep518_refuses_invalid_build_system(script, data):
     assert "does not comply with PEP 518" in result.stderr
 
 
-def test_pep518_allows_missing_requires(script, data):
+def test_pep518_allows_missing_requires(script, data, common_wheels):
     result = script.pip(
-        'install',
+        'install', '-f', common_wheels,
         data.src.join("pep518_missing_requires"),
         expect_stderr=True
     )
@@ -521,14 +521,13 @@ def test_install_pardir(script, data):
     assert egg_info_folder in result.files_created, str(result)
 
 
-@pytest.mark.network
 def test_install_global_option(script):
     """
     Test using global distutils options.
     (In particular those that disable the actual install action)
     """
-    result = script.pip(
-        'install', '--global-option=--version', "INITools==0.1",
+    result = script.pip_install_local(
+        '--global-option=--version', "INITools==0.1",
         expect_stderr=True)
     assert '0.1\n' in result.stdout
 
@@ -583,15 +582,14 @@ def test_install_global_option_using_editable(script, tmpdir):
     assert 'Successfully installed anyjson' in result.stdout
 
 
-@pytest.mark.network
 def test_install_package_with_same_name_in_curdir(script):
     """
     Test installing a package with the same name of a local folder
     """
-    script.scratch_path.join("mock==0.6").mkdir()
-    result = script.pip('install', 'mock==0.6')
-    egg_folder = script.site_packages / 'mock-0.6.0-py%s.egg-info' % pyversion
-    assert egg_folder in result.files_created, str(result)
+    script.scratch_path.join("simplewheel==1.0").mkdir()
+    result = script.pip_install_local('simplewheel==1.0')
+    dist_folder = script.site_packages / 'simplewheel-1.0.dist-info'
+    assert dist_folder in result.files_created, str(result)
 
 
 mock100_setup_py = textwrap.dedent('''\

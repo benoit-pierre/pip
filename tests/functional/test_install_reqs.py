@@ -11,20 +11,19 @@ from tests.lib import (
 from tests.lib.local_repos import local_checkout
 
 
-@pytest.mark.network
 def test_requirements_file(script):
     """
     Test installing from a requirements file.
 
     """
-    other_lib_name, other_lib_version = 'anyjson', '0.3'
+    other_lib_name, other_lib_version = 'simplewheel', '1.0'
     script.scratch_path.join("initools-req.txt").write(textwrap.dedent("""\
         INITools==0.2
         # and something else to test out:
         %s<=%s
         """ % (other_lib_name, other_lib_version)))
-    result = script.pip(
-        'install', '-r', script.scratch_path / 'initools-req.txt'
+    result = script.pip_install_local(
+        '-r', script.scratch_path / 'initools-req.txt'
     )
     assert (
         script.site_packages / 'INITools-0.2-py%s.egg-info' %
@@ -32,7 +31,7 @@ def test_requirements_file(script):
     )
     assert script.site_packages / 'initools' in result.files_created
     assert result.files_created[script.site_packages / other_lib_name].dir
-    fn = '%s-%s-py%s.egg-info' % (other_lib_name, other_lib_version, pyversion)
+    fn = '%s-%s.dist-info' % (other_lib_name, other_lib_version)
     assert result.files_created[script.site_packages / fn].dir
 
 
