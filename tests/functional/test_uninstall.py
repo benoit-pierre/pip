@@ -316,45 +316,24 @@ def test_uninstall_editable_from_svn(script, tmpdir):
 
 
 @pytest.mark.network
-def test_uninstall_editable_with_source_outside_venv(script, tmpdir):
+def test_uninstall_editable_with_source_outside_venv(script, tmpdir, pip_test_package_clone):
     """
     Test uninstalling editable install from existing source outside the venv.
 
     """
-    cache_dir = tmpdir.join("cache")
-
-    try:
-        temp = mkdtemp()
-        tmpdir = join(temp, 'pip-test-package')
-        _test_uninstall_editable_with_source_outside_venv(
-            script,
-            tmpdir,
-            cache_dir,
-        )
-    finally:
-        rmtree(temp)
-
-
-def _test_uninstall_editable_with_source_outside_venv(
-        script, tmpdir, cache_dir):
-    result = script.run(
-        'git', 'clone',
-        local_repo(
-            'git+git://github.com/pypa/pip-test-package',
-            cache_dir,
-        ),
-        tmpdir,
-        expect_stderr=True,
-    )
-    result2 = script.pip('install', '-e', tmpdir)
+    checkout = tmpdir.join('checkout')
+    script.run('git', 'clone', '-q',
+               pip_test_package_clone.split('+', 1)[1],
+               checkout)
+    result1 = script.pip('install', '-e', checkout)
     assert join(
         script.site_packages, 'pip-test-package.egg-link'
-    ) in result2.files_created, list(result2.files_created.keys())
-    result3 = script.pip('uninstall', '-y',
+    ) in result1.files_created, list(result1.files_created.keys())
+    result2 = script.pip('uninstall', '-y',
                          'pip-test-package', expect_error=True)
     assert_all_changes(
-        result,
-        result3,
+        result1,
+        result2,
         [script.venv / 'build', script.site_packages / 'easy-install.pth'],
     )
 
