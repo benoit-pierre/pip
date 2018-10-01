@@ -39,6 +39,7 @@ echo "TOXENV=${TOXENV}"
 
 # Print the commands run for this test.
 set -x
+cat /proc/cpuinfo
 if [[ "$GROUP" == "1" ]]; then
     # Unit tests
     tox -- -m unit -n3
