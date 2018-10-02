@@ -7,8 +7,8 @@ from doctest import ELLIPSIS, OutputChecker
 import pytest
 
 from tests.lib import (
-    _create_test_package, _create_test_package_with_srcdir, need_bzr,
-    need_mercurial,
+    _create_test_package, _create_test_package_with_srcdir,
+    create_basic_wheel_for_package, need_bzr, need_mercurial,
 )
 
 distribute_re = re.compile('^distribute==[0-9.]+\n', re.MULTILINE)
@@ -455,6 +455,9 @@ def test_freeze_with_requirement_option_multiple(script):
     --requirement hints
 
     """
+    create_basic_wheel_for_package(script, 'INITools', '2.0')
+    create_basic_wheel_for_package(script, 'simple', '1.0')
+    create_basic_wheel_for_package(script, 'simple2', '1.0')
     script.scratch_path.join('hint1.txt').write(textwrap.dedent("""\
         INITools==0.1
         NoExist==4.2
@@ -464,10 +467,10 @@ def test_freeze_with_requirement_option_multiple(script):
         NoExist2==2.0
         simple2==1.0
     """) + _freeze_req_opts)
-    result = script.pip_install_local('initools==0.2')
-    result = script.pip_install_local('simple')
-    result = script.pip_install_local('simple2==1.0')
-    result = script.pip_install_local('meta')
+    script.pip_install_local('-f', script.scratch_path,
+                             'initools==0.2',
+                             'simple2==1.0',
+                             'meta')
     result = script.pip(
         'freeze', '--requirement', 'hint1.txt', '--requirement', 'hint2.txt',
         expect_stderr=True,
