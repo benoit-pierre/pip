@@ -117,7 +117,7 @@ def test_command_line_appends_correctly(script, data):
     ), result.stdout
 
 
-def test_config_file_override_stack(script, virtualenv):
+def test_config_file_override_stack(script, virtualenv, data):
     """
     Test config files (global, overriding a global config with a
     local, overriding all with a command line flag).
@@ -125,7 +125,7 @@ def test_config_file_override_stack(script, virtualenv):
     """
     fd, config_file = tempfile.mkstemp('-pip.cfg', 'test-')
     try:
-        _test_config_file_override_stack(script, virtualenv, config_file)
+        _test_config_file_override_stack(script, virtualenv, config_file, data)
     finally:
         # `os.close` is a workaround for a bug in subprocess
         # https://bugs.python.org/issue3210
@@ -133,39 +133,30 @@ def test_config_file_override_stack(script, virtualenv):
         os.remove(config_file)
 
 
-def _test_config_file_override_stack(script, virtualenv, config_file):
+def _test_config_file_override_stack(script, virtualenv, config_file, data):
     # set this to make pip load it
     script.environ['PIP_CONFIG_FILE'] = config_file
     (script.scratch_path / config_file).write(textwrap.dedent("""\
         [global]
-        index-url = https://download.zope.org/ppix
-        """))
+        index-url = %s
+        """ % data.index_url()))
     result = script.pip('install', '-vvv', 'INITools', expect_error=True)
-    assert (
-        "Getting page https://download.zope.org/ppix/initools" in result.stdout
-    )
+    assert "Looking in indexes: %s" % data.index_url() in result.stdout
     virtualenv.clear()
     (script.scratch_path / config_file).write(textwrap.dedent("""\
         [global]
         index-url = https://download.zope.org/ppix
         [install]
-        index-url = https://pypi.gocept.com/
-        """))
+        index-url = %s
+        """ % data.index_url()))
     result = script.pip('install', '-vvv', 'INITools', expect_error=True)
-    assert "Getting page https://pypi.gocept.com/initools" in result.stdout
+    assert "Looking in indexes: %s" % data.index_url() in result.stdout
     result = script.pip(
-        'install', '-vvv', '--index-url', 'https://pypi.org/simple/',
+        'install', '-vvv', '--index-url', data.index_url('empty_with_pkg'),
         'INITools',
         expect_error=True,
     )
-    assert (
-        "Getting page http://download.zope.org/ppix/INITools"
-        not in result.stdout
-    )
-    assert "Getting page https://pypi.gocept.com/INITools" not in result.stdout
-    assert (
-        "Getting page https://pypi.org/simple/initools" in result.stdout
-    )
+    assert "Looking in indexes: %s" % data.index_url('empty_with_pkg')
 
 
 def test_options_from_venv_config(script, virtualenv):
