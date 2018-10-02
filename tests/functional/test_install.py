@@ -650,27 +650,30 @@ def test_install_package_with_target(script):
     """
     Test installing a package using pip install --target
     """
+    pkg1 = create_basic_wheel_for_package(script, 'simple', '1.0')
+    pkg2 = create_basic_wheel_for_package(script, 'simple', '2.0')
+
     target_dir = script.scratch_path / 'target'
-    result = script.pip_install_local('-t', target_dir, "simple==1.0")
+    result = script.pip_install_local('-t', target_dir, pkg1)
     assert Path('scratch') / 'target' / 'simple' in result.files_created, (
         str(result)
     )
 
     # Test repeated call without --upgrade, no files should have changed
     result = script.pip_install_local(
-        '-t', target_dir, "simple==1.0", expect_stderr=True,
+        '-t', target_dir, pkg1, expect_stderr=True,
     )
     assert not Path('scratch') / 'target' / 'simple' in result.files_updated
 
     # Test upgrade call, check that new version is installed
     result = script.pip_install_local('--upgrade', '-t',
-                                      target_dir, "simple==2.0")
+                                      target_dir, pkg2)
     assert Path('scratch') / 'target' / 'simple' in result.files_updated, (
         str(result)
     )
-    egg_folder = (
-        Path('scratch') / 'target' / 'simple-2.0-py%s.egg-info' % pyversion)
-    assert egg_folder in result.files_created, (
+    dist_folder = (
+        Path('scratch') / 'target' / 'simple-2.0.dist-info')
+    assert dist_folder in result.files_created, (
         str(result)
     )
 
