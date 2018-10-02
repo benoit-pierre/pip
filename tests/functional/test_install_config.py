@@ -1,5 +1,3 @@
-import os
-import tempfile
 import textwrap
 
 
@@ -43,18 +41,7 @@ def test_env_vars_override_config_file(script, data):
     Test that environmental variables override settings in config files.
 
     """
-    fd, config_file = tempfile.mkstemp('-pip.cfg', 'test-')
-    try:
-        _test_env_vars_override_config_file(script, data, config_file)
-    finally:
-        # `os.close` is a workaround for a bug in subprocess
-        # https://bugs.python.org/issue3210
-        os.close(fd)
-        os.remove(config_file)
-
-
-def _test_env_vars_override_config_file(script, data, config_file):
-    # set this to make pip load it
+    config_file = script.scratch_path / 'pip.cfg'
     script.environ['PIP_CONFIG_FILE'] = config_file
     # It's important that we test this particular config value ('no-index')
     # because there is/was a bug which only shows up in cases in which
@@ -123,18 +110,7 @@ def test_config_file_override_stack(script, virtualenv, data):
     local, overriding all with a command line flag).
 
     """
-    fd, config_file = tempfile.mkstemp('-pip.cfg', 'test-')
-    try:
-        _test_config_file_override_stack(script, virtualenv, config_file, data)
-    finally:
-        # `os.close` is a workaround for a bug in subprocess
-        # https://bugs.python.org/issue3210
-        os.close(fd)
-        os.remove(config_file)
-
-
-def _test_config_file_override_stack(script, virtualenv, config_file, data):
-    # set this to make pip load it
+    config_file = script.scratch_path / 'pip.cfg'
     script.environ['PIP_CONFIG_FILE'] = config_file
     (script.scratch_path / config_file).write(textwrap.dedent("""\
         [global]
@@ -179,19 +155,15 @@ def test_options_from_venv_config(script, virtualenv):
 
 def test_install_no_binary_via_config_disables_cached_wheels(
         script, data, with_wheel):
-    config_file = tempfile.NamedTemporaryFile(mode='wt', delete=False)
-    try:
-        script.environ['PIP_CONFIG_FILE'] = config_file.name
-        config_file.write(textwrap.dedent("""\
-            [global]
-            no-binary = :all:
-            """))
-        config_file.close()
-        res = script.pip(
-            'install', '--no-index', '-f', data.find_links,
-            'upper', expect_stderr=True)
-    finally:
-        os.unlink(config_file.name)
+    config_file = script.scratch_path / 'pip.cfg'
+    script.environ['PIP_CONFIG_FILE'] = config_file
+    config_file.write(textwrap.dedent("""\
+        [global]
+        no-binary = :all:
+        """))
+    res = script.pip(
+        'install', '--no-index', '-f', data.find_links,
+        'upper', expect_stderr=True)
     assert "Successfully installed upper-2.0" in str(res), str(res)
     # No wheel building for upper, which was blacklisted
     assert "Running setup.py bdist_wheel for upper" not in str(res), str(res)
