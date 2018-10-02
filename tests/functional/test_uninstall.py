@@ -467,11 +467,9 @@ def test_uninstall_editable_and_pip_install(script, data):
     script.environ['SETUPTOOLS_SYS_PATH_TECHNIQUE'] = 'raw'
 
     pkg_path = data.packages.join("FSPkg")
-    script.pip('install', '-e', '.',
-               expect_stderr=True, cwd=pkg_path)
+    script.pip('install', '-e', '.', cwd=pkg_path)
     # ensure both are installed with --ignore-installed:
-    script.pip('install', '--ignore-installed', '.',
-               expect_stderr=True, cwd=pkg_path)
+    script.pip('install', '--ignore-installed', '.', cwd=pkg_path)
     list_result = script.pip('list', '--format=json')
     assert {"name": "FSPkg", "version": "0.1.dev0"} \
         in json.loads(list_result.stdout)
