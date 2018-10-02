@@ -61,7 +61,7 @@ test_script:
             $env:TEMP = "T:\"
             $env:TMP = "T:\"
             
-            $nprocs = (python -c "print(min(5, __import__('multiprocessing').cpu_count()+1))"))
+            $nprocs = (python -c "print(min(5, __import__('multiprocessing').cpu_count()+1))")
             if ($env:RUN_INTEGRATION_TESTS -eq "True") {
                 tox -e py -- -m integration -n$nprocs --duration=10
             }
