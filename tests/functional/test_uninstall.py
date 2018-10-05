@@ -497,11 +497,12 @@ def test_uninstall_ignores_missing_packages(script, data):
 
 
 def test_uninstall_ignores_missing_packages_and_uninstalls_rest(script, data):
-    script.pip_install_local('simple')
+    script.pip_install_local('simplewheel')
     result = script.pip(
-        'uninstall', '-y', 'non-existent-pkg', 'simple', expect_stderr=True,
+        'uninstall', '-y', 'non-existent-pkg', 'simplewheel',
+        expect_stderr=True,
     )
 
     assert "Skipping non-existent-pkg as it is not installed." in result.stderr
-    assert "Successfully uninstalled simple" in result.stdout
+    assert "Successfully uninstalled simplewheel" in result.stdout
     assert result.returncode == 0, "Expected clean exit"

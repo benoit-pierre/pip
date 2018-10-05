@@ -319,7 +319,7 @@ def test_basic_install_from_local_directory(script, data):
     Test installing from a local directory.
     """
     to_install = data.packages.join("FSPkg")
-    result = script.pip('install', to_install, expect_error=False)
+    result = script.pip('install', to_install)
     fspkg_folder = script.site_packages / 'fspkg'
     egg_info_folder = (
         script.site_packages / 'FSPkg-0.1.dev0-py%s.egg-info' % pyversion
@@ -677,14 +677,12 @@ def test_install_package_with_target(script):
     assert singlemodule_py in result.files_updated, str(result)
 
 
-def test_install_nonlocal_compatible_wheel(script, data):
+def test_install_nonlocal_compatible_wheel(script):
     target_dir = script.scratch_path / 'target'
 
     # Test install with --target
-    result = script.pip(
-        'install',
+    result = script.pip_install_local(
         '-t', target_dir,
-        '--no-index', '--find-links', data.find_links,
         '--only-binary=:all:',
         '--python', '3',
         '--platform', 'fakeplat',
@@ -697,9 +695,7 @@ def test_install_nonlocal_compatible_wheel(script, data):
     assert distinfo in result.files_created
 
     # Test install without --target
-    result = script.pip(
-        'install',
-        '--no-index', '--find-links', data.find_links,
+    result = script.pip_install_local(
         '--only-binary=:all:',
         '--python', '3',
         '--platform', 'fakeplat',
@@ -767,15 +763,12 @@ def test_install_with_target_and_scripts_no_warning(script, with_wheel):
     assert "--no-warn-script-location" not in result.stderr, str(result)
 
 
-def test_install_package_with_root(script, data):
+def test_install_package_with_root(script):
     """
     Test installing a package using pip install --root
     """
     root_dir = script.scratch_path / 'root'
-    result = script.pip(
-        'install', '--root', root_dir, '-f', data.find_links, '--no-index',
-        'simple==1.0',
-    )
+    result = script.pip_install_local('--root', root_dir, 'simple==1.0',)
     normal_install_path = (
         script.base_path / script.site_packages / 'simple-1.0-py%s.egg-info' %
         pyversion
@@ -793,14 +786,14 @@ def test_install_package_with_root(script, data):
     assert "Looking in links: " in result.stdout
 
 
-def test_install_package_with_prefix(script, data):
+def test_install_package_with_prefix(script):
     """
     Test installing a package using pip install --prefix
     """
     prefix_path = script.scratch_path / 'prefix'
-    result = script.pip(
-        'install', '--prefix', prefix_path, '-f', data.find_links,
-        '--no-binary', 'simple', '--no-index', 'simple==1.0',
+    result = script.pip_install_local(
+        '--prefix', prefix_path,
+        '--no-binary', 'simple', 'simple==1.0',
     )
 
     rel_prefix_path = script.scratch / 'prefix'
@@ -842,14 +835,13 @@ def test_install_editable_with_prefix(script):
     assert install_path in result.files_created, str(result)
 
 
-def test_install_package_conflict_prefix_and_user(script, data):
+def test_install_package_conflict_prefix_and_user(script):
     """
     Test installing a package using pip install --prefix --user errors out
     """
     prefix_path = script.scratch_path / 'prefix'
-    result = script.pip(
-        'install', '-f', data.find_links, '--no-index', '--user',
-        '--prefix', prefix_path, 'simple==1.0',
+    result = script.pip_install_local(
+        '--user', '--prefix', prefix_path, 'simple==1.0',
         expect_error=True, quiet=True,
     )
     assert (
@@ -897,9 +889,7 @@ def test_url_req_case_mismatch_no_index(script, data):
     'requiresupper' has install_requires = ['upper']
     """
     Upper = '/'.join((data.find_links, 'Upper-1.0.tar.gz'))
-    result = script.pip(
-        'install', '--no-index', '-f', data.find_links, Upper, 'requiresupper'
-    )
+    result = script.pip_install_local(Upper, 'requiresupper')
 
     # only Upper-1.0.tar.gz should get installed.
     egg_folder = script.site_packages / 'Upper-1.0-py%s.egg-info' % pyversion
@@ -935,15 +925,13 @@ def test_url_req_case_mismatch_file_index(script, data):
     assert egg_folder not in result.files_created, str(result)
 
 
-def test_url_incorrect_case_no_index(script, data):
+def test_url_incorrect_case_no_index(script):
     """
     Same as test_url_req_case_mismatch_no_index, except testing for the case
     where the incorrect case is given in the name of the package to install
     rather than in a requirements file.
     """
-    result = script.pip(
-        'install', '--no-index', '-f', data.find_links, "upper",
-    )
+    result = script.pip_install_local("upper")
 
     # only Upper-2.0.tar.gz should get installed.
     egg_folder = script.site_packages / 'Upper-1.0-py%s.egg-info' % pyversion
@@ -1076,27 +1064,20 @@ def test_install_log(script, data, tmpdir):
         assert 2 == fp.read().count("HELLO FROM CHATTYMODULE")
 
 
-def test_install_topological_sort(script, data):
-    args = ['install', 'TopoRequires4', '--no-index', '-f', data.packages]
-    res = str(script.pip(*args, expect_error=False))
+def test_install_topological_sort(script):
+    res = str(script.pip_install_local('TopoRequires4'))
     order1 = 'TopoRequires, TopoRequires2, TopoRequires3, TopoRequires4'
     order2 = 'TopoRequires, TopoRequires3, TopoRequires2, TopoRequires4'
     assert order1 in res or order2 in res, res
 
 
-def test_install_wheel_broken(script, data, with_wheel):
-    res = script.pip(
-        'install', '--no-index', '-f', data.find_links,
-        'wheelbroken',
-        expect_stderr=True)
+def test_install_wheel_broken(script, with_wheel):
+    res = script.pip_install_local('wheelbroken', expect_stderr=True)
     assert "Successfully installed wheelbroken-0.1" in str(res), str(res)
 
 
-def test_cleanup_after_failed_wheel(script, data, with_wheel):
-    res = script.pip(
-        'install', '--no-index', '-f', data.find_links,
-        'wheelbrokenafter',
-        expect_stderr=True)
+def test_cleanup_after_failed_wheel(script, with_wheel):
+    res = script.pip_install_local('wheelbrokenafter', expect_stderr=True)
     # One of the effects of not cleaning up is broken scripts:
     script_py = script.bin_path / "script.py"
     assert script_py.exists, script_py
@@ -1395,7 +1376,7 @@ def test_installed_files_recorded_in_deterministic_order(script, data):
     assert installed_files_lines == sorted(installed_files_lines)
 
 
-def test_install_conflict_results_in_warning(script, data):
+def test_install_conflict_results_in_warning(script):
     pkgA_path = create_basic_wheel_for_package(
         script,
         name='pkgA', version='1.0', depends=['pkgb == 1.0'],
@@ -1418,7 +1399,7 @@ def test_install_conflict_results_in_warning(script, data):
     assert "Successfully installed pkgB-2.0" in result2.stdout, str(result2)
 
 
-def test_install_conflict_warning_can_be_suppressed(script, data):
+def test_install_conflict_warning_can_be_suppressed(script):
     pkgA_path = create_basic_wheel_for_package(
         script,
         name='pkgA', version='1.0', depends=['pkgb == 1.0'],
