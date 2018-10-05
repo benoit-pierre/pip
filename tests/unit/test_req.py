@@ -24,7 +24,7 @@ from pip._internal.req.req_file import process_line
 from pip._internal.req.req_tracker import RequirementTracker
 from pip._internal.resolve import Resolver
 from pip._internal.utils.misc import read_text_file
-from tests.lib import DATA_DIR, assert_raises_regexp, requirements_file
+from tests.lib import assert_raises_regexp, requirements_file
 
 
 def get_processed_req_from_line(line, fname='file', lineno=1):
@@ -624,10 +624,8 @@ def test_exclusive_environment_markers():
     assert req_set.has_requirement('Django')
 
 
-def test_mismatched_versions(caplog, tmpdir):
-    original_source = os.path.join(DATA_DIR, 'src', 'simplewheel-1.0')
-    source_dir = os.path.join(tmpdir, 'simplewheel')
-    shutil.copytree(original_source, source_dir)
+def test_mismatched_versions(caplog, data):
+    source_dir = data.src / 'simplewheel-1.0'
     req = InstallRequirement(req=Requirement('simplewheel==2.0'),
                              comes_from=None, source_dir=source_dir)
     req.run_egg_info()

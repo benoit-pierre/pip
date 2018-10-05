@@ -80,13 +80,12 @@ class Tests_UserSite:
         )
         assert_distributions_installed(script, user='FSPkg-0.1.dev0')
 
-    def test_install_user_venv_nositepkgs_fails(self, script, data):
+    def test_install_user_venv_nositepkgs_fails(self, script):
         """
         user install in virtualenv (with no system packages) fails with message
         """
         result = script.pip(
-            'install', '--user', '.',
-            cwd=data.packages.join("FSPkg"),
+            'install', '--user', 'simplewheel',
             expect_error=True,
         )
         assert (
