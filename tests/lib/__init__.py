@@ -514,9 +514,14 @@ def assert_distributions_installed(script, system=(), user=(),
         }
         expected[location] = set(yield_words(locals()[location]))
 
-    assert installed == expected, 'installed: system=(%s) user=(%s)' % (
-        ', '.join(installed['system']), ', '.join(installed['user'])
-    )
+    assert installed == expected, (
+        '\nexpected: system=(%s) user=(%s)'
+        '\ninstalled: system=(%s) user=(%s)' % (
+            ', '.join(sorted(expected['system'])),
+            ', '.join(sorted(expected['user'])),
+            ', '.join(sorted(installed['system'])),
+            ', '.join(sorted(installed['user'])),
+        ))
 
 
 def _create_test_package_with_subdirectory(script, subdirectory):
