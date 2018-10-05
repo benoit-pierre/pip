@@ -13,7 +13,7 @@ def test_basic_list(script):
         'simple==1.0',
         'simple2==3.0',
     )
-    result = script.pip_list_local()
+    result = script.pip_local('list')
     assert 'simple     1.0' in result.stdout, str(result)
     assert 'simple2    3.0' in result.stdout, str(result)
 
@@ -26,7 +26,7 @@ def test_verbose_flag(script):
         'simple==1.0',
         'simple2==3.0',
     )
-    result = script.pip_list_local('-v', '--format=columns')
+    result = script.pip_local('list', '-v', '--format=columns')
     assert 'Package' in result.stdout, str(result)
     assert 'Version' in result.stdout, str(result)
     assert 'Location' in result.stdout, str(result)
@@ -43,7 +43,7 @@ def test_columns_flag(script):
         'simple==1.0',
         'simple2==3.0',
     )
-    result = script.pip_list_local('--format=columns')
+    result = script.pip_local('list', '--format=columns')
     assert 'Package' in result.stdout, str(result)
     assert 'Version' in result.stdout, str(result)
     assert 'simple (1.0)' not in result.stdout, str(result)
@@ -59,13 +59,13 @@ def test_format_priority(script):
         'simple==1.0',
         'simple2==3.0',
     )
-    result = script.pip_list_local('--format=columns', '--format=freeze')
+    result = script.pip_local('list', '--format=columns', '--format=freeze')
     assert 'simple==1.0' in result.stdout, str(result)
     assert 'simple2==3.0' in result.stdout, str(result)
     assert 'simple     1.0' not in result.stdout, str(result)
     assert 'simple2    3.0' not in result.stdout, str(result)
 
-    result = script.pip_list_local('--format=freeze', '--format=columns')
+    result = script.pip_local('list', '--format=freeze', '--format=columns')
     assert 'Package' in result.stdout, str(result)
     assert 'Version' in result.stdout, str(result)
     assert 'simple==1.0' not in result.stdout, str(result)
@@ -80,7 +80,7 @@ def test_local_flag(script):
 
     """
     script.pip_install_local('simple==1.0')
-    result = script.pip_list_local('--local', '--format=json')
+    result = script.pip_local('list', '--local', '--format=json')
     assert {"name": "simple", "version": "1.0"} in json.loads(result.stdout)
 
 
@@ -90,7 +90,7 @@ def test_local_columns_flag(script):
 
     """
     script.pip_install_local('simple==1.0')
-    result = script.pip_list_local('--local', '--format=columns')
+    result = script.pip_local('list', '--local', '--format=columns')
     assert 'Package' in result.stdout
     assert 'Version' in result.stdout
     assert 'simple (1.0)' not in result.stdout
@@ -105,7 +105,7 @@ def test_user_flag(script, virtualenv):
     virtualenv.system_site_packages = True
     script.pip_install_local('simple==1.0')
     script.pip_install_local('--user', 'simple2==2.0')
-    result = script.pip_list_local('--user', '--format=json')
+    result = script.pip_local('list', '--user', '--format=json')
     assert {"name": "simple", "version": "1.0"} \
         not in json.loads(result.stdout)
     assert {"name": "simple2", "version": "2.0"} in json.loads(result.stdout)
@@ -119,7 +119,7 @@ def test_user_columns_flag(script, virtualenv):
     virtualenv.system_site_packages = True
     script.pip_install_local('simple==1.0')
     script.pip_install_local('--user', 'simple2==2.0')
-    result = script.pip_list_local('--user', '--format=columns')
+    result = script.pip_local('list', '--user', '--format=columns')
     assert 'Package' in result.stdout
     assert 'Version' in result.stdout
     assert 'simple2 (2.0)' not in result.stdout
@@ -238,8 +238,8 @@ def test_editables_flag(script, data, pip_test_package_clone):
         'simple==1.0',
         '-e', '%s#egg=pip-test-package' % pip_test_package_clone,
     )
-    result = script.pip_list_local('--editable', '--format=json')
-    result2 = script.pip_list_local('--editable')
+    result = script.pip_local('list', '--editable', '--format=json')
+    result2 = script.pip_local('list', '--editable')
     assert {"name": "simple", "version": "1.0"} \
         not in json.loads(result.stdout)
     assert os.path.join('src', 'pip-test-package') in result2.stdout
@@ -255,7 +255,7 @@ def test_exclude_editable_flag(script, data, pip_test_package_clone):
         'simple==1.0',
         '-e', '%s#egg=pip-test-package' % pip_test_package_clone,
     )
-    result = script.pip_list_local('--exclude-editable', '--format=json')
+    result = script.pip_local('list', '--exclude-editable', '--format=json')
     assert {"name": "simple", "version": "1.0"} in json.loads(result.stdout)
     assert "pip-test-package" \
         not in {p["name"] for p in json.loads(result.stdout)}
@@ -271,7 +271,7 @@ def test_editables_columns_flag(script, data, pip_test_package_clone):
         'simple==1.0',
         '-e', '%s#egg=pip-test-package' % pip_test_package_clone,
     )
-    result = script.pip_list_local('--editable', '--format=columns')
+    result = script.pip_local('list', '--editable', '--format=columns')
     assert 'Package' in result.stdout
     assert 'Version' in result.stdout
     assert 'Location' in result.stdout
@@ -329,10 +329,10 @@ def test_outdated_editables_flag(script, data, pip_test_package_clone):
     test the behavior of --editable --outdated flag in the list command
     """
     script.pip_install_local(
-               'simple==1.0',
-               '-e', '%s@0.1#egg=pip-test-package' % pip_test_package_clone,
+        'simple==1.0',
+        '-e', '%s@0.1#egg=pip-test-package' % pip_test_package_clone,
     )
-    result = script.pip_list_local('--editable', '--outdated')
+    result = script.pip_local('list', '--editable', '--outdated')
     assert 'simple' not in result.stdout
     assert os.path.join('src', 'pip-test-package') in result.stdout
 
@@ -343,11 +343,11 @@ def test_outdated_editables_columns_flag(script, data, pip_test_package_clone):
     test the behavior of --editable --outdated flag in the list command
     """
     script.pip_install_local(
-               'simple==1.0',
-               '-e', '%s@0.1#egg=pip-test-package' % pip_test_package_clone,
+        'simple==1.0',
+        '-e', '%s@0.1#egg=pip-test-package' % pip_test_package_clone,
     )
-    result = script.pip_list_local('--editable', '--outdated',
-                                   '--format=columns')
+    result = script.pip_local('list', '--editable', '--outdated',
+                              '--format=columns')
     assert 'Package' in result.stdout
     assert 'Version' in result.stdout
     assert 'Location' in result.stdout
@@ -364,15 +364,15 @@ def test_outdated_pre(script, data):
     wheelhouse_path = script.scratch_path / 'wheelhouse'
     wheelhouse_path.join('simple-1.1-py2.py3-none-any.whl').write('')
     wheelhouse_path.join('simple-2.0.dev0-py2.py3-none-any.whl').write('')
-    result = script.pip_list_local('--format=json', links=wheelhouse_path)
+    result = script.pip_local('list', '--format=json', links=wheelhouse_path)
     assert {"name": "simple", "version": "1.0"} in json.loads(result.stdout)
-    result = script.pip_list_local('--format=json', '--outdated',
-                                   links=wheelhouse_path)
+    result = script.pip_local('list', '--format=json', '--outdated',
+                              links=wheelhouse_path)
     assert {"name": "simple", "version": "1.0",
             "latest_version": "1.1", "latest_filetype": "wheel"} \
         in json.loads(result.stdout)
-    result_pre = script.pip_list_local('--outdated', '--pre', '--format=json',
-                                       links=wheelhouse_path)
+    result_pre = script.pip_local('list', '--outdated', '--pre',
+                                  '--format=json', links=wheelhouse_path)
     assert {"name": "simple", "version": "1.0",
             "latest_version": "2.0.dev0", "latest_filetype": "wheel"} \
         in json.loads(result_pre.stdout)
@@ -386,23 +386,23 @@ def test_outdated_formats(script, data):
     script.scratch_path.join("wheelhouse").mkdir()
     wheelhouse_path = script.scratch_path / 'wheelhouse'
     wheelhouse_path.join('simple-1.1-py2.py3-none-any.whl').write('')
-    result = script.pip_list_local('--format=freeze', links=wheelhouse_path)
+    result = script.pip_local('list', '--format=freeze', links=wheelhouse_path)
     assert 'simple==1.0' in result.stdout
 
     # Check columns
-    result = script.pip_list_local('--outdated', '--format=columns',
-                                   links=wheelhouse_path)
+    result = script.pip_local('list', '--outdated', '--format=columns',
+                              links=wheelhouse_path)
     assert 'Package Version Latest Type' in result.stdout
     assert 'simple  1.0     1.1    wheel' in result.stdout
 
     # Check freeze
-    result = script.pip_list_local('--outdated', '--format=freeze',
-                                   links=wheelhouse_path)
+    result = script.pip_local('list', '--outdated', '--format=freeze',
+                              links=wheelhouse_path)
     assert 'simple==1.0' in result.stdout
 
     # Check json
-    result = script.pip_list_local('--outdated', '--format=json',
-                                   links=wheelhouse_path)
+    result = script.pip_local('list', '--outdated', '--format=json',
+                              links=wheelhouse_path)
     data = json.loads(result.stdout)
     assert data == [{'name': 'simple', 'version': '1.0',
                      'latest_version': '1.1', 'latest_filetype': 'wheel'}]
@@ -410,7 +410,7 @@ def test_outdated_formats(script, data):
 
 def test_not_required_flag(script):
     script.pip_install_local('TopoRequires4')
-    result = script.pip_list_local('--not-required')
+    result = script.pip_local('list', '--not-required')
     assert 'TopoRequires4 ' in result.stdout, str(result)
     assert 'TopoRequires ' not in result.stdout
     assert 'TopoRequires2 ' not in result.stdout
@@ -426,7 +426,7 @@ def test_list_freeze(script, data):
         'simple==1.0',
         'simple2==3.0',
     )
-    result = script.pip_list_local('--format=freeze')
+    result = script.pip_local('list', '--format=freeze')
     assert 'simple==1.0' in result.stdout, str(result)
     assert 'simple2==3.0' in result.stdout, str(result)
 
@@ -440,7 +440,7 @@ def test_list_json(script, data):
         'simple==1.0',
         'simple2==3.0',
     )
-    result = script.pip_list_local('--format=json')
+    result = script.pip_local('list', '--format=json')
     data = json.loads(result.stdout)
     assert {'name': 'simple', 'version': '1.0'} in data
     assert {'name': 'simple2', 'version': '3.0'} in data
