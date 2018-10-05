@@ -84,8 +84,8 @@ def test_pep518_with_user_pip(script, virtualenv, pip_src,
     with open(system_pip_dir / '__init__.py', 'w') as fp:
         fp.write('raise ImportError\n')
     script.pip(
-        'wheel', '--no-index', '-f', common_wheels, '-f', data.packages,
-        data.src.join("pep518-3.0"), use_module=True,
+        'wheel', '--no-index', '-f', common_wheels,
+        '-f', data.find_links, "pep518==3.0", use_module=True,
     )
 
 
