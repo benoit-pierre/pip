@@ -312,9 +312,9 @@ def test_should_not_install_always_from_cache(script):
     If there is an old cached package, pip should download the newer version
     Related to issue #175
     """
-    script.pip_install_local('INITools==0.2', expect_error=True)
+    script.pip('install', 'INITools==0.2', expect_error=True)
     script.pip('uninstall', '-y', 'INITools')
-    result = script.pip('install', 'INITools==0.1', expect_error=True)
+    result = script.pip_install_local('INITools==0.1', expect_error=True)
     assert (
         script.site_packages / 'INITools-0.2-py%s.egg-info' %
         pyversion not in result.files_created
