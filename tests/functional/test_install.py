@@ -405,7 +405,7 @@ def test_hashed_install_success(script, data, tmpdir):
             '{simple} --hash=sha256:393043e672415891885c9a2a0929b1af95fb866d6c'
             'a016b42d2e6ce53619b653'.format(simple=file_url),
             tmpdir) as reqs_file:
-        script.pip_install_local('-r', reqs_file.abspath, expect_error=False)
+        script.pip_install_local('-r', reqs_file.abspath)
 
 
 def test_hashed_install_failure(script, tmpdir):
@@ -431,7 +431,7 @@ def test_install_from_local_directory_with_symlinks_to_directories(
     Test installing from a local directory containing symlinks to directories.
     """
     to_install = data.packages.join("symlinks")
-    result = script.pip('install', to_install, expect_error=False)
+    result = script.pip('install', to_install)
     pkg_folder = script.site_packages / 'symlinks'
     egg_info_folder = (
         script.site_packages / 'symlinks-0.1.dev0-py%s.egg-info' % pyversion

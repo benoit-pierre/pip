@@ -573,15 +573,13 @@ def test_freeze_with_requirement_option_package_repeated_multi_file(script):
     assert result.stderr.count('is not installed') == 1
 
 
-def test_freeze_user(script, virtualenv, data):
+def test_freeze_user(script, virtualenv):
     """
     Testing freeze with --user, first we have to install some stuff.
     """
     virtualenv.system_site_packages = True
-    script.pip_install_local('--find-links', data.find_links,
-                             '--user', 'simple==2.0')
-    script.pip_install_local('--find-links', data.find_links,
-                             'simple2==3.0')
+    script.pip_install_local('--user', 'simple==2.0')
+    script.pip_install_local('simple2==3.0')
     result = script.pip('freeze', '--user', expect_stderr=True)
     expected = textwrap.dedent("""\
         simple==2.0
