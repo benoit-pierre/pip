@@ -39,16 +39,15 @@ echo "TOXENV=${TOXENV}"
 
 # Print the commands run for this test.
 set -x
-cat /proc/cpuinfo | grep '^processor' | wc -l
-NPROCS="$(python -c "print(min(5, __import__('multiprocessing').cpu_count()+1))")"
+echo "cores: $(cat /proc/cpuinfo | grep '^processor' | wc -l)"
 if [[ "$GROUP" == "1" ]]; then
     # Unit tests
-    tox -- -m unit -n$NPROCS
+    tox -- -m unit
     # Integration tests (not the ones for 'pip install')
-    tox -- -m integration -n$NPROCS --duration=10 -k "not test_install"
+    tox -- -m integration -n 4 --duration=10 -k "not test_install"
 elif [[ "$GROUP" == "2" ]]; then
     # Separate Job for running integration tests for 'pip install'
-    tox -- -m integration -n$NPROCS --duration=10 -k "test_install"
+    tox -- -m integration -n 4 --duration=10 -k "test_install"
 else
     # Non-Testing Jobs should run once
     tox
