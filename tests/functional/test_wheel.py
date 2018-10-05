@@ -186,12 +186,9 @@ def test_pip_wheel_with_pep518_build_reqs(script, data, common_wheels):
     assert "Installing build dependencies" in result.stdout, result.stdout
 
 
-def test_pip_wheel_with_pep518_build_reqs_no_isolation(script, data):
+def test_pip_wheel_with_pep518_build_reqs_no_isolation(script):
     script.pip_install_local('simplewheel==2.0')
-    result = script.pip(
-        'wheel', '--no-index', '-f', data.find_links,
-        '--no-build-isolation', 'pep518==3.0',
-    )
+    result = script.pip_local('wheel', '--no-build-isolation', 'pep518==3.0',)
     wheel_file_name = 'pep518-3.0-py%s-none-any.whl' % pyversion[0]
     wheel_file_path = script.scratch / wheel_file_name
     assert wheel_file_path in result.files_created, result.stdout
@@ -203,8 +200,8 @@ def test_pip_wheel_with_user_set_in_config(script, data, common_wheels):
     config_file = script.scratch_path / 'pip.conf'
     script.environ['PIP_CONFIG_FILE'] = str(config_file)
     config_file.write("[install]\nuser = true")
-    result = script.pip(
+    result = script.pip_local(
         'wheel', data.src / 'withpyproject',
-        '--no-index', '-f', common_wheels
+        links=common_wheels
     )
     assert "Successfully built withpyproject" in result.stdout, result.stdout

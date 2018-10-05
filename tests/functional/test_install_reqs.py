@@ -342,9 +342,8 @@ def test_constraints_constrain_to_local(script, data):
     script.scratch_path.join("constraints.txt").write(
         "%s#egg=singlemodule" % path_to_url(to_install)
     )
-    result = script.pip(
-        'install', '--no-index', '-f', data.find_links, '-c',
-        script.scratch_path / 'constraints.txt', 'singlemodule')
+    result = script.pip_install_local(
+        '-c', script.scratch_path / 'constraints.txt', 'singlemodule')
     assert 'Running setup.py install for singlemodule' in result.stdout
 
 
@@ -359,8 +358,7 @@ def test_constrained_to_url_install_same_url(script, data):
             in result.stdout), str(result)
 
 
-def test_double_install_spurious_hash_mismatch(
-        script, tmpdir, data, with_wheel):
+def test_double_install_spurious_hash_mismatch(script, tmpdir, with_wheel):
     """Make sure installing the same hashed sdist twice doesn't throw hash
     mismatch errors.
 
@@ -375,19 +373,15 @@ def test_double_install_spurious_hash_mismatch(
                            '0929b1af95fb866d6ca016b42d2e6ce53619b653',
                            tmpdir) as reqs_file:
         # Install a package (and build its wheel):
-        result = script.pip_install_local(
-            '--find-links', data.find_links,
-            '-r', reqs_file.abspath, expect_error=False)
+        result = script.pip_install_local('-r', reqs_file.abspath)
         assert 'Successfully installed simple-1.0' in str(result)
 
         # Uninstall it:
-        script.pip('uninstall', '-y', 'simple', expect_error=False)
+        script.pip('uninstall', '-y', 'simple')
 
         # Then install it again. We should not hit a hash mismatch, and the
         # package should install happily.
-        result = script.pip_install_local(
-            '--find-links', data.find_links,
-            '-r', reqs_file.abspath, expect_error=False)
+        result = script.pip_install_local('-r', reqs_file.abspath)
         assert 'Successfully installed simple-1.0' in str(result)
 
 

@@ -48,13 +48,7 @@ class Tests_UserSite:
         pkg = create_basic_wheel_for_package(script, name='INITools',
                                              version='0.1')
         script.pip_install_local('--user', pkg)
-        result = script.run(
-            'python', '-c',
-            "import pkg_resources; print(pkg_resources.get_distribution"
-            "('initools').project_name)",
-        )
-        project_name = result.stdout.strip()
-        assert 'INITools' == project_name, project_name
+        assert_distributions_installed(script, user='INITools-0.1')
 
     @pytest.mark.network
     def test_install_subversion_usersite_editable_with_distribute(
@@ -64,7 +58,7 @@ class Tests_UserSite:
         distribute
         """
         virtualenv.system_site_packages = True
-        result = script.pip(
+        script.pip(
             'install', '--user', '-e',
             '%s#egg=initools' %
             local_checkout(
@@ -72,7 +66,7 @@ class Tests_UserSite:
                 tmpdir.join("cache"),
             )
         )
-        result.assert_installed('INITools', use_user_site=True)
+        assert_distributions_installed(script, user='INITools-0.3.1.dev0')
 
     def test_install_from_current_directory_into_usersite(
             self, script, virtualenv, data, with_wheel):
@@ -109,12 +103,12 @@ class Tests_UserSite:
         create_basic_wheel_for_package(script, name='INITools', version='0.1')
         create_basic_wheel_for_package(script, name='INITools', version='0.3')
 
-        script.pip_install_local('-f', script.scratch_path,
-                                 '--user', 'INITools==0.3')
+        script.pip_install_local('--user', 'INITools==0.3',
+                                 links=script.scratch_path)
         assert_distributions_installed(script, user='INITools-0.3')
 
-        script.pip_install_local('-f', script.scratch_path,
-                                 '--user', 'INITools==0.1')
+        script.pip_install_local('--user', 'INITools==0.1',
+                                 links=script.scratch_path)
         assert_distributions_installed(script, user='INITools-0.1')
 
     def test_install_user_conflict_in_globalsite(self, script, virtualenv):
@@ -128,11 +122,11 @@ class Tests_UserSite:
         create_basic_wheel_for_package(script, name='INITools', version='0.1')
         create_basic_wheel_for_package(script, name='INITools', version='0.2')
 
-        script.pip_install_local('-f', script.scratch_path, 'INITools==0.2')
+        script.pip_install_local('INITools==0.2', links=script.scratch_path)
         assert_distributions_installed(script, system='INITools-0.2')
 
-        script.pip_install_local('-f', script.scratch_path,
-                                 '--user', 'INITools==0.1')
+        script.pip_install_local('--user', 'INITools==0.1',
+                                 links=script.scratch_path)
         assert_distributions_installed(script,
                                        system='INITools-0.2',
                                        user='INITools-0.1')
@@ -148,10 +142,10 @@ class Tests_UserSite:
         create_basic_wheel_for_package(script, 'INITools', '0.2')
         create_basic_wheel_for_package(script, 'INITools', '0.3.1')
 
-        script.pip_install_local('-f', script.scratch_path, 'INITools==0.2')
+        script.pip_install_local('INITools==0.2', links=script.scratch_path)
         assert_distributions_installed(script, system='INITools-0.2')
-        script.pip_install_local('-f', script.scratch_path,
-                                 '--user', '--upgrade', 'INITools')
+        script.pip_install_local('--user', '--upgrade', 'INITools',
+                                 links=script.scratch_path)
         assert_distributions_installed(script,
                                        system='INITools-0.2',
                                        user='INITools-0.3.1')
@@ -169,15 +163,15 @@ class Tests_UserSite:
         create_basic_wheel_for_package(script, 'INITools', '0.2')
         create_basic_wheel_for_package(script, 'INITools', '0.3')
 
-        script.pip_install_local('-f', script.scratch_path, 'INITools==0.2')
+        script.pip_install_local('INITools==0.2', links=script.scratch_path)
         assert_distributions_installed(script, system='INITools-0.2')
-        script.pip_install_local('-f', script.scratch_path,
-                                 '--user', 'INITools==0.3')
+        script.pip_install_local('--user', 'INITools==0.3',
+                                 links=script.scratch_path)
         assert_distributions_installed(script,
                                        system='INITools-0.2',
                                        user='INITools-0.3')
-        script.pip_install_local('-f', script.scratch_path,
-                                 '--user', 'INITools==0.1')
+        script.pip_install_local('--user', 'INITools==0.1',
+                                 links=script.scratch_path)
         assert_distributions_installed(script,
                                        system='INITools-0.2',
                                        user='INITools-0.1')
@@ -193,11 +187,11 @@ class Tests_UserSite:
         create_basic_wheel_for_package(script, 'INITools', '0.1')
         create_basic_wheel_for_package(script, 'INITools', '0.2')
 
-        script.pip_install_local('-f', script.scratch_path, 'INITools==0.2')
+        script.pip_install_local('INITools==0.2', links=script.scratch_path)
         assert_distributions_installed(script, system='INITools-0.2')
 
-        result = script.pip_install_local('-f', script.scratch_path,
-                                          '--user', 'INITools==0.1',
+        result = script.pip_install_local('--user', 'INITools==0.1',
+                                          links=script.scratch_path,
                                           expect_error=True)
         assert_distributions_installed(script, system='INITools-0.2')
         assert (
