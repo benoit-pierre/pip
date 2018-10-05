@@ -401,9 +401,6 @@ class PipTestEnvironment(scripttest.TestFileEnvironment):
     def pip_install_local(self, *args, **kwargs):
         return self.pip_local("install", *args, **kwargs)
 
-    def pip_list_local(self, *args, **kwargs):
-        return self.pip_local("list", *args, **kwargs)
-
     def easy_install(self, *args, **kwargs):
         args = ('-m', 'easy_install') + args
         return self.run('python', *args, **kwargs)
