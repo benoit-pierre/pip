@@ -389,14 +389,20 @@ class PipTestEnvironment(scripttest.TestFileEnvironment):
             exe = 'pip'
         return self.run(exe, *args, **kwargs)
 
-    def pip_install_local(self, *args, **kwargs):
+    def pip_local(self, command, *args, **kwargs):
         links = kwargs.pop('links',
                            path_to_url(os.path.join(DATA_DIR, "packages")))
         return self.pip(
-            "install", "--no-index",
+            command, "--no-index",
             "--find-links", links,
             *args, **kwargs
         )
+
+    def pip_install_local(self, *args, **kwargs):
+        return self.pip_local("install", *args, **kwargs)
+
+    def pip_list_local(self, *args, **kwargs):
+        return self.pip_local("list", *args, **kwargs)
 
     def easy_install(self, *args, **kwargs):
         args = ('-m', 'easy_install') + args
