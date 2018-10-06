@@ -201,43 +201,8 @@ def virtualenv_template(tmpdir_factory, pip_src,
     tmpdir = Path(str(tmpdir_factory.mktemp('virtualenv')))
     venv = VirtualEnvironment.create(tmpdir.join("venv_orig"))
 
-    # Fix `site.py`.
-    site_py = venv.lib / 'site.py'
-    with open(site_py) as fp:
-        site_contents = fp.read()
-    for pattern, replace in (
-        (
-            # Ensure enabling user site does not result in adding
-            # the real site-packages' directory to `sys.path`.
-            (
-                '\ndef virtual_addsitepackages(known_paths):\n'
-            ),
-            (
-                '\ndef virtual_addsitepackages(known_paths):\n'
-                '    return known_paths\n'
-            ),
-        ),
-        (
-            # Fix sites ordering: user site must be added before system site.
-            (
-                '\n    paths_in_sys = addsitepackages(paths_in_sys)'
-                '\n    paths_in_sys = addusersitepackages(paths_in_sys)\n'
-            ),
-            (
-                '\n    paths_in_sys = addusersitepackages(paths_in_sys)'
-                '\n    paths_in_sys = addsitepackages(paths_in_sys)\n'
-            ),
-        ),
-    ):
-        assert pattern in site_contents
-        site_contents = site_contents.replace(pattern, replace)
-    with open(site_py, 'w') as fp:
-        fp.write(site_contents)
-    # Make sure bytecode is up-to-date too.
-    assert compileall.compile_file(str(site_py), quiet=1, force=True)
-
     # Enable user site.
-    (venv.lib / "no-global-site-packages.txt").rm()
+    venv.user_site_packages = True
 
     # Install setuptools/pip.
     site_packages = Path(get_python_lib(prefix=venv.location))

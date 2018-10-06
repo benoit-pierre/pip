@@ -77,13 +77,13 @@ class Tests_UserSite:
         )
         assert_distributions_installed(script, user='FSPkg-0.1.dev0')
 
-    def test_install_user_venv_nositepkgs_fails(self, script):
+    def test_install_user_venv_nositepkgs_fails(self, virtualenv, script):
         """
         user install in virtualenv (with no system packages) fails with message
         """
         # We can't use PYTHONNOUSERSITE, as it's not
         # honoured by virtualenv's custom site.py.
-        (script.lib_path / "no-global-site-packages.txt").touch()
+        virtualenv.user_site_packages = False
         result = script.pip(
             'install', '--user', 'simplewheel',
             expect_error=True,
