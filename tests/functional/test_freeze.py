@@ -70,7 +70,7 @@ def test_basic_freeze(script):
 def test_freeze_with_pip(script):
     """Test pip shows itself"""
     result = script.pip('freeze', '--all')
-    assert 'pip==' in result.stdout
+    assert '#egg=pip' in result.stdout
 
 
 def test_freeze_with_invalid_names(script):

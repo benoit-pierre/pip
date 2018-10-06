@@ -1,8 +1,6 @@
-import compileall
 import io
 import os
 import shutil
-import subprocess
 import sys
 from distutils.sysconfig import get_python_lib
 
@@ -164,9 +162,6 @@ def pip_src(tmpdir_factory):
             "tests", "pip.egg-info", "build", "dist", ".tox", ".git",
         ),
     )
-    subprocess.check_call((sys.executable, 'setup.py', '-q', 'egg_info'),
-                          cwd=pip_src)
-    assert compileall.compile_dir(str(pip_src), quiet=1, force=True)
     return pip_src
 
 
@@ -194,8 +189,7 @@ def wheel_install(tmpdir_factory, common_wheels):
 
 
 @pytest.yield_fixture(scope='session')
-def virtualenv_template(tmpdir_factory, pip_src,
-                        setuptools_install, common_wheels):
+def virtualenv_template(tmpdir_factory, setuptools_install, common_wheels):
 
     # Create the virtual environment
     tmpdir = Path(str(tmpdir_factory.mktemp('virtualenv')))
@@ -207,10 +201,10 @@ def virtualenv_template(tmpdir_factory, pip_src,
     # Install setuptools/pip.
     site_packages = Path(get_python_lib(prefix=venv.location))
     with open(site_packages / 'easy-install.pth', 'w') as fp:
-        fp.write(str(pip_src / 'src') + '\n' +
+        fp.write(str(SRC_DIR / 'src') + '\n' +
                  str(setuptools_install) + '\n')
     with open(site_packages / 'pip.egg-link', 'w') as fp:
-        fp.write(str(pip_src / 'src') + '\n..')
+        fp.write(str(SRC_DIR / 'src') + '\n..')
     with open(site_packages / 'setuptools.egg-link', 'w') as fp:
         fp.write(str(setuptools_install) + '\n.')
 
