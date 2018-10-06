@@ -8,6 +8,7 @@ from distutils.sysconfig import get_python_lib
 
 import pytest
 import six
+from setuptools.wheel import Wheel
 
 import pip._internal
 from tests.lib import DATA_DIR, SRC_DIR, TestData
@@ -169,18 +170,27 @@ def pip_src(tmpdir_factory):
     return pip_src
 
 
+def _common_wheel_editable_install(tmpdir_factory, common_wheels, package):
+    wheel_candidates = list(common_wheels.glob('%s-*.whl' % package))
+    assert len(wheel_candidates) == 1, wheel_candidates
+    install_dir = Path(str(tmpdir_factory.mktemp(package))) / 'install'
+    Wheel(wheel_candidates[0]).install_as_egg(install_dir)
+    (install_dir / 'EGG-INFO').rename(install_dir / '%s.egg-info' % package)
+    return install_dir
+
+
 @pytest.fixture(scope='session')
 def setuptools_install(tmpdir_factory, common_wheels):
-    install = Path(str(tmpdir_factory.mktemp('setuptools')))
-    subprocess.check_call((sys.executable, '-m', 'pip', 'install',
-                           '--no-index', '-t', install,
-                           '-f', common_wheels,
-                           'setuptools'))
-    egg_info = install / 'setuptools.egg-info'
-    os.rename(next(install.glob('*.dist-info')), egg_info)
-    os.rename(egg_info / 'METADATA', egg_info / 'PKG-INFO')
-    shutil.rmtree(install.abspath / 'bin')
-    return install
+    return _common_wheel_editable_install(tmpdir_factory,
+                                          common_wheels,
+                                          'setuptools')
+
+
+@pytest.fixture(scope='session')
+def wheel_install(tmpdir_factory, common_wheels):
+    return _common_wheel_editable_install(tmpdir_factory,
+                                          common_wheels,
+                                          'wheel')
 
 
 @pytest.yield_fixture(scope='session')
@@ -263,20 +273,6 @@ def virtualenv(virtualenv_template, tmpdir, isolate):
     venv_location = tmpdir.join("workspace", "venv")
     yield VirtualEnvironment.create(venv_location, virtualenv_template)
     venv_location.rmtree(noerrors=True)
-
-
-@pytest.fixture(scope='session')
-def wheel_install(tmpdir_factory, common_wheels):
-    install = Path(str(tmpdir_factory.mktemp('wheel')))
-    subprocess.check_call((sys.executable, '-m', 'pip', 'install',
-                           '--no-index', '-t', install,
-                           '-f', common_wheels,
-                           'wheel'))
-    egg_info = install / 'wheel.egg-info'
-    os.rename(next(install.glob('*.dist-info')), egg_info)
-    os.rename(egg_info / 'METADATA', egg_info / 'PKG-INFO')
-    shutil.rmtree(install.abspath / 'bin')
-    return install
 
 
 @pytest.fixture
