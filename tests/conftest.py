@@ -249,10 +249,23 @@ def virtualenv_template(tmpdir_factory, pip_src,
 
     # Drop (non-relocatable) launchers.
     for exe in os.listdir(venv.bin):
-        if exe.startswith('activate') \
-           or exe.startswith('easy_install') \
-           or exe.startswith('pip'):
+        if not exe.startswith('python'):
             (venv.bin / exe).remove()
+
+    # Create pip launcher.
+    launcher_script = '; '.join((
+        "import sys",
+        "from pip._internal import main",
+        "sys.argv[0] = 'pip'",
+        "sys.exit(main())",
+    ))
+    if sys.platform == 'win32':
+        with open(venv.bin / 'pip.bat', 'w') as fp:
+            fp.write('python.exe -c %r %*' % launcher_script)
+    else:
+        with open(venv.bin / 'pip', 'w') as fp:
+            fp.write('#!/bin/sh\nexec python -c %r "$@"' % launcher_script)
+        os.chmod(venv.bin / 'pip', 0o700)
 
     # Rename original virtualenv directory to make sure
     # it's not reused by mistake from one of the copies.

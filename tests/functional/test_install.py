@@ -34,7 +34,7 @@ def test_pep518_uses_build_env(script, data, common_wheels, command, variant):
         raise ValueError(variant)
     script.pip(
         command, '--no-index', '-f', common_wheels, '-f', data.packages,
-        data.src.join("pep518-3.0"), use_module=True
+        data.src.join("pep518-3.0")
     )
 
 
@@ -85,7 +85,7 @@ def test_pep518_with_user_pip(script, virtualenv, pip_src,
         fp.write('raise ImportError\n')
     script.pip(
         'wheel', '--no-index', '-f', common_wheels,
-        '-f', data.find_links, "pep518==3.0", use_module=True,
+        '-f', data.find_links, "pep518==3.0"
     )
 
 
@@ -95,7 +95,6 @@ def test_pep518_with_extra_and_markers(script, data, common_wheels):
         '-f', common_wheels,
         '-f', data.find_links,
         data.src.join("pep518_with_extra_and_markers-1.0"),
-        use_module=True,
     )
 
 
@@ -1205,9 +1204,7 @@ def test_double_install(script):
     """
     Test double install passing with two same version requirements
     """
-    result = script.pip('install', 'pip', 'pip',
-                        use_module=True,
-                        expect_error=False)
+    result = script.pip('install', 'pip', 'pip', expect_error=False)
     msg = "Double requirement given: pip (already in pip, name='pip')"
     assert msg not in result.stderr
 

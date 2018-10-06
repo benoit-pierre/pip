@@ -18,7 +18,7 @@ _pip_completion()
 complete -o default -F _pip_completion pip"""
 
     result = script.pip('completion', '--bash', use_module=False)
-    assert bash_completion in result.stdout, 'bash completion is wrong'
+    assert bash_completion in result.stdout, result.stdout
 
 
 def test_completion_for_zsh(script):
@@ -37,7 +37,7 @@ function _pip_completion {
 compctl -K _pip_completion pip"""
 
     result = script.pip('completion', '--zsh', use_module=False)
-    assert zsh_completion in result.stdout, 'zsh completion is wrong'
+    assert zsh_completion in result.stdout, result.stdout
 
 
 def test_completion_for_fish(script):
@@ -56,7 +56,7 @@ end
 complete -fa "(__fish_complete_pip)" -c pip"""
 
     result = script.pip('completion', '--fish', use_module=False)
-    assert fish_completion in result.stdout, 'fish completion is wrong'
+    assert fish_completion in result.stdout, result.stdout
 
 
 def test_completion_for_unknown_shell(script):
