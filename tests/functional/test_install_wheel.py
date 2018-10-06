@@ -230,11 +230,10 @@ def test_wheel_record_lines_in_deterministic_order(script, data):
     assert record_lines == sorted(record_lines)
 
 
-def test_install_user_wheel(script, virtualenv, data, with_wheel):
+def test_install_user_wheel(script, data, with_wheel):
     """
     Test user install from wheel (that has a script)
     """
-    virtualenv.system_site_packages = True
     result = script.pip(
         'install', 'has.script==1.0', '--user', '--no-index',
         '--find-links=' + data.find_links,

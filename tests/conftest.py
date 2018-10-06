@@ -207,9 +207,8 @@ def virtualenv_template(tmpdir_factory, pip_src,
         site_contents = fp.read()
     for pattern, replace in (
         (
-            # Ensure `virtualenv.system_site_packages = True` (needed
-            # for testing `--user`) does not result in adding the real
-            # site-packages' directory to `sys.path`.
+            # Ensure enabling user site does not result in adding
+            # the real site-packages' directory to `sys.path`.
             (
                 '\ndef virtual_addsitepackages(known_paths):\n'
             ),
@@ -236,6 +235,9 @@ def virtualenv_template(tmpdir_factory, pip_src,
         fp.write(site_contents)
     # Make sure bytecode is up-to-date too.
     assert compileall.compile_file(str(site_py), quiet=1, force=True)
+
+    # Enable user site.
+    (venv.lib / "no-global-site-packages.txt").rm()
 
     # Install setuptools/pip.
     site_packages = Path(get_python_lib(prefix=venv.location))

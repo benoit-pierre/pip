@@ -18,7 +18,6 @@ class VirtualEnvironment(object):
 
     def __init__(self, location, template=None):
         self.location = Path(location)
-        self._system_site_packages = False
         self._template = template
         home, lib, inc, bin = _virtualenv.path_locations(self.location)
         self.lib = Path(virtualenv_lib_path(home, lib))
@@ -54,16 +53,3 @@ class VirtualEnvironment(object):
 
     def clear(self):
         self._create(clear=True)
-
-    @property
-    def system_site_packages(self):
-        return self._system_site_packages
-
-    @system_site_packages.setter
-    def system_site_packages(self, value):
-        marker = self.lib.join("no-global-site-packages.txt")
-        if value:
-            marker.rm()
-        else:
-            marker.touch()
-        self._system_site_packages = value

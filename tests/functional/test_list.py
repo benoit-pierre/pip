@@ -102,7 +102,6 @@ def test_user_flag(script, virtualenv):
     Test the behavior of --user flag in the list command
 
     """
-    virtualenv.system_site_packages = True
     script.pip_install_local('simple==1.0')
     script.pip_install_local('--user', 'simple2==2.0')
     result = script.pip_local('list', '--user', '--format=json')
@@ -116,7 +115,6 @@ def test_user_columns_flag(script, virtualenv):
     Test the behavior of --user --format=columns flags in the list command
 
     """
-    virtualenv.system_site_packages = True
     script.pip_install_local('simple==1.0')
     script.pip_install_local('--user', 'simple2==2.0')
     result = script.pip_local('list', '--user', '--format=columns')

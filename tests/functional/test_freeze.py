@@ -577,7 +577,6 @@ def test_freeze_user(script, virtualenv):
     """
     Testing freeze with --user, first we have to install some stuff.
     """
-    virtualenv.system_site_packages = True
     script.pip_install_local('--user', 'simple==2.0')
     script.pip_install_local('simple2==3.0')
     result = script.pip('freeze', '--user', expect_stderr=True)

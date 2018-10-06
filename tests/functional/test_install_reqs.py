@@ -231,9 +231,8 @@ def test_install_local_with_subdirectory(script):
 
 
 def test_wheel_user_with_prefix_in_pydistutils_cfg(
-        script, data, virtualenv, with_wheel):
+        script, data, with_wheel):
     # Make sure wheel is available in the virtualenv
-    virtualenv.system_site_packages = True
     if os.name == 'posix':
         user_filename = ".pydistutils.cfg"
     else:

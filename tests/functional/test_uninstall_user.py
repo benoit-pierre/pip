@@ -13,7 +13,6 @@ class Tests_UninstallUserSite:
         """
         Test uninstall from usersite
         """
-        virtualenv.system_site_packages = True
         result1 = script.pip_install_local('--user', 'INITools==0.3')
         result2 = script.pip('uninstall', '-y', 'INITools')
         assert_all_changes(result1, result2, [script.venv / 'build', 'cache'])
@@ -35,7 +34,6 @@ class Tests_UninstallUserSite:
         # 2) adding usersite to PYTHONPATH, so usersite has sys.path precedence
         #    over the virtualenv site
 
-        virtualenv.system_site_packages = True
         script.environ["PYTHONPATH"] = script.base_path / script.user_site
         _patch_dist_in_site_packages(script)
 
@@ -63,7 +61,6 @@ class Tests_UninstallUserSite:
         """
         Test uninstall editable local user install
         """
-        virtualenv.system_site_packages = True
         script.user_site_path.makedirs()
 
         # install

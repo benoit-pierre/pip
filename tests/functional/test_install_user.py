@@ -39,25 +39,23 @@ def _patch_dist_in_site_packages(script):
 
 class Tests_UserSite:
 
-    def test_reset_env_system_site_packages_usersite(self, script, virtualenv):
+    def test_reset_env_system_site_packages_usersite(self, script):
         """
-        `virtualenv.system_site_packages = True` produces env where a --user
-        install can be found using pkg_resources
+        Check user site works as expected.
         """
-        virtualenv.system_site_packages = True
         pkg = create_basic_wheel_for_package(script, name='INITools',
                                              version='0.1')
         script.pip_install_local('--user', pkg)
         assert_distributions_installed(script, user='INITools-0.1')
+        script.run('python', '-c', 'import INITools')
 
     @pytest.mark.network
     def test_install_subversion_usersite_editable_with_distribute(
-            self, script, virtualenv, tmpdir):
+            self, script, tmpdir):
         """
         Test installing current directory ('.') into usersite after installing
         distribute
         """
-        virtualenv.system_site_packages = True
         script.pip(
             'install', '--user', '-e',
             '%s#egg=initools' %
@@ -69,11 +67,10 @@ class Tests_UserSite:
         assert_distributions_installed(script, user='INITools-0.3.1.dev0')
 
     def test_install_from_current_directory_into_usersite(
-            self, script, virtualenv, data, with_wheel):
+            self, script, data, with_wheel):
         """
         Test installing current directory ('.') into usersite
         """
-        virtualenv.system_site_packages = True
         script.pip(
             'install', '-vvv', '--user', os.path.curdir,
             cwd=data.packages.join("FSPkg"),
@@ -84,6 +81,9 @@ class Tests_UserSite:
         """
         user install in virtualenv (with no system packages) fails with message
         """
+        # We can't use PYTHONNOUSERSITE, as it's not
+        # honoured by virtualenv's custom site.py.
+        (script.lib_path / "no-global-site-packages.txt").touch()
         result = script.pip(
             'install', '--user', 'simplewheel',
             expect_error=True,
@@ -93,12 +93,10 @@ class Tests_UserSite:
             "visible in this virtualenv." in result.stderr
         )
 
-    def test_install_user_conflict_in_usersite(self, script, virtualenv):
+    def test_install_user_conflict_in_usersite(self, script):
         """
         Test user install with conflict in usersite updates usersite.
         """
-        virtualenv.system_site_packages = True
-
         create_basic_wheel_for_package(script, name='INITools', version='0.1')
         create_basic_wheel_for_package(script, name='INITools', version='0.3')
 
@@ -110,12 +108,11 @@ class Tests_UserSite:
                                  links=script.scratch_path)
         assert_distributions_installed(script, user='INITools-0.1')
 
-    def test_install_user_conflict_in_globalsite(self, script, virtualenv):
+    def test_install_user_conflict_in_globalsite(self, script):
         """
         Test user install with conflict in global site ignores site and
         installs to usersite
         """
-        virtualenv.system_site_packages = True
         _patch_dist_in_site_packages(script)
 
         create_basic_wheel_for_package(script, name='INITools', version='0.1')
@@ -130,12 +127,11 @@ class Tests_UserSite:
                                        system='INITools-0.2',
                                        user='INITools-0.1')
 
-    def test_upgrade_user_conflict_in_globalsite(self, script, virtualenv):
+    def test_upgrade_user_conflict_in_globalsite(self, script):
         """
         Test user install/upgrade with conflict in global site ignores site and
         installs to usersite
         """
-        virtualenv.system_site_packages = True
         _patch_dist_in_site_packages(script)
 
         create_basic_wheel_for_package(script, 'INITools', '0.2')
@@ -150,12 +146,11 @@ class Tests_UserSite:
                                        user='INITools-0.3.1')
 
     def test_install_user_conflict_in_globalsite_and_usersite(
-            self, script, virtualenv):
+            self, script):
         """
         Test user install with conflict in globalsite and usersite ignores
         global site and updates usersite.
         """
-        virtualenv.system_site_packages = True
         _patch_dist_in_site_packages(script)
 
         create_basic_wheel_for_package(script, 'INITools', '0.1')
@@ -176,13 +171,11 @@ class Tests_UserSite:
                                        user='INITools-0.1')
 
     def test_install_user_in_global_virtualenv_with_conflict_fails(
-            self, script, virtualenv):
+            self, script):
         """
         Test user install in --system-site-packages virtualenv with conflict in
         site fails.
         """
-        virtualenv.system_site_packages = True
-
         create_basic_wheel_for_package(script, 'INITools', '0.1')
         create_basic_wheel_for_package(script, 'INITools', '0.2')
 
