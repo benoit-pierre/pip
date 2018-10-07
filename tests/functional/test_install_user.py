@@ -67,6 +67,7 @@ class Tests_UserSite:
         )
         assert_distributions_installed(script, user='FSPkg-0.1.dev0')
 
+    @pytest.mark.venv_xfail
     def test_install_user_venv_nositepkgs_fails(self, virtualenv, script):
         """
         user install in virtualenv (with no system packages) fails with message

@@ -94,6 +94,7 @@ def handle_install_request(script, requirement):
     return retval
 
 
+@pytest.mark.venv_xfail
 @pytest.mark.yaml
 @pytest.mark.parametrize(
     "case", generate_yaml_tests(DATA_DIR.folder / "yaml"), ids=id_func

@@ -20,9 +20,12 @@ def pytest_addoption(parser):
         "--keep-tmpdir", action="store_true",
         default=False, help="keep temporary test directories"
     )
+    if six.PY3:
+        parser.addoption("--use-venv", action="store_true",
+                         help="use venv for virtual environment creation")
 
 
-def pytest_collection_modifyitems(items):
+def pytest_collection_modifyitems(config, items):
     for item in items:
         if not hasattr(item, 'module'):  # e.g.: DoctestTextfile
             continue
@@ -30,6 +33,9 @@ def pytest_collection_modifyitems(items):
         # Mark network tests as flaky
         if item.get_marker('network') is not None and "CI" in os.environ:
             item.add_marker(pytest.mark.flaky(reruns=3))
+
+        if item.get_marker('venv_xfail') and config.getoption("--use-venv"):
+            item.add_marker(pytest.mark.xfail())
 
         module_path = os.path.relpath(
             item.module.__file__,
@@ -188,11 +194,16 @@ def wheel_install(tmpdir_factory, common_wheels):
 
 
 @pytest.yield_fixture(scope='session')
-def virtualenv_template(tmpdir_factory, setuptools_install, common_wheels):
+def virtualenv_template(request, tmpdir_factory,
+                        setuptools_install, common_wheels):
+
+    venv_type = (
+        'venv' if request.config.getoption('--use-venv') else 'virtualenv'
+    )
 
     # Create the virtual environment
     tmpdir = Path(str(tmpdir_factory.mktemp('virtualenv')))
-    venv = VirtualEnvironment(tmpdir.join("venv_orig"))
+    venv = VirtualEnvironment(tmpdir.join("venv_orig"), venv_type=venv_type)
 
     # Install setuptools/pip.
     with open(venv.site / 'easy-install.pth', 'w') as fp:
