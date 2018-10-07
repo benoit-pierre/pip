@@ -22,7 +22,7 @@ install:
   - "python --version"
   - "python -m pip install --upgrade pip --disable-pip-version-check"
   - "python -m pip install --upgrade certifi setuptools wheel"
-  - "python -m pip install --upgrade tox"
+  - "python -m pip install --upgrade tox tox-venv"
   - "python -m pip freeze --all"
   # Fix git SSL errors.
   - "python -m certifi >cacert.txt"
@@ -68,7 +68,7 @@ test_script:
             $cores = (python -c "print(min(5, __import__('multiprocessing').cpu_count()+1))")
             Write-Host "cores: $cores"
             if ($env:RUN_INTEGRATION_TESTS -eq "True") {
-                tox -e py -- -m integration -n 3 --duration=10
+                tox -e py -- --use-venv -n 3 --duration=10 -m integration
             }
             else {
                 tox -e py -- -m unit -n 3
