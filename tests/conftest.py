@@ -20,9 +20,8 @@ def pytest_addoption(parser):
         "--keep-tmpdir", action="store_true",
         default=False, help="keep temporary test directories"
     )
-    if six.PY3:
-        parser.addoption("--use-venv", action="store_true",
-                         help="use venv for virtual environment creation")
+    parser.addoption("--use-venv", action="store_true",
+                     help="use venv for virtual environment creation")
 
 
 def pytest_collection_modifyitems(config, items):

@@ -7,10 +7,10 @@ import textwrap
 import six
 import virtualenv as _virtualenv
 
+from .path import Path
+
 if six.PY3:
     import venv as _venv
-
-from .path import Path  # noqa: E402
 
 
 class VirtualEnvironment(object):
