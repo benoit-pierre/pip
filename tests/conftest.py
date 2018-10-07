@@ -192,7 +192,7 @@ def virtualenv_template(tmpdir_factory, setuptools_install, common_wheels):
 
     # Create the virtual environment
     tmpdir = Path(str(tmpdir_factory.mktemp('virtualenv')))
-    venv = VirtualEnvironment.create(tmpdir.join("venv_orig"))
+    venv = VirtualEnvironment(tmpdir.join("venv_orig"))
 
     # Install setuptools/pip.
     with open(venv.site / 'easy-install.pth', 'w') as fp:
@@ -227,11 +227,14 @@ def virtualenv_template(tmpdir_factory, setuptools_install, common_wheels):
                      'exec python -c %r "$@"' % (launcher_script % name))
             os.chmod(sh, 0o700)
 
+    # Enable user site packages.
+    venv.user_site_packages = True
+
     # Rename original virtualenv directory to make sure
     # it's not reused by mistake from one of the copies.
     venv_template = tmpdir / "venv_template"
-    os.rename(venv.location, venv_template)
-    yield venv_template
+    venv.move(venv_template)
+    yield venv
     tmpdir.rmtree(noerrors=True)
 
 
@@ -244,9 +247,7 @@ def virtualenv(virtualenv_template, tmpdir, isolate):
     ``tests.lib.venv.VirtualEnvironment`` object.
     """
     venv_location = tmpdir.join("workspace", "venv")
-    venv = VirtualEnvironment.create(venv_location, virtualenv_template)
-    venv.user_site_packages = True
-    yield venv
+    yield VirtualEnvironment(venv_location, virtualenv_template)
     venv_location.rmtree(noerrors=True)
 
 

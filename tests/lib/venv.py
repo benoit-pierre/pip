@@ -18,8 +18,12 @@ class VirtualEnvironment(object):
     def __init__(self, location, template=None):
         self.location = Path(location)
         self._user_site_packages = False
-        self._template = Path(template) if template else None
+        self._template = template
         self._sitecustomize = None
+        self._update_paths()
+        self._create()
+
+    def _update_paths(self):
         home, lib, inc, bin = _virtualenv.path_locations(self.location)
         self.bin = Path(bin)
         self.site = Path(lib) / 'site-packages'
@@ -34,12 +38,6 @@ class VirtualEnvironment(object):
     def __repr__(self):
         return "<VirtualEnvironment {}>".format(self.location)
 
-    @classmethod
-    def create(cls, location, template=None):
-        obj = cls(location, template)
-        obj._create()
-        return obj
-
     def _create(self, clear=False):
         if clear:
             self.location.rmtree()
@@ -49,7 +47,9 @@ class VirtualEnvironment(object):
             if sys.platform == 'win32' and self.location.exists:
                 self.location.rmdir()
             # Clone virtual environment from template.
-            self._template.copytree(self.location)
+            self._template.location.copytree(self.location)
+            self._sitecustomize = self._template.sitecustomize
+            self._user_site_packages = self._template.user_site_packages
         else:
             # Create a new virtual environment.
             _virtualenv.create_environment(
@@ -59,7 +59,8 @@ class VirtualEnvironment(object):
                 no_setuptools=True,
             )
             self._fix_site_module()
-            self._customize_site()
+            self.sitecustomize = self._sitecustomize
+            self.user_site_packages = self._user_site_packages
 
     def _fix_site_module(self):
         # Patch `site.py` so user site work as expected.
@@ -97,18 +98,13 @@ class VirtualEnvironment(object):
         # Make sure bytecode is up-to-date too.
         assert compileall.compile_file(str(site_py), quiet=1, force=True)
 
-    def _customize_site(self):
-        sitecustomize = self.lib.join("sitecustomize.py")
-        if self.sitecustomize is None:
-            contents = ''
-        else:
-            contents = self.sitecustomize + '\n'
-        sitecustomize.write(contents)
-        # Make sure bytecode is up-to-date too.
-        assert compileall.compile_file(str(sitecustomize), quiet=1, force=True)
-
     def clear(self):
         self._create(clear=True)
+
+    def move(self, location):
+        self.location.move(location)
+        self.location = Path(location)
+        self._update_paths()
 
     @property
     def sitecustomize(self):
@@ -116,8 +112,15 @@ class VirtualEnvironment(object):
 
     @sitecustomize.setter
     def sitecustomize(self, value):
+        if value is None:
+            contents = ''
+        else:
+            contents = value + '\n'
+        sitecustomize = self.site / "sitecustomize.py"
+        sitecustomize.write(contents)
+        # Make sure bytecode is up-to-date too.
+        assert compileall.compile_file(str(sitecustomize), quiet=1, force=True)
         self._sitecustomize = value
-        self._customize_site()
 
     @property
     def user_site_packages(self):
@@ -125,7 +128,7 @@ class VirtualEnvironment(object):
 
     @user_site_packages.setter
     def user_site_packages(self, value):
-        marker = self.lib.join("no-global-site-packages.txt")
+        marker = self.lib / "no-global-site-packages.txt"
         if value:
             marker.rm()
         else:
