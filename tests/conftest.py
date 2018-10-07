@@ -216,7 +216,10 @@ def virtualenv_template(request, tmpdir_factory,
 
     # Drop (non-relocatable) launchers.
     for exe in os.listdir(venv.bin):
-        if not exe.startswith('python'):
+        if not (
+            exe.startswith('python') or
+            exe.startswith('libpy')  # Don't remove libpypy-c.so...
+        ):
             (venv.bin / exe).remove()
 
     # Create pip launchers.
