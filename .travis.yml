@@ -8,58 +8,54 @@ stages:
 
 jobs:
   include:
-    # # Basic Checks
-    # - stage: primary
-    #   env: TOXENV=docs
-    # - env: TOXENV=lint-py2
-    # - env: TOXENV=lint-py3
-    #   python: 3.6
-    # - env: TOXENV=mypy
-    #   python: 3.6
-    # - env: TOXENV=packaging
-    #   python: 3.6
-    # # Latest CPython
-    # - env: GROUP=1
-    #   python: 2.7
+    # Basic Checks
+    - stage: primary
+      env: TOXENV=docs
+    - env: TOXENV=lint-py2
+    - env: TOXENV=lint-py3
+      python: 3.6
+    - env: TOXENV=mypy
+      python: 3.6
+    - env: TOXENV=packaging
+      python: 3.6
+    # Latest CPython
+    - env: GROUP=1
+      python: 2.7
     - env: GROUP=2
       python: 2.7
-    # - env: GROUP=1
-    #   python: 3.6
-    # - env: GROUP=2
-    #   python: 3.6
+    - env: GROUP=1
+      python: 3.6
+    - env: GROUP=2
+      python: 3.6
     # Complete checking for ensuring compatibility
     # PyPy
-    # - stage: secondary
-    #   env: GROUP=1
-    #   python: pypy3
+    - stage: secondary
+      env: GROUP=1
+      python: pypy3.5-5.10.1
     - env: GROUP=2
       python: pypy3.5-5.10.1
-    # - env: GROUP=1
-    #   python: pypy
+    - env: GROUP=1
+      python: pypy2.7-5.10.0
     - env: GROUP=2
       python: pypy2.7-5.10.0
     # Other Supported CPython
-    # - env: GROUP=1
-    #   python: 3.7
-    #   dist: xenial
+    - env: GROUP=1
+      python: 3.7
     - env: GROUP=2
       python: 3.7
-      dist: xenial
-    # - env: GROUP=1
-    #   python: 3.5
-    # - env: GROUP=2
-    #   python: 3.5
-    # - env: GROUP=1
-    #   python: 3.4
-    # - env: GROUP=2
-    #   python: 3.4
+    - env: GROUP=1
+      python: 3.5
+    - env: GROUP=2
+      python: 3.5
+    - env: GROUP=1
+      python: 3.4
+    - env: GROUP=2
+      python: 3.4
 
-    # - env: GROUP=1
-    #   python: 3.8-dev
-    #   dist: xenial
-    # - env: GROUP=2
-    #   python: 3.8-dev
-    #   dist: xenial
+    - env: GROUP=1
+      python: 3.8-dev
+    - env: GROUP=2
+      python: 3.8-dev
 
   # It's okay to fail on the in-development CPython version.
   fast_finish: true
