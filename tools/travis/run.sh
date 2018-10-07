@@ -26,7 +26,7 @@ fi
 # Export the correct TOXENV when not provided.
 echo "Determining correct TOXENV..."
 if [[ -z "$TOXENV" ]]; then
-  TOXENV='py'
+  export TOXENV='py'
 fi
 echo "TOXENV=${TOXENV}"
 
