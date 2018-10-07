@@ -196,9 +196,10 @@ def wheel_install(tmpdir_factory, common_wheels):
 def virtualenv_template(request, tmpdir_factory,
                         setuptools_install, common_wheels):
 
-    venv_type = (
-        'venv' if request.config.getoption('--use-venv') else 'virtualenv'
-    )
+    if six.PY3 and request.config.getoption('--use-venv'):
+        venv_type = 'venv'
+    else:
+        venv_type = 'virtualenv'
 
     # Create the virtual environment
     tmpdir = Path(str(tmpdir_factory.mktemp('virtualenv')))
