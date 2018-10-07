@@ -9,7 +9,7 @@ import six
 from setuptools.wheel import Wheel
 
 import pip._internal
-from tests.lib import DATA_DIR, SRC_DIR, TestData
+from tests.lib import DATA_DIR, SRC_DIR, TestData, pyversion
 from tests.lib.local_repos import local_checkout
 from tests.lib.path import Path
 from tests.lib.scripttest import PipTestEnvironment
@@ -217,16 +217,20 @@ def virtualenv_template(tmpdir_factory, setuptools_install, common_wheels):
     launcher_script = '; '.join((
         "import sys",
         "from pip._internal import main",
-        "sys.argv[0] = 'pip'",
+        "sys.argv[0] = '%s'",
         "sys.exit(main())",
     ))
+    launchers = ('pip', 'pip' + pyversion[0], 'pip' + pyversion)
     if sys.platform == 'win32':
-        with open(venv.bin / 'pip.bat', 'w') as fp:
-            fp.write('python.exe -c %r %*' % launcher_script)
+        for name in launchers:
+            bat = venv.bin.join('%s.bat' % name)
+            bat.write('python.exe -c %r %%*' % (launcher_script % name))
     else:
-        with open(venv.bin / 'pip', 'w') as fp:
-            fp.write('#!/bin/sh\nexec python -c %r "$@"' % launcher_script)
-        os.chmod(venv.bin / 'pip', 0o700)
+        for name in launchers:
+            sh = venv.bin.join(name)
+            sh.write('#!/bin/sh\n'
+                     'exec python -c %r "$@"' % (launcher_script % name))
+            os.chmod(sh, 0o700)
 
     # Rename original virtualenv directory to make sure
     # it's not reused by mistake from one of the copies.

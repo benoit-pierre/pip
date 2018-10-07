@@ -14,8 +14,8 @@ from pip._internal.models.index import PyPI, TestPyPI
 from pip._internal.utils.misc import rmtree
 from tests.lib import (
     _create_svn_repo, _create_test_package, create_basic_wheel_for_package,
-    need_bzr, need_mercurial, path_to_url, pyversion, pyversion_tuple,
-    requirements_file,
+    need_bzr, need_mercurial, need_svn, path_to_url, pyversion,
+    pyversion_tuple, requirements_file,
 )
 from tests.lib.local_repos import local_checkout
 from tests.lib.path import Path
@@ -116,7 +116,6 @@ def test_pep518_forkbombs(script, data, common_wheels, command, package):
     ) in result.stdout, str(result)
 
 
-@pytest.mark.skip
 def test_pip_second_command_line_interface_works(script, data):
     """
     Check if ``pip<PYVERSION>`` commands behaves equally
@@ -187,7 +186,7 @@ def test_basic_editable_install(script):
     assert not result.files_updated
 
 
-@pytest.mark.svn
+@need_svn
 def test_basic_install_editable_from_svn(script):
     """
     Test checking out from svn.
@@ -395,8 +394,7 @@ def test_hashed_install_success(script, data, tmpdir):
     scenes).
 
     """
-    file_url = path_to_url(
-        (data.packages / 'simple-1.0.tar.gz').abspath)
+    file_url = path_to_url((data.packages / 'simple-1.0.tar.gz').abspath)
     with requirements_file(
             'simple2==1.0 --hash=sha256:9336af72ca661e6336eb87bc7de3e8844d853e'
             '3848c2b9bbd2e8bf01db88c2c7\n'

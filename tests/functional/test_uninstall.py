@@ -13,7 +13,7 @@ import pytest
 from pip._internal.req.constructors import install_req_from_line
 from tests.lib import (
     DATA_DIR, assert_all_changes, create_basic_wheel_for_package,
-    create_test_package_with_setup,
+    create_test_package_with_setup, need_svn,
 )
 from tests.lib.local_repos import local_checkout
 
@@ -288,6 +288,7 @@ def test_uninstall_easy_installed_console_scripts(script):
 
 
 @pytest.mark.network
+@need_svn
 def test_uninstall_editable_from_svn(script, tmpdir):
     """
     Test uninstalling an editable installation from svn.
@@ -338,6 +339,7 @@ def test_uninstall_editable_with_source_outside_venv(
 
 
 @pytest.mark.network
+@need_svn
 def test_uninstall_from_reqs_file(script, tmpdir):
     """
     Test uninstall from a requirements file.

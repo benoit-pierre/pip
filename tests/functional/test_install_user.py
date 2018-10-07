@@ -8,7 +8,7 @@ import pytest
 
 from pip._internal.utils.compat import cache_from_source, uses_pycache
 from tests.lib import (
-    assert_distributions_installed, create_basic_wheel_for_package,
+    assert_distributions_installed, create_basic_wheel_for_package, need_svn,
 )
 from tests.lib.local_repos import local_checkout
 
@@ -50,6 +50,7 @@ class Tests_UserSite:
         script.run('python', '-c', 'import INITools')
 
     @pytest.mark.network
+    @need_svn
     def test_install_subversion_usersite_editable_with_distribute(
             self, script, tmpdir):
         """

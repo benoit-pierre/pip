@@ -839,3 +839,9 @@ def need_mercurial(fn):
     return pytest.mark.mercurial(need_executable(
         'Mercurial', ('hg', 'version')
     )(fn))
+
+
+def need_svn(fn):
+    return pytest.mark.svn(need_executable(
+        'Subversion', ('svn', '--version', '--quiet')
+    )(fn))

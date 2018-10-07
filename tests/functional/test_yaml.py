@@ -6,7 +6,7 @@ import re
 
 import pytest
 
-from tests.lib import DATA_DIR, create_basic_wheel_for_package, path_to_url
+from tests.lib import DATA_DIR, create_basic_wheel_for_package
 from tests.lib.yaml_helpers import generate_yaml_tests, id_func
 
 _conflict_finder_re = re.compile(
@@ -53,11 +53,8 @@ def handle_install_request(script, requirement):
     assert isinstance(requirement, str), (
         "Need install requirement to be a string only"
     )
-    result = script.pip(
-        "install",
-        "--no-index", "--find-links", path_to_url(script.scratch_path),
-        requirement
-    )
+    result = script.pip_local("install", requirement,
+                              links=script.scratch_path)
 
     retval = {}
     if result.returncode == 0:

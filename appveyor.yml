@@ -20,7 +20,9 @@ clone_depth: 50
 install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - "python --version"
-  - "pip install certifi tox"
+  - "python -m pip install --upgrade pip --disable-pip-version-check"
+  - "python -m pip install --upgrade certifi setuptools wheel"
+  - "python -m pip install --upgrade tox"
   # Fix git SSL errors.
   - "python -m certifi >cacert.txt"
   - "set /p GIT_SSL_CAINFO=<cacert.txt"
