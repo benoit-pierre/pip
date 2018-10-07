@@ -8,9 +8,9 @@ stages:
 
 jobs:
   include:
-    # Basic Checks
-    - stage: primary
-      env: TOXENV=docs
+    # # Basic Checks
+    # - stage: primary
+    #   env: TOXENV=docs
     # - env: TOXENV=lint-py2
     - env: TOXENV=lint-py3
       python: 3.6
@@ -32,34 +32,34 @@ jobs:
     - stage: secondary
       env: GROUP=1
       python: pypy3
-    # - env: GROUP=2
-    #   python: pypy3
+    - env: GROUP=2
+      python: pypy3
     - env: GROUP=1
       python: pypy
-    # - env: GROUP=2
-    #   python: pypy
-    # # Other Supported CPython
-    # - env: GROUP=1
-    #   python: 3.7
-    #   dist: xenial
-    # - env: GROUP=2
-    #   python: 3.7
-    #   dist: xenial
-    # - env: GROUP=1
-    #   python: 3.5
-    # - env: GROUP=2
-    #   python: 3.5
-    # - env: GROUP=1
-    #   python: 3.4
-    # - env: GROUP=2
-    #   python: 3.4
+    - env: GROUP=2
+      python: pypy
+    # Other Supported CPython
+    - env: GROUP=1
+      python: 3.7
+      dist: xenial
+    - env: GROUP=2
+      python: 3.7
+      dist: xenial
+    - env: GROUP=1
+      python: 3.5
+    - env: GROUP=2
+      python: 3.5
+    - env: GROUP=1
+      python: 3.4
+    - env: GROUP=2
+      python: 3.4
 
-    # - env: GROUP=1
-    #   python: 3.8-dev
-    #   dist: xenial
-    # - env: GROUP=2
-    #   python: 3.8-dev
-    #   dist: xenial
+    - env: GROUP=1
+      python: 3.8-dev
+      dist: xenial
+    - env: GROUP=2
+      python: 3.8-dev
+      dist: xenial
 
   # It's okay to fail on the in-development CPython version.
   fast_finish: true

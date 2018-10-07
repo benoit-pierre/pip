@@ -208,24 +208,25 @@ def virtualenv_template(tmpdir_factory, setuptools_install, common_wheels):
         if not exe.startswith('python'):
             (venv.bin / exe).remove()
 
-    # Create pip launcher.
+    # Create pip launchers.
     launcher_script = '; '.join((
         "import sys",
         "from pip._internal import main",
         "sys.argv[0] = '%s'",
         "sys.exit(main())",
     ))
-    launchers = ('pip', 'pip' + pyversion[0], 'pip' + pyversion)
+    launcher_list = ('pip', 'pip' + pyversion[0], 'pip' + pyversion)
     if sys.platform == 'win32':
-        for name in launchers:
-            bat = venv.bin.join('%s.bat' % name)
-            bat.write('python.exe -c %r %%*' % (launcher_script % name))
+        launcher_name_template = '%s.bat'
+        launcher_template = 'python.exe -c %r %%*'
     else:
-        for name in launchers:
-            sh = venv.bin.join(name)
-            sh.write('#!/bin/sh\n'
-                     'exec python -c %r "$@"' % (launcher_script % name))
-            os.chmod(sh, 0o700)
+        launcher_name_template = '%s'
+        launcher_template = '#!/bin/sh\nexec python -c %r "$@"'
+    for name in launcher_list:
+        launcher = venv.bin.join(launcher_name_template % name)
+        launcher.write(launcher_template % (launcher_script % name))
+        if sys.platform != 'win32':
+            os.chmod(launcher, 0o700)
 
     # Enable user site packages.
     venv.user_site_packages = True
