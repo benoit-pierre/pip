@@ -1,13 +1,11 @@
 from __future__ import absolute_import
 
 import compileall
-import os
-import shutil
 import sys
 
+import six
 import virtualenv as _virtualenv
 
-from . import virtualenv_lib_path
 from .path import Path
 
 
@@ -20,10 +18,18 @@ class VirtualEnvironment(object):
     def __init__(self, location, template=None):
         self.location = Path(location)
         self._user_site_packages = False
-        self._template = template
+        self._template = Path(template) if template else None
+        self._sitecustomize = None
         home, lib, inc, bin = _virtualenv.path_locations(self.location)
-        self.lib = Path(virtualenv_lib_path(home, lib))
         self.bin = Path(bin)
+        self.site = Path(lib) / 'site-packages'
+        # Workaround for https://github.com/pypa/virtualenv/issues/306
+        if hasattr(sys, "pypy_version_info"):
+            version_fmt = '{0}' if six.PY3 else '{0}.{1}'
+            version_dir = version_fmt.format(*sys.version_info)
+            self.lib = Path(home, 'lib-python', version_dir)
+        else:
+            self.lib = Path(lib)
 
     def __repr__(self):
         return "<VirtualEnvironment {}>".format(self.location)
@@ -36,14 +42,14 @@ class VirtualEnvironment(object):
 
     def _create(self, clear=False):
         if clear:
-            shutil.rmtree(self.location)
+            self.location.rmtree()
         if self._template:
             # On Windows, calling `_virtualenv.path_locations(target)`
             # will have created the `target` directory...
-            if sys.platform == 'win32' and os.path.exists(self.location):
-                os.rmdir(self.location)
+            if sys.platform == 'win32' and self.location.exists:
+                self.location.rmdir()
             # Clone virtual environment from template.
-            shutil.copytree(self._template, self.location, symlinks=True)
+            self._template.copytree(self.location)
         else:
             # Create a new virtual environment.
             _virtualenv.create_environment(
@@ -53,6 +59,7 @@ class VirtualEnvironment(object):
                 no_setuptools=True,
             )
             self._fix_site_module()
+            self._customize_site()
 
     def _fix_site_module(self):
         # Patch `site.py` so user site work as expected.
@@ -90,8 +97,27 @@ class VirtualEnvironment(object):
         # Make sure bytecode is up-to-date too.
         assert compileall.compile_file(str(site_py), quiet=1, force=True)
 
+    def _customize_site(self):
+        sitecustomize = self.lib.join("sitecustomize.py")
+        if self.sitecustomize is None:
+            contents = ''
+        else:
+            contents = self.sitecustomize + '\n'
+        sitecustomize.write(contents)
+        # Make sure bytecode is up-to-date too.
+        assert compileall.compile_file(str(sitecustomize), quiet=1, force=True)
+
     def clear(self):
         self._create(clear=True)
+
+    @property
+    def sitecustomize(self):
+        return self._sitecustomize
+
+    @sitecustomize.setter
+    def sitecustomize(self, value):
+        self._sitecustomize = value
+        self._customize_site()
 
     @property
     def user_site_packages(self):

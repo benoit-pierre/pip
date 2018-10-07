@@ -6,35 +6,24 @@ import textwrap
 
 import pytest
 
-from pip._internal.utils.compat import cache_from_source, uses_pycache
 from tests.lib import (
     assert_distributions_installed, create_basic_wheel_for_package, need_svn,
 )
 from tests.lib.local_repos import local_checkout
 
 
-def _patch_dist_in_site_packages(script):
+def _patch_dist_in_site_packages(virtualenv):
     # Since the tests are run from a virtualenv, and to avoid the "Will not
     # install to the usersite because it will lack sys.path precedence..."
     # error: Monkey patch `pip._internal.req.req_install.dist_in_site_packages`
     # so it's possible to install a conflicting distribution in the user site.
-    sitecustomize_path = script.lib_path.join("sitecustomize.py")
-    sitecustomize_path.write(textwrap.dedent("""
+    virtualenv.sitecustomize = textwrap.dedent("""
         def dist_in_site_packages(dist):
             return False
 
         from pip._internal.req import req_install
         req_install.dist_in_site_packages = dist_in_site_packages
-    """))
-
-    # Caught py32 with an outdated __pycache__ file after a sitecustomize
-    #   update (after python should have updated it) so will delete the cache
-    #   file to be sure
-    #   See: https://github.com/pypa/pip/pull/893#issuecomment-16426701
-    if uses_pycache:
-        cache_path = cache_from_source(sitecustomize_path)
-        if os.path.isfile(cache_path):
-            os.remove(cache_path)
+    """)
 
 
 class Tests_UserSite:
@@ -109,12 +98,12 @@ class Tests_UserSite:
                                  links=script.scratch_path)
         assert_distributions_installed(script, user='INITools-0.1')
 
-    def test_install_user_conflict_in_globalsite(self, script):
+    def test_install_user_conflict_in_globalsite(self, virtualenv, script):
         """
         Test user install with conflict in global site ignores site and
         installs to usersite
         """
-        _patch_dist_in_site_packages(script)
+        _patch_dist_in_site_packages(virtualenv)
 
         create_basic_wheel_for_package(script, name='INITools', version='0.1')
         create_basic_wheel_for_package(script, name='INITools', version='0.2')
@@ -128,12 +117,12 @@ class Tests_UserSite:
                                        system='INITools-0.2',
                                        user='INITools-0.1')
 
-    def test_upgrade_user_conflict_in_globalsite(self, script):
+    def test_upgrade_user_conflict_in_globalsite(self, virtualenv, script):
         """
         Test user install/upgrade with conflict in global site ignores site and
         installs to usersite
         """
-        _patch_dist_in_site_packages(script)
+        _patch_dist_in_site_packages(virtualenv)
 
         create_basic_wheel_for_package(script, 'INITools', '0.2')
         create_basic_wheel_for_package(script, 'INITools', '0.3.1')
@@ -147,12 +136,12 @@ class Tests_UserSite:
                                        user='INITools-0.3.1')
 
     def test_install_user_conflict_in_globalsite_and_usersite(
-            self, script):
+            self, virtualenv, script):
         """
         Test user install with conflict in globalsite and usersite ignores
         global site and updates usersite.
         """
-        _patch_dist_in_site_packages(script)
+        _patch_dist_in_site_packages(virtualenv)
 
         create_basic_wheel_for_package(script, 'INITools', '0.1')
         create_basic_wheel_for_package(script, 'INITools', '0.2')

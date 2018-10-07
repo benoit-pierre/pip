@@ -2,7 +2,6 @@ import io
 import os
 import shutil
 import sys
-from distutils.sysconfig import get_python_lib
 
 import pytest
 import six
@@ -196,13 +195,12 @@ def virtualenv_template(tmpdir_factory, setuptools_install, common_wheels):
     venv = VirtualEnvironment.create(tmpdir.join("venv_orig"))
 
     # Install setuptools/pip.
-    site_packages = Path(get_python_lib(prefix=venv.location))
-    with open(site_packages / 'easy-install.pth', 'w') as fp:
+    with open(venv.site / 'easy-install.pth', 'w') as fp:
         fp.write(str(SRC_DIR / 'src') + '\n' +
                  str(setuptools_install) + '\n')
-    with open(site_packages / 'pip.egg-link', 'w') as fp:
+    with open(venv.site / 'pip.egg-link', 'w') as fp:
         fp.write(str(SRC_DIR / 'src') + '\n..')
-    with open(site_packages / 'setuptools.egg-link', 'w') as fp:
+    with open(venv.site / 'setuptools.egg-link', 'w') as fp:
         fp.write(str(setuptools_install) + '\n.')
 
     # Drop (non-relocatable) launchers.
@@ -254,10 +252,9 @@ def virtualenv(virtualenv_template, tmpdir, isolate):
 
 @pytest.fixture
 def with_wheel(virtualenv, wheel_install):
-    site_packages = Path(get_python_lib(prefix=virtualenv.location))
-    with open(site_packages / 'easy-install.pth', 'a') as fp:
+    with open(virtualenv.site / 'easy-install.pth', 'a') as fp:
         fp.write(str(wheel_install) + '\n')
-    with open(site_packages / 'wheel.egg-link', 'w') as fp:
+    with open(virtualenv.site / 'wheel.egg-link', 'w') as fp:
         fp.write(str(wheel_install) + '\n.')
 
 
@@ -274,7 +271,7 @@ def script(tmpdir, virtualenv):
         tmpdir.join("workspace"),
 
         # Tell the Test Environment where our virtualenv is located
-        virtualenv=virtualenv.location,
+        virtualenv=virtualenv,
 
         # Do not ignore hidden files, they need to be checked as well
         ignore_hidden=False,

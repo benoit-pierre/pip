@@ -15,7 +15,9 @@ jobs:
     - env: TOXENV=lint-py3
       python: 3.6
     - env: TOXENV=mypy
+      python: 3.6
     - env: TOXENV=packaging
+      python: 3.6
     # Latest CPython
     - env: GROUP=1
       python: 2.7

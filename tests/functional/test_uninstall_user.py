@@ -9,7 +9,7 @@ from tests.lib import assert_all_changes, pyversion
 
 class Tests_UninstallUserSite:
 
-    def test_uninstall_from_usersite(self, script, virtualenv):
+    def test_uninstall_from_usersite(self, script):
         """
         Test uninstall from usersite
         """
@@ -18,7 +18,7 @@ class Tests_UninstallUserSite:
         assert_all_changes(result1, result2, [script.venv / 'build', 'cache'])
 
     def test_uninstall_from_usersite_with_dist_in_global_site(
-            self, script, virtualenv):
+            self, virtualenv, script):
         """
         Test uninstall from usersite (with same dist in global site)
         """
@@ -35,7 +35,7 @@ class Tests_UninstallUserSite:
         #    over the virtualenv site
 
         script.environ["PYTHONPATH"] = script.base_path / script.user_site
-        _patch_dist_in_site_packages(script)
+        _patch_dist_in_site_packages(virtualenv)
 
         script.pip_install_local('pip-test-package==0.1', '--no-binary=:all:')
 
@@ -57,7 +57,7 @@ class Tests_UninstallUserSite:
         )
         assert isdir(egg_info_folder)
 
-    def test_uninstall_editable_from_usersite(self, script, virtualenv, data):
+    def test_uninstall_editable_from_usersite(self, script, data):
         """
         Test uninstall editable local user install
         """
