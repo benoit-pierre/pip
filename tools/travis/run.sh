@@ -31,17 +31,25 @@ fi
 echo "TOXENV=${TOXENV}"
 
 # Print the commands run for this test.
-set -x
 echo "cores: $(cat /proc/cpuinfo | grep '^processor' | wc -l)"
+tox=(tox --)
+case "${TRAVIS_PYTHON_VERSION}" in
+  *pypy3*|3*)
+    tox+=(--use-venv)
+    ;;
+esac
 if [[ "$GROUP" == "1" ]]; then
-    # Unit tests
-    tox -- -m unit
-    # Integration tests (not the ones for 'pip install')
-    tox -- -m integration -n 3 --duration=10 -k "not test_install"
+  set -x
+  # Unit tests
+  "${tox[@]}" -m unit
+  # Integration tests (not the ones for 'pip install')
+  "${tox[@]}" -m integration -n 3 --duration=10 -k "not test_install"
 elif [[ "$GROUP" == "2" ]]; then
-    # Separate Job for running integration tests for 'pip install'
-    tox -- -m integration -n 3 --duration=10 -k "test_install"
+  set -x
+  # Separate Job for running integration tests for 'pip install'
+  "${tox[@]}" -m integration -n 3 --duration=10 -k "test_install"
 else
-    # Non-Testing Jobs should run once
-    tox
+  set -x
+  # Non-Testing Jobs should run once
+  "${tox[@]}"
 fi
