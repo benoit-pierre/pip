@@ -70,7 +70,7 @@ def test_basic_freeze(script):
 def test_freeze_with_pip(script):
     """Test pip shows itself"""
     result = script.pip('freeze', '--all')
-    assert 'pip==' in result.stdout
+    assert '#egg=pip' in result.stdout
 
 
 def test_freeze_with_invalid_names(script):
@@ -576,7 +576,6 @@ def test_freeze_user(script, virtualenv, data):
     Testing freeze with --user, first we have to install some stuff.
     """
     script.pip('download', 'setuptools', 'wheel', '-d', data.packages)
-    virtualenv.system_site_packages = True
     script.pip_install_local('--find-links', data.find_links,
                              '--user', 'simple==2.0')
     script.pip_install_local('--find-links', data.find_links,
