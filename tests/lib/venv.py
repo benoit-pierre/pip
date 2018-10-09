@@ -2,11 +2,15 @@ from __future__ import absolute_import
 
 import compileall
 import sys
+import textwrap
 
 import six
 import virtualenv as _virtualenv
 
 from .path import Path
+
+if six.PY3:
+    import venv as _venv
 
 
 class VirtualEnvironment(object):
@@ -15,8 +19,11 @@ class VirtualEnvironment(object):
     virtualenv but in the future it could use pyvenv.
     """
 
-    def __init__(self, location, template=None):
+    def __init__(self, location, template=None, venv_type=None):
+        assert template is None or venv_type is None
+        assert venv_type in (None, 'virtualenv', 'venv')
         self.location = Path(location)
+        self._venv_type = venv_type or template._venv_type or 'virtualenv'
         self._user_site_packages = False
         self._template = template
         self._sitecustomize = None
@@ -52,17 +59,24 @@ class VirtualEnvironment(object):
             self._user_site_packages = self._template.user_site_packages
         else:
             # Create a new virtual environment.
-            _virtualenv.create_environment(
-                self.location,
-                no_pip=True,
-                no_wheel=True,
-                no_setuptools=True,
-            )
-            self._fix_site_module()
+            if self._venv_type == 'virtualenv':
+                _virtualenv.create_environment(
+                    self.location,
+                    no_pip=True,
+                    no_wheel=True,
+                    no_setuptools=True,
+                )
+                self._fix_virtualenv_site_module()
+            elif self._venv_type == 'venv':
+                builder = _venv.EnvBuilder()
+                context = builder.ensure_directories(self.location)
+                builder.create_configuration(context)
+                builder.setup_python(context)
+                self.site.makedirs()
             self.sitecustomize = self._sitecustomize
             self.user_site_packages = self._user_site_packages
 
-    def _fix_site_module(self):
+    def _fix_virtualenv_site_module(self):
         # Patch `site.py` so user site work as expected.
         site_py = self.lib / 'site.py'
         with open(site_py) as fp:
@@ -100,6 +114,25 @@ class VirtualEnvironment(object):
 
     def _customize_site(self):
         contents = ''
+        if self._venv_type == 'venv':
+            # Enable user site (before system).
+            contents += textwrap.dedent(
+                '''
+                import os, site, sys
+
+                if not os.environ.get('PYTHONNOUSERSITE', False):
+                    site.ENABLE_USER_SITE = True
+                    final_sys_path = sys.path[:]
+                    sys.path = []
+                    site.addsitedir(site.getusersitepackages())
+                    for path in site.getsitepackages():
+                        site.addsitedir(path)
+                    for p in sys.path:
+                        if p in final_sys_path:
+                            final_sys_path.remove(p)
+                        final_sys_path.append(p)
+                    sys.path = final_sys_path
+                ''').strip()
         if self._sitecustomize is not None:
             contents += '\n' + self._sitecustomize
         sitecustomize = self.site / "sitecustomize.py"
@@ -131,8 +164,11 @@ class VirtualEnvironment(object):
     @user_site_packages.setter
     def user_site_packages(self, value):
         self._user_site_packages = value
-        marker = self.lib / "no-global-site-packages.txt"
-        if self._user_site_packages:
-            marker.rm()
-        else:
-            marker.touch()
+        if self._venv_type == 'virtualenv':
+            marker = self.lib / "no-global-site-packages.txt"
+            if self._user_site_packages:
+                marker.rm()
+            else:
+                marker.touch()
+        elif self._venv_type == 'venv':
+            self._customize_site()
