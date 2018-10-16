@@ -23,7 +23,6 @@ def test_cleanup_after_install(script, data):
     script.assert_no_temp()
 
 
-@pytest.mark.network
 def test_no_clean_option_blocks_cleaning_after_install(script, data):
     """
     Test --no-clean option blocks cleaning after install
@@ -121,7 +120,6 @@ def test_cleanup_after_egg_info_exception(script, data):
     script.assert_no_temp()
 
 
-@pytest.mark.network
 def test_cleanup_prevented_upon_build_dir_exception(script, data):
     """
     Test no cleanup occurs after a PreviousBuildDirError

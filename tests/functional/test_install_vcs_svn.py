@@ -1,11 +1,9 @@
-import pytest
 from mock import patch
 
 from pip._internal.vcs.subversion import Subversion
 
 
 @patch('pip._internal.vcs.call_subprocess')
-@pytest.mark.network
 def test_obtain_should_recognize_auth_info_url(call_subprocess_mock, script):
     svn = Subversion(url='svn+http://username:password@svn.example.com/')
     svn.obtain(script.scratch_path / 'test')
@@ -17,7 +15,6 @@ def test_obtain_should_recognize_auth_info_url(call_subprocess_mock, script):
 
 
 @patch('pip._internal.vcs.call_subprocess')
-@pytest.mark.network
 def test_export_should_recognize_auth_info_url(call_subprocess_mock, script):
     svn = Subversion(url='svn+http://username:password@svn.example.com/')
     svn.export(script.scratch_path / 'test')
