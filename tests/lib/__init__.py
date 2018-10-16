@@ -6,9 +6,11 @@ import sys
 import re
 import textwrap
 import site
-import shutil
 import subprocess
+import time
+import zipfile
 
+import pkg_resources
 import pytest
 from scripttest import FoundDir, TestFileEnvironment
 
@@ -679,12 +681,20 @@ def create_test_package_with_setup(script, **setup_kwargs):
     return pkg_path
 
 
-def create_basic_wheel_for_package(script, name, version, depends, extras):
+def create_basic_wheel_for_package(dest_dir, name, version,
+                                   depends=None, extras=None,
+                                   timestamp=None, singlemodule=False):
+
+    name = pkg_resources.safe_name(name)
+    version = pkg_resources.safe_version(version)
+    if depends is None:
+        depends = []
+    if extras is None:
+        extras = {}
+    extras = dict((pkg_resources.safe_extra(extra), reqs)
+                  for extra, reqs in extras.items())
+
     files = {
-        "{name}/__init__.py": """
-            def hello():
-                return "Hello From {name}"
-        """,
         "{dist_info}/DESCRIPTION": """
             UNKNOWN
         """,
@@ -718,12 +728,25 @@ def create_basic_wheel_for_package(script, name, version, depends, extras):
         "{dist_info}/RECORD": ""
     }
 
+    if singlemodule:
+        files["{name}.py"] = """
+            __version__ = %r
+            def hello():
+                return "Hello From {name}"
+        """ % version
+    else:
+        files["{name}/__init__.py"] = """
+            __version__ = %r
+            def hello():
+                return "Hello From {name}"
+        """ % version
+
     # Some useful shorthands
     archive_name = "{name}-{version}-py2.py3-none-any.whl".format(
-        name=name, version=version
+        name=pkg_resources.to_filename(name), version=version
     )
     dist_info = "{name}-{version}.dist-info".format(
-        name=name, version=version
+        name=pkg_resources.to_filename(name), version=version
     )
 
     requires_dist = "\n".join([
@@ -743,19 +766,16 @@ def create_basic_wheel_for_package(script, name, version, depends, extras):
             name=name, version=version, requires_dist=requires_dist
         ).strip()
 
-    for fname in files:
-        path = script.temp_path / fname
-        path.folder.mkdir()
-        path.write(files[fname])
+    archive_path = Path(dest_dir) / archive_name
+    date_time = time.localtime(timestamp or time.time())[0:6]
+    with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_STORED) as zip:
+        for fname, contents in files.items():
+            info = zipfile.ZipInfo(str(fname), date_time)
+            info.compress_type = zipfile.ZIP_STORED
+            info.external_attr = 0o644 << 16
+            zip.writestr(info, contents)
 
-    retval = script.scratch_path / archive_name
-    generated = shutil.make_archive(retval, 'zip', script.temp_path)
-    shutil.move(generated, retval)
-
-    script.temp_path.rmtree()
-    script.temp_path.mkdir()
-
-    return retval
+    return archive_path
 
 
 def need_executable(name, check_cmd):

@@ -119,7 +119,7 @@ def test_yaml_based(script, case):
 
         assert isinstance(package, dict), "Needs to be a dictionary"
 
-        create_basic_wheel_for_package(script, **package)
+        create_basic_wheel_for_package(script.scratch_path, **package)
 
     available_actions = {
         "install": handle_install_request
