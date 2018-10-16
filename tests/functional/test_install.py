@@ -472,6 +472,7 @@ def test_editable_install_from_local_directory_with_no_setup_py(script, data):
     assert "is not installable. File 'setup.py' not found." in result.stderr
 
 
+@pytest.mark.network
 @pytest.mark.skipif("sys.version_info >= (3,4)")
 @pytest.mark.xfail
 def test_install_argparse_shadowed(script):
@@ -486,6 +487,7 @@ def test_install_argparse_shadowed(script):
     assert "Not uninstalling argparse" in result.stdout
 
 
+@pytest.mark.network
 @pytest.mark.skipif("sys.version_info < (3,4)")
 def test_upgrade_argparse_shadowed(script):
     # If argparse is installed - even if shadowed for imported - we support
