@@ -5,7 +5,7 @@ import textwrap
 import pytest
 
 from tests.lib import (
-    _create_test_package_with_subdirectory, path_to_url, pyversion,
+    _create_test_package_with_subdirectory, need_svn, path_to_url, pyversion,
     requirements_file,
 )
 from tests.lib.local_repos import local_checkout
@@ -104,6 +104,7 @@ def test_relative_requirements_file(script, data, req_path_type, mode):
             assert egg_link_file in result.files_created, str(result)
 
 
+@need_svn
 @pytest.mark.network
 def test_multiple_requirements_files(script, tmpdir):
     """

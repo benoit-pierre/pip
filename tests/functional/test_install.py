@@ -14,8 +14,8 @@ from pip._internal.models.index import PyPI, TestPyPI
 from pip._internal.utils.misc import rmtree
 from tests.lib import (
     _create_svn_repo, _create_test_package, create_test_package_with_setup,
-    need_bzr, need_mercurial, path_to_url, pyversion, pyversion_tuple,
-    requirements_file,
+    need_bzr, need_mercurial, need_svn, path_to_url, pyversion,
+    pyversion_tuple, requirements_file,
 )
 from tests.lib.local_repos import local_checkout
 from tests.lib.path import Path
@@ -199,7 +199,7 @@ def test_basic_editable_install(script):
     assert not result.files_updated
 
 
-@pytest.mark.svn
+@need_svn
 def test_basic_install_editable_from_svn(script):
     """
     Test checking out from svn.
