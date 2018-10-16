@@ -75,7 +75,8 @@ def test_pep518_allows_missing_requires(script, data, common_wheels):
 
 
 def test_pep518_with_user_pip(script, pip_src, data, common_wheels):
-    script.pip("install", "--ignore-installed", "--user", pip_src)
+    script.pip("install", "--no-build-isolation",
+               "--ignore-installed", "--user", pip_src)
     system_pip_dir = script.site_packages_path / 'pip'
     system_pip_dir.rmtree()
     system_pip_dir.mkdir()
