@@ -331,7 +331,7 @@ def test_basic_install_from_local_directory(script, data):
     """
     Test installing from a local directory.
     """
-    to_install = data.packages.join("FSPkg")
+    to_install = data.src.join("FSPkg")
     result = script.pip('install', to_install, expect_error=False)
     fspkg_folder = script.site_packages / 'fspkg'
     egg_info_folder = (
@@ -354,7 +354,7 @@ def test_basic_install_relative_directory(script, data, req_path_type, mode):
     """
 
     # Compute relative install path to FSPkg from scratch path.
-    full_rel_path = data.packages.join('FSPkg') - script.scratch_path
+    full_rel_path = data.src.join('FSPkg') - script.scratch_path
     full_rel_url = (
         'file:' + full_rel_path.replace(os.path.sep, '/') + '#egg=FSPkg'
     )
@@ -395,7 +395,7 @@ def test_install_quiet(script, data):
     # everything. See:
     #   https://github.com/pypa/pip/issues/3418
     #   https://github.com/docker-library/python/issues/83
-    to_install = data.packages.join("FSPkg")
+    to_install = data.src.join("FSPkg")
     result = script.pip('install', '-qqq', to_install, expect_error=False)
     assert result.stdout == ""
     assert result.stderr == ""
@@ -443,7 +443,7 @@ def test_install_from_local_directory_with_symlinks_to_directories(
     """
     Test installing from a local directory containing symlinks to directories.
     """
-    to_install = data.packages.join("symlinks")
+    to_install = data.src.join("symlinks")
     result = script.pip('install', to_install, expect_error=False)
     pkg_folder = script.site_packages / 'symlinks'
     egg_info_folder = (
@@ -453,21 +453,22 @@ def test_install_from_local_directory_with_symlinks_to_directories(
     assert egg_info_folder in result.files_created, str(result)
 
 
-def test_install_from_local_directory_with_no_setup_py(script, data):
+def test_install_from_local_directory_with_no_setup_py(script):
     """
     Test installing from a local directory with no 'setup.py'.
     """
-    result = script.pip('install', data.root, expect_error=True)
+    result = script.pip('install', script.scratch_path, expect_error=True)
     assert not result.files_created
     assert "is not installable." in result.stderr
     assert "Neither 'setup.py' nor 'pyproject.toml' found." in result.stderr
 
 
-def test_editable_install_from_local_directory_with_no_setup_py(script, data):
+def test_editable_install_from_local_directory_with_no_setup_py(script):
     """
     Test installing from a local directory with no 'setup.py'.
     """
-    result = script.pip('install', '-e', data.root, expect_error=True)
+    result = script.pip('install', '-e', script.scratch_path,
+                        expect_error=True)
     assert not result.files_created
     assert "is not installable. File 'setup.py' not found." in result.stderr
 
@@ -501,7 +502,7 @@ def test_install_curdir(script, data):
     """
     Test installing current directory ('.').
     """
-    run_from = data.packages.join("FSPkg")
+    run_from = data.src.join("FSPkg")
     # Python 2.4 Windows balks if this exists already
     egg_info = join(run_from, "FSPkg.egg-info")
     if os.path.isdir(egg_info):
@@ -519,7 +520,7 @@ def test_install_pardir(script, data):
     """
     Test installing parent directory ('..').
     """
-    run_from = data.packages.join("FSPkg", "fspkg")
+    run_from = data.src.join("FSPkg", "fspkg")
     result = script.pip('install', pardir, cwd=run_from, expect_error=False)
     fspkg_folder = script.site_packages / 'fspkg'
     egg_info_folder = (
@@ -545,7 +546,7 @@ def test_install_with_hacked_egg_info(script, data):
     """
     test installing a package which defines its own egg_info class
     """
-    run_from = data.packages.join("HackedEggInfo")
+    run_from = data.src.join("HackedEggInfo")
     result = script.pip('install', '.', cwd=run_from)
     assert 'Successfully installed hackedegginfo-0.0.0\n' in result.stdout
 
@@ -877,7 +878,7 @@ def test_install_package_that_emits_unicode(script, data):
 
     Refs https://github.com/pypa/pip/issues/326
     """
-    to_install = data.packages.join("BrokenEmitsUTF8")
+    to_install = data.src.join("BrokenEmitsUTF8")
     result = script.pip(
         'install', to_install, expect_error=True, expect_temp=True, quiet=True,
     )
@@ -889,13 +890,13 @@ def test_install_package_that_emits_unicode(script, data):
 
 def test_install_package_with_utf8_setup(script, data):
     """Install a package with a setup.py that declares a utf-8 encoding."""
-    to_install = data.packages.join("SetupPyUTF8")
+    to_install = data.src.join("SetupPyUTF8")
     script.pip('install', to_install)
 
 
 def test_install_package_with_latin1_setup(script, data):
     """Install a package with a setup.py that declares a latin-1 encoding."""
-    to_install = data.packages.join("SetupPyLatin1")
+    to_install = data.src.join("SetupPyLatin1")
     script.pip('install', to_install)
 
 
@@ -1125,7 +1126,7 @@ def test_install_builds_wheels(script, data, with_wheel):
     # NB This incidentally tests a local tree + tarball inputs
     # see test_install_editable_from_git_autobuild_wheel for editable
     # vcs coverage.
-    to_install = data.packages.join('requires_wheelbroken_upper')
+    to_install = data.src.join('requires_wheelbroken_upper')
     res = script.pip(
         'install', '--no-index', '-f', data.find_links,
         to_install, expect_stderr=True)
@@ -1157,7 +1158,7 @@ def test_install_builds_wheels(script, data, with_wheel):
 
 
 def test_install_no_binary_disables_building_wheels(script, data, with_wheel):
-    to_install = data.packages.join('requires_wheelbroken_upper')
+    to_install = data.src.join('requires_wheelbroken_upper')
     res = script.pip(
         'install', '--no-index', '--no-binary=upper', '-f', data.find_links,
         to_install, expect_stderr=True)
@@ -1386,7 +1387,7 @@ def test_installed_files_recorded_in_deterministic_order(script, data):
     Ensure that we record the files installed by a package in a deterministic
     order, to make installs reproducible.
     """
-    to_install = data.packages.join("FSPkg")
+    to_install = data.src.join("FSPkg")
     result = script.pip('install', to_install, expect_error=False)
     fspkg_folder = script.site_packages / 'fspkg'
     egg_info = 'FSPkg-0.1.dev0-py%s.egg-info' % pyversion

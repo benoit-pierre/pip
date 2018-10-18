@@ -65,47 +65,50 @@ class TestData(object):
     data into a directory and operating on the copied data.
     """
 
-    def __init__(self, root, source=None):
+    def __init__(self, tmpdir, source=None):
         self.source = source or DATA_DIR
-        self.root = Path(root).abspath
-
-    @classmethod
-    def copy(cls, root):
-        obj = cls(root)
-        obj.reset()
-        return obj
+        self.tmpdir = Path(tmpdir).abspath
 
     def reset(self):
-        self.root.rmtree()
-        self.source.copytree(self.root)
+        self.tmpdir.rmtree()
+        self.tmpdir.mkdir()
 
     @property
     def packages(self):
-        return self.root.join("packages")
+        return self.source.join("packages")
 
     @property
     def packages2(self):
-        return self.root.join("packages2")
+        return self.source.join("packages2")
 
     @property
     def packages3(self):
-        return self.root.join("packages3")
+        return self.source.join("packages3")
 
     @property
     def src(self):
-        return self.root.join("src")
+        tmpdir_src = self.tmpdir / 'src'
+        if not tmpdir_src.exists:
+            self.source.join('src').copytree(tmpdir_src)
+            # for root, dirs, files in tmpdir_src.walk():
+            #     for name in dirs:
+            #         os.chmod(root / name, 0o700)
+            #     for name in files:
+            #         os.chmod(root / name, 0o600)
+            # os.chmod(tmpdir_src, 0o700)
+        return tmpdir_src
 
     @property
     def indexes(self):
-        return self.root.join("indexes")
+        return self.source.join("indexes")
 
     @property
     def reqfiles(self):
-        return self.root.join("reqfiles")
+        return self.source.join("reqfiles")
 
     @property
     def completion_paths(self):
-        return self.root.join("completion_paths")
+        return self.source.join("completion_paths")
 
     @property
     def find_links(self):
@@ -121,10 +124,10 @@ class TestData(object):
 
     @property
     def backends(self):
-        return path_to_url(self.root.join("backends"))
+        return path_to_url(self.source.join("backends"))
 
     def index_url(self, index="simple"):
-        return path_to_url(self.root.join("indexes", index))
+        return path_to_url(self.source.join("indexes", index))
 
 
 class TestFailure(AssertionError):

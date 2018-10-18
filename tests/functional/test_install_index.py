@@ -14,7 +14,7 @@ def test_find_links_relative_path(script, data):
         '--no-index',
         '--find-links',
         'packages/',
-        cwd=data.root,
+        cwd=data.source,
     )
     egg_info_folder = (
         script.site_packages / 'parent-0.1-py%s.egg-info' % pyversion
@@ -35,7 +35,7 @@ def test_find_links_requirements_file_relative_path(script, data):
         'install',
         '-r',
         script.scratch_path / "test-req.txt",
-        cwd=data.root,
+        cwd=data.source,
     )
     egg_info_folder = (
         script.site_packages / 'parent-0.1-py%s.egg-info' % pyversion

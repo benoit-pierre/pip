@@ -24,7 +24,7 @@ from pip._internal.req.req_file import process_line
 from pip._internal.req.req_tracker import RequirementTracker
 from pip._internal.resolve import Resolver
 from pip._internal.utils.misc import read_text_file
-from tests.lib import DATA_DIR, assert_raises_regexp, requirements_file
+from tests.lib import assert_raises_regexp, requirements_file
 
 
 def get_processed_req_from_line(line, fname='file', lineno=1):
@@ -89,7 +89,7 @@ class TestRequirementSet(object):
         """
         reqset = RequirementSet()
         req = install_req_from_editable(
-            data.packages.join("LocalEnvironMarker")
+            data.src.join("LocalEnvironMarker")
         )
         req.is_direct = True
         reqset.add_requirement(req)
@@ -202,7 +202,7 @@ class TestRequirementSet(object):
             'git+git://github.com/pypa/pip-test-package --hash=sha256:123',
             lineno=1,
         ))
-        dir_path = data.packages.join('FSPkg')
+        dir_path = data.src.join('FSPkg')
         reqset.add_requirement(get_processed_req_from_line(
             'file://%s' % (dir_path,),
             lineno=2,
@@ -220,7 +220,7 @@ class TestRequirementSet(object):
             r"\(line 1\)\)\n"
             r"Can't verify hashes for these file:// requirements because they "
             r"point to directories:\n"
-            r"    file://.*{sep}data{sep}packages{sep}FSPkg "
+            r"    file://.*{sep}data{sep}src{sep}FSPkg "
             r"\(from -r file \(line 2\)\)".format(sep=sep),
             resolver.resolve,
             reqset)
@@ -624,10 +624,8 @@ def test_exclusive_environment_markers():
     assert req_set.has_requirement('Django')
 
 
-def test_mismatched_versions(caplog, tmpdir):
-    original_source = os.path.join(DATA_DIR, 'src', 'simplewheel-1.0')
-    source_dir = os.path.join(tmpdir, 'simplewheel')
-    shutil.copytree(original_source, source_dir)
+def test_mismatched_versions(caplog, data):
+    source_dir = data.src / 'simplewheel-1.0'
     req = InstallRequirement(req=Requirement('simplewheel==2.0'),
                              comes_from=None, source_dir=source_dir)
     req.run_egg_info()

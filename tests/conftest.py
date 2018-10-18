@@ -310,7 +310,7 @@ def common_wheels():
 
 @pytest.fixture
 def data(tmpdir):
-    return TestData.copy(tmpdir.join("data"))
+    return TestData(tmpdir.join("data"))
 
 
 class InMemoryPipResult(object):

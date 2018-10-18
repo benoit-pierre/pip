@@ -63,7 +63,7 @@ class Tests_UserSite:
         """
         Test installing current directory ('.') into usersite
         """
-        run_from = data.packages.join("FSPkg")
+        run_from = data.src.join("FSPkg")
         result = script.pip(
             'install', '-vvv', '--user', curdir,
             cwd=run_from,
@@ -87,7 +87,7 @@ class Tests_UserSite:
         # We can't use PYTHONNOUSERSITE, as it's not
         # honoured by virtualenv's custom site.py.
         virtualenv.user_site_packages = False
-        run_from = data.packages.join("FSPkg")
+        run_from = data.src.join("FSPkg")
         result = script.pip(
             'install', '--user', curdir,
             cwd=run_from,

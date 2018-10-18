@@ -25,7 +25,7 @@ def test_show_with_files_not_found(script, data):
     Test for show command with installed files listing enabled and
     installed-files.txt not found.
     """
-    editable = data.packages.join('SetupPyUTF8')
+    editable = data.src.join('SetupPyUTF8')
     script.pip('install', '-e', editable)
     result = script.pip('show', '-f', 'SetupPyUTF8')
     lines = result.stdout.splitlines()
