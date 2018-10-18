@@ -58,14 +58,10 @@ test_script:
         }
 
         if (should_run_tests) {
-            # Shorten paths, workaround https://bugs.python.org/issue18199
-            subst T: $env:TEMP
-            $env:TEMP = "T:\"
-            $env:TMP = "T:\"
             if ($env:RUN_INTEGRATION_TESTS -eq "True") {
-                tox -e py -- --use-venv -m integration -n 3 --duration=5
+              tox -e py -- --tmpdir-subst-drive=T: --use-venv -m integration -n 3 --duration=5
             }
             else {
-                tox -e py -- -m unit -n 3
+              tox -e py -- -m unit -n 3
             }
         }

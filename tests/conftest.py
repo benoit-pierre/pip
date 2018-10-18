@@ -1,6 +1,7 @@
 import compileall
 import io
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -23,6 +24,11 @@ def pytest_addoption(parser):
     )
     parser.addoption("--use-venv", action="store_true",
                      help="use venv for virtual environment creation")
+    if sys.platform == 'win32':
+        parser.addoption("--tmpdir-subst-drive",
+                         help="map pytest base temp directory to this drive"
+                         " (to work around maximum path length limitation"
+                         " on Windows)")
 
 
 def pytest_collection_modifyitems(config, items):
@@ -75,7 +81,74 @@ def tmpdir_factory(request, tmpdir_factory):
     """ Modified `tmpdir_factory` session fixture
     that will automatically cleanup after itself.
     """
-    yield tmpdir_factory
+    if sys.platform == 'win32' and \
+       request.config.getoption("--tmpdir-subst-drive"):
+        # Shorten paths, workaround https://bugs.python.org/issue18199
+
+        from filelock import FileLock
+
+        from ctypes import windll, c_int, c_wchar_p
+        DefineDosDevice = windll.kernel32.DefineDosDeviceW
+        DefineDosDevice.argtypes = [c_int, c_wchar_p, c_wchar_p]
+
+        mapped_tmpdir = request.config.getoption("--tmpdir-subst-drive")
+        assert re.match('[a-zA-Z]:$', mapped_tmpdir)
+        base_tmpdir = Path(str(tmpdir_factory.getbasetemp()))
+        if re.match('popen-gw\d+$', base_tmpdir.name):
+            base_tmpdir = base_tmpdir.folder
+        base_tmpdir = str(base_tmpdir).rstrip(os.path.sep) + os.path.sep
+
+        subst_state = os.path.join(base_tmpdir, 'subst')
+        lock = FileLock(subst_state + '.lock')
+        with lock, os.fdopen(os.open(
+            subst_state, os.O_RDWR | os.O_CREAT
+        ), 'rb+') as fp:
+                counter = int(b'0' + fp.read())
+                assert counter >= 0
+                counter += 1
+                fp.seek(0)
+                fp.write(b'%u' % counter)
+                if counter == 1:
+                    assert DefineDosDevice(0, mapped_tmpdir, base_tmpdir)
+
+        def reduce_tmpdir(tmpdir):
+            tmpdir = str(tmpdir)
+            if tmpdir.startswith(base_tmpdir):
+                tmpdir = Path(mapped_tmpdir + os.path.sep,
+                              tmpdir[len(base_tmpdir):])
+            else:
+                tmpdir = Path(tmpdir)
+            return tmpdir
+
+        def cleanup():
+            with lock, open(subst_state, 'r+b') as fp:
+                counter = int(fp.read())
+                assert counter > 0
+                counter -= 0
+                fp.seek(0)
+                fp.write(b'%u' % counter)
+                if not counter:
+                    assert DefineDosDevice(2, mapped_tmpdir, base_tmpdir)
+
+    else:
+
+        def reduce_tmpdir(tmpdir):
+            return Path(str(tmpdir))
+
+        def cleanup():
+            pass
+
+    class Factory:
+
+        @staticmethod
+        def mktemp(name, numbered=True):
+            return reduce_tmpdir(
+                tmpdir_factory.mktemp(name, numbered=numbered)
+            )
+
+    yield Factory()
+
+    cleanup()
     if not request.config.getoption("--keep-tmpdir"):
         tmpdir_factory.getbasetemp().remove(ignore_errors=True)
 
@@ -91,13 +164,12 @@ def tmpdir(request, tmpdir):
     to return our typical path object instead of py.path.local as well as
     deleting the temporary directories at the end of each test case.
     """
-    assert tmpdir.isdir()
     yield Path(str(tmpdir))
     # Clear out the temporary directory after the test has finished using it.
     # This should prevent us from needing a multiple gigabyte temporary
     # directory while running the tests.
     if not request.config.getoption("--keep-tmpdir"):
-        tmpdir.remove(ignore_errors=True)
+        tmpdir.rmtree()
 
 
 @pytest.fixture(autouse=True)
