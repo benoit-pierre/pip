@@ -59,10 +59,11 @@ def test_basic_pip_wheel_downloads_wheels(script, data):
 
 
 def test_pip_wheel_builds_when_no_binary_set(script, data):
-    data.packages.join('simple-3.0-py2.py3-none-any.whl').touch()
+    script.scratch_path.join('simple-3.0-py2.py3-none-any.whl').touch()
     # Check that the wheel package is ignored
     res = script.pip(
         'wheel', '--no-index', '--no-binary', ':all:',
+        '-f', script.scratch_path,
         '-f', data.find_links,
         'simple==3.0')
     assert "Running setup.py bdist_wheel for simple" in str(res), str(res)
@@ -173,7 +174,7 @@ def test_pip_wheel_fail_cause_of_previous_build_dir(script, data):
 def test_wheel_package_with_latin1_setup(script, data):
     """Create a wheel from a package with latin-1 encoded setup.py."""
 
-    pkg_to_wheel = data.packages.join("SetupPyLatin1")
+    pkg_to_wheel = data.src.join("SetupPyLatin1")
     result = script.pip('wheel', pkg_to_wheel)
     assert 'Successfully built SetupPyUTF8' in result.stdout
 

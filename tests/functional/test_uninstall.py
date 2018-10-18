@@ -462,7 +462,7 @@ def test_uninstall_wheel(script, data):
 
 def test_uninstall_setuptools_develop_install(script, data):
     """Try uninstall after setup.py develop followed of setup.py install"""
-    pkg_path = data.packages.join("FSPkg")
+    pkg_path = data.src.join("FSPkg")
     script.run('python', 'setup.py', 'develop',
                expect_stderr=True, cwd=pkg_path)
     script.run('python', 'setup.py', 'install',
@@ -489,7 +489,7 @@ def test_uninstall_editable_and_pip_install(script, data):
     # This becomes the default behavior in setuptools 25.
     script.environ['SETUPTOOLS_SYS_PATH_TECHNIQUE'] = 'raw'
 
-    pkg_path = data.packages.join("FSPkg")
+    pkg_path = data.src.join("FSPkg")
     script.pip('install', '-e', '.',
                expect_stderr=True, cwd=pkg_path)
     # ensure both are installed with --ignore-installed:

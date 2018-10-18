@@ -63,7 +63,7 @@ def test_cleanup_after_install_from_local_directory(script, data):
     """
     Test clean up after installing from a local directory.
     """
-    to_install = data.packages.join("FSPkg")
+    to_install = data.src.join("FSPkg")
     script.pip('install', to_install, expect_error=False)
     build = script.venv_path / 'build'
     src = script.venv_path / 'src'

@@ -245,7 +245,7 @@ class Test_unpack_file_url(object):
 
     def test_unpack_file_url_thats_a_dir(self, tmpdir, data):
         self.prep(tmpdir, data)
-        dist_path = data.packages.join("FSPkg")
+        dist_path = data.src.join("FSPkg")
         dist_url = Link(path_to_url(dist_path))
         unpack_file_url(dist_url, self.build_dir,
                         download_dir=self.download_dir)
