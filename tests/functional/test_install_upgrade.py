@@ -5,7 +5,6 @@ import textwrap
 import pytest
 
 from tests.lib import assert_all_changes, pyversion
-from tests.lib.local_repos import local_checkout
 
 
 def test_no_upgrade_unless_requested(script):
@@ -352,12 +351,9 @@ def test_install_with_ignoreinstalled_requested(script):
 
 
 @pytest.mark.network
-def test_upgrade_vcs_req_with_no_dists_found(script, tmpdir):
+def test_upgrade_vcs_req_with_no_dists_found(script, pip_test_package_clone):
     """It can upgrade a VCS requirement that has no distributions otherwise."""
-    req = "%s#egg=pip-test-package" % local_checkout(
-        "git+https://github.com/pypa/pip-test-package.git",
-        tmpdir.join("cache"),
-    )
+    req = "%s#egg=pip-test-package" % pip_test_package_clone
     script.pip("install", req)
     result = script.pip("install", "-U", req)
     assert not result.returncode

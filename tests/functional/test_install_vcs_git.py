@@ -154,14 +154,13 @@ def test_install_editable_from_git_with_https(script, tmpdir):
 
 
 @pytest.mark.network
-def test_install_noneditable_git(script, tmpdir):
+def test_install_noneditable_git(script, pip_test_package_clone):
     """
     Test installing from a non-editable git URL with a given tag.
     """
     result = script.pip(
         'install',
-        'git+https://github.com/pypa/pip-test-package.git'
-        '@0.1.1#egg=pip-test-package'
+        '%s@0.1.1#egg=pip-test-package' % pip_test_package_clone
     )
     egg_info_folder = (
         script.site_packages /
