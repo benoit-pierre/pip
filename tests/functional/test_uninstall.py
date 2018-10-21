@@ -314,14 +314,15 @@ def test_uninstall_editable_from_svn(script, tmpdir):
 
 
 @pytest.mark.network
-def test_uninstall_editable_with_source_outside_venv(script, tmpdir):
+def test_uninstall_editable_with_source_outside_venv(
+        script, tmpdir, pip_test_package_clone):
     """
     Test uninstalling editable install from existing source outside the venv.
 
     """
     checkout = tmpdir.join('checkout')
     script.run('git', 'clone', '-q',
-               'git://github.com/pypa/pip-test-package',
+               pip_test_package_clone.split('+', 1)[1],
                checkout)
     result1 = script.pip('install', '-e', checkout)
     assert join(

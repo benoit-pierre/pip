@@ -115,14 +115,14 @@ def test_user_columns_flag(script):
 
 
 @pytest.mark.network
-def test_uptodate_flag(script):
+def test_uptodate_flag(script, pip_test_package_clone):
     """
     Test the behavior of --uptodate flag in the list command
 
     """
     script.pip_install_local(
-        'simple==1.0', 'simple2==3.0', '-e',
-        'git+https://github.com/pypa/pip-test-package.git#egg=pip-test-package'
+        'simple==1.0', 'simple2==3.0',
+        '-e', '%s#egg=pip-test-package' % pip_test_package_clone,
     )
     result = script.pip_local('list', '--uptodate', '--format=json')
     assert {"name": "simple", "version": "1.0"} \
@@ -133,14 +133,14 @@ def test_uptodate_flag(script):
 
 
 @pytest.mark.network
-def test_uptodate_columns_flag(script):
+def test_uptodate_columns_flag(script, pip_test_package_clone):
     """
     Test the behavior of --uptodate --format=columns flag in the list command
 
     """
     script.pip_install_local(
         'simple==1.0', 'simple2==3.0', '-e',
-        'git+https://github.com/pypa/pip-test-package.git#egg=pip-test-package'
+        '%s#egg=pip-test-package' % pip_test_package_clone,
     )
     result = script.pip_local('list', '--uptodate', '--format=columns')
     assert 'Package' in result.stdout
@@ -152,15 +152,14 @@ def test_uptodate_columns_flag(script):
 
 
 @pytest.mark.network
-def test_outdated_flag(script):
+def test_outdated_flag(script, pip_test_package_clone):
     """
     Test the behavior of --outdated flag in the list command
 
     """
     script.pip_install_local(
         'simple==1.0', 'simple2==3.0', 'simplewheel==1.0',
-        '-e', 'git+https://github.com/pypa/pip-test-package.git'
-        '@0.1#egg=pip-test-package'
+        '-e', '%s@0.1#egg=pip-test-package' % pip_test_package_clone,
     )
     result = script.pip_local('list', '--outdated', '--format=json')
     assert {"name": "simple", "version": "1.0",
@@ -176,15 +175,14 @@ def test_outdated_flag(script):
 
 
 @pytest.mark.network
-def test_outdated_columns_flag(script):
+def test_outdated_columns_flag(script, pip_test_package_clone):
     """
     Test the behavior of --outdated --format=columns flag in the list command
 
     """
     script.pip_install_local(
-        'simple==1.0', 'simple2==3.0', 'simplewheel==1.0', '-e',
-        'git+https://github.com/pypa/pip-test-package.git'
-        '@0.1#egg=pip-test-package'
+        'simple==1.0', 'simple2==3.0', 'simplewheel==1.0',
+        '-e', '%s@0.1#egg=pip-test-package' % pip_test_package_clone,
     )
     result = script.pip_local('list', '--outdated', '--format=columns')
     assert 'Package' in result.stdout
@@ -203,13 +201,13 @@ def test_outdated_columns_flag(script):
 
 
 @pytest.mark.network
-def test_editables_flag(script):
+def test_editables_flag(script, pip_test_package_clone):
     """
     Test the behavior of --editables flag in the list command
     """
     script.pip_install_local(
-        'simple==1.0', '-e',
-        'git+https://github.com/pypa/pip-test-package.git#egg=pip-test-package'
+        'simple==1.0',
+        '-e', '%s#egg=pip-test-package' % pip_test_package_clone,
     )
     result = script.pip_local('list', '--editable', '--format=json')
     result2 = script.pip_local('list', '--editable')
@@ -219,13 +217,13 @@ def test_editables_flag(script):
 
 
 @pytest.mark.network
-def test_exclude_editable_flag(script):
+def test_exclude_editable_flag(script, pip_test_package_clone):
     """
     Test the behavior of --editables flag in the list command
     """
     script.pip_install_local(
         'simple==1.0', '-e',
-        'git+https://github.com/pypa/pip-test-package.git#egg=pip-test-package'
+        '%s#egg=pip-test-package' % pip_test_package_clone
     )
     result = script.pip_local('list', '--exclude-editable', '--format=json')
     assert {"name": "simple", "version": "1.0"} in json.loads(result.stdout)
@@ -234,13 +232,13 @@ def test_exclude_editable_flag(script):
 
 
 @pytest.mark.network
-def test_editables_columns_flag(script):
+def test_editables_columns_flag(script, pip_test_package_clone):
     """
     Test the behavior of --editables flag in the list command
     """
     script.pip_install_local(
-        'simple==1.0', '-e',
-        'git+https://github.com/pypa/pip-test-package.git#egg=pip-test-package'
+        'simple==1.0',
+        '-e', '%s#egg=pip-test-package' % pip_test_package_clone,
     )
     result = script.pip_local('list', '--editable', '--format=columns')
     assert 'Package' in result.stdout
@@ -252,13 +250,13 @@ def test_editables_columns_flag(script):
 
 
 @pytest.mark.network
-def test_uptodate_editables_flag(script):
+def test_uptodate_editables_flag(script, pip_test_package_clone):
     """
     test the behavior of --editable --uptodate flag in the list command
     """
     script.pip_install_local(
-        'simple==1.0', '-e',
-        'git+https://github.com/pypa/pip-test-package.git#egg=pip-test-package'
+        'simple==1.0',
+        '-e', '%s#egg=pip-test-package' % pip_test_package_clone,
     )
     result = script.pip_local('list', '--editable', '--uptodate')
     assert 'simple' not in result.stdout
@@ -268,14 +266,14 @@ def test_uptodate_editables_flag(script):
 
 
 @pytest.mark.network
-def test_uptodate_editables_columns_flag(script):
+def test_uptodate_editables_columns_flag(script, pip_test_package_clone):
     """
     test the behavior of --editable --uptodate --format=columns flag in the
     list command
     """
     script.pip_install_local(
-        'simple==1.0', '-e',
-        'git+https://github.com/pypa/pip-test-package.git#egg=pip-test-package'
+        'simple==1.0',
+        '-e', '%s#egg=pip-test-package' % pip_test_package_clone
     )
     result = script.pip_local(
         'list', '--editable', '--uptodate', '--format=columns',
@@ -289,14 +287,13 @@ def test_uptodate_editables_columns_flag(script):
 
 
 @pytest.mark.network
-def test_outdated_editables_flag(script):
+def test_outdated_editables_flag(script, pip_test_package_clone):
     """
     test the behavior of --editable --outdated flag in the list command
     """
     script.pip_install_local(
-        'simple==1.0', '-e',
-        'git+https://github.com/pypa/pip-test-package.git'
-        '@0.1#egg=pip-test-package'
+        'simple==1.0',
+        '-e', '%s@0.1#egg=pip-test-package' % pip_test_package_clone,
     )
     result = script.pip_local('list', '--editable', '--outdated')
     assert 'simple' not in result.stdout
@@ -304,14 +301,13 @@ def test_outdated_editables_flag(script):
 
 
 @pytest.mark.network
-def test_outdated_editables_columns_flag(script):
+def test_outdated_editables_columns_flag(script, pip_test_package_clone):
     """
     test the behavior of --editable --outdated flag in the list command
     """
     script.pip_install_local(
-        'simple==1.0', '-e',
-        'git+https://github.com/pypa/pip-test-package.git'
-        '@0.1#egg=pip-test-package'
+        'simple==1.0',
+        '-e', '%s@0.1#egg=pip-test-package' % pip_test_package_clone,
     )
     result = script.pip_local('list', '--editable', '--outdated',
                               '--format=columns')
