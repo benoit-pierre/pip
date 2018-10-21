@@ -1,15 +1,18 @@
+import os
+import shlex
 import textwrap
 
 import pytest
 
 from pip._internal.cli.status_codes import ERROR
+from tests.lib import DATA_DIR
 from tests.lib.path import Path
 
 
-def fake_wheel(data, wheel_path):
-    data.packages.join(
-        'simple.dist-0.1-py2.py3-none-any.whl'
-    ).copy(data.packages.join(wheel_path))
+def fake_wheel(script, wheel_path):
+    (
+        DATA_DIR / 'packages' / 'simple.dist-0.1-py2.py3-none-any.whl'
+    ).copy((script.scratch_path / 'fakes').mkdir() / wheel_path)
 
 
 @pytest.mark.network
@@ -87,17 +90,25 @@ def test_basic_download_should_download_dependencies(script):
     assert script.site_packages / 'openid' not in result.files_created
 
 
+def check_download(script, args, expected, links=DATA_DIR / 'packages'):
+    result = script.pip_local('download', '-d', 'downloads', *args,
+                              links=links, expect_error=not expected)
+    expected = {
+        os.path.join(script.scratch_path.name, 'downloads', path)
+        for path in expected
+    }
+    # Downloads directory will be created even on failure.
+    expected.add(os.path.join(script.scratch_path.name, 'downloads'))
+    assert set(result.files_created.keys()) == expected
+
+
 def test_download_wheel_archive(script, data):
     """
     It should download a wheel archive path
     """
     wheel_filename = 'colander-0.9.9-py2.py3-none-any.whl'
     wheel_path = '/'.join((data.find_links, wheel_filename))
-    result = script.pip(
-        'download', wheel_path,
-        '-d', '.', '--no-deps'
-    )
-    assert Path('scratch') / wheel_filename in result.files_created
+    check_download(script, ('--no-deps', wheel_path), (wheel_filename,))
 
 
 def test_download_should_download_wheel_deps(script, data):
@@ -107,12 +118,7 @@ def test_download_should_download_wheel_deps(script, data):
     wheel_filename = 'colander-0.9.9-py2.py3-none-any.whl'
     dep_filename = 'translationstring-1.1.tar.gz'
     wheel_path = '/'.join((data.find_links, wheel_filename))
-    result = script.pip(
-        'download', wheel_path,
-        '-d', '.', '--find-links', data.find_links, '--no-index'
-    )
-    assert Path('scratch') / wheel_filename in result.files_created
-    assert Path('scratch') / dep_filename in result.files_created
+    check_download(script, (wheel_path,), (wheel_filename, dep_filename))
 
 
 @pytest.mark.network
@@ -156,66 +162,226 @@ def test_download_vcs_link(script):
     """
     It should allow -d flag for vcs links, regression test for issue #798.
     """
-    result = script.pip(
-        'download', '-d', '.', 'git+git://github.com/pypa/pip-test-package.git'
-    )
-    assert (
-        Path('scratch') / 'pip-test-package-0.1.1.zip'
-        in result.files_created
-    )
-    assert script.site_packages / 'piptestpackage' not in result.files_created
+    check_download(script, ('git+git://github.com/pypa/pip-test-package.git',),
+                   ('pip-test-package-0.1.1.zip',))
 
 
-def test_only_binary_set_then_download_specific_platform(script, data):
-    """
-    Confirm that specifying an interpreter/platform constraint
-    is allowed when ``--only-binary=:all:`` is set.
-    """
-    fake_wheel(data, 'fake-1.0-py2.py3-none-any.whl')
+PLATFORM_DOWNLOAD_TESTS = (
 
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--platform', 'linux_x86_64',
-        'fake'
-    )
-    assert (
-        Path('scratch') / 'fake-1.0-py2.py3-none-any.whl'
-        in result.files_created
-    )
+    # Confirm that specifying an interpreter/platform constraint
+    # is allowed when ``--only-binary=:all:`` is set.
+    ('only_binary_set_then_download_specific_platform',
+     'fake-1.0-py2.py3-none-any.whl',
+     '--only-binary=:all: --platform=linux_x86_64 -f {fakes} fake',
+     'fake-1.0-py2.py3-none-any.whl'),
+
+    # Confirm that specifying an interpreter/platform constraint
+    # is allowed when ``--no-deps`` is set.
+    ('no_deps_set_then_download_specific_platform',
+     'fake-1.0-py2.py3-none-any.whl',
+     '--no-deps --platform=linux_x86_64 -f {fakes} fake',
+     'fake-1.0-py2.py3-none-any.whl'),
+
+    # Test using "pip download --platform" to download a .whl archive
+    # supported for a specific platform
+
+    # Confirm that universal wheels are returned even for specific
+    # platforms.
+    ('specify_platform',
+     'fake-1.0-py2.py3-none-any.whl',
+     '--only-binary=:all: --platform=linux_x86_64 -f {fakes} fake',
+     'fake-1.0-py2.py3-none-any.whl'),
+    ('specify_platform',
+     'fake-1.0-cp37-cp37m-linux_x86_64.whl',
+     '--only-binary=:all: --platform=macosx_10_9_x86_64 -f {fakes} fake',
+     ''),
+
+    ('specify_platform',
+     '''
+     fake-1.0-py2.py3-none-macosx_10_9_x86_64.whl
+     fake-2.0-py2.py3-none-linux_x86_64.whl
+     ''',
+     '--only-binary=:all: --platform=macosx_10_10_x86_64 -f {fakes} fake',
+     'fake-1.0-py2.py3-none-macosx_10_9_x86_64.whl'),
+    # OSX platform wheels are not backward-compatible.
+    ('specify_platform',
+     '''
+     fake-1.0-py2.py3-none-macosx_10_9_x86_64.whl
+     fake-2.0-py2.py3-none-linux_x86_64.whl
+     ''',
+     '--only-binary=:all: --platform=macosx_10_8_x86_64 -f {fakes} fake',
+     ''),
+    # No linux wheel provided for this version.
+    ('specify_platform',
+     '''
+     fake-1.0-py2.py3-none-macosx_10_9_x86_64.whl
+     fake-2.0-py2.py3-none-linux_x86_64.whl
+     ''',
+     '--only-binary=:all: --platform=linux_x86_64 -f {fakes} fake==1',
+     ''),
+    ('specify_platform',
+     '''
+     fake-1.0-py2.py3-none-macosx_10_9_x86_64.whl
+     fake-2.0-py2.py3-none-linux_x86_64.whl
+     ''',
+     '--only-binary=:all: --platform=linux_x86_64 -f {fakes} fake==2',
+     'fake-2.0-py2.py3-none-linux_x86_64.whl'),
+
+    # ('prefer_binary_when_wheel_doesnt_satisfy_req',
+    #  'source-0.8-py2.py3-none-any.whl',
+    #  '--prefer-binary
+
+    # Test using "pip download --platform" to download a .whl archive
+    # supported for a specific platform.
+
+    # Confirm that universal wheels are returned even for specific
+    # platforms.
+    ('platform_manylinux',
+     'fake-1.0-py2.py3-none-any.whl',
+     '--only-binary=:all: --platform=linux_x86_64 -f {fakes} fake',
+     'fake-1.0-py2.py3-none-any.whl'),
+    ('platform_manylinux',
+     'fake-1.0-py2.py3-none-manylinux1_x86_64.whl',
+     '--only-binary=:all: --platform=manylinux1_x86_64 -f {fakes} fake',
+     'fake-1.0-py2.py3-none-manylinux1_x86_64.whl'),
+    # When specifying the platform, manylinux1 needs to be the
+    # explicit platform--it won't ever be added to the compatible
+    # tags.
+    # FIXME: original test was wrong!
+    # ('platform_manylinux',
+    #  'fake-1.0-py2.py3-none-linux_x86_64.whl',
+    #  '--only-binary=:all: --platform=linux_x86_64 fake',
+    #  '',
+    # ),
+
+    # Test using "pip download --python-version" to download a .whl archive
+    # supported for a specific interpreter
+    ('specify_python_version',
+     'fake-1.0-py2.py3-none-any.whl',
+     '--only-binary=:all: --python-version=2 -f {fakes} fake',
+     'fake-1.0-py2.py3-none-any.whl'),
+    ('specify_python_version',
+     'fake-1.0-py2.py3-none-any.whl',
+     '--only-binary=:all: --python-version=3 -f {fakes} fake',
+     'fake-1.0-py2.py3-none-any.whl'),
+    ('specify_python_version',
+     'fake-1.0-py2.py3-none-any.whl',
+     '--only-binary=:all: --python-version=27 -f {fakes} fake',
+     'fake-1.0-py2.py3-none-any.whl'),
+    ('specify_python_version',
+     'fake-1.0-py2.py3-none-any.whl',
+     '--only-binary=:all: --python-version=33 -f {fakes} fake',
+     'fake-1.0-py2.py3-none-any.whl'),
+    ('specify_python_version',
+     'fake-1.0-py2-none-any.whl fake-2.0-py3-none-any.whl',
+     '--only-binary=:all: --python-version=3 -f {fakes} fake==1.0',
+     ''),
+    ('specify_python_version',
+     'fake-1.0-py2-none-any.whl fake-2.0-py3-none-any.whl',
+     '--only-binary=:all: --python-version=2 -f {fakes} fake',
+     'fake-1.0-py2-none-any.whl'),
+    ('specify_python_version',
+     'fake-1.0-py2-none-any.whl fake-2.0-py3-none-any.whl',
+     '--only-binary=:all: --python-version=26 -f {fakes} fake',
+     'fake-1.0-py2-none-any.whl'),
+    ('specify_python_version',
+     'fake-1.0-py2-none-any.whl fake-2.0-py3-none-any.whl',
+     '--only-binary=:all: --python-version=3 -f {fakes} fake',
+     'fake-2.0-py3-none-any.whl'),
+
+    # Test using "pip download --abi" to download a .whl archive
+    # supported for a specific abi
+    ('specify_abi',
+     'fake-1.0-py2.py3-none-any.whl',
+     '--only-binary=:all: --implementation=fk --abi=fake_abi -f {fakes} fake',
+     'fake-1.0-py2.py3-none-any.whl'),
+    ('specify_abi',
+     'fake-1.0-py2.py3-none-any.whl',
+     '--only-binary=:all: --implementation=fk --abi=none -f {fakes} fake',
+     'fake-1.0-py2.py3-none-any.whl'),
+    # FIXME: another wrong test...
+    # ('specify_abi',
+    #  'fake-1.0-py2.py3-none-any.whl',
+    #  '--only-binary=:all: --implementation=fk --abi=cp27m -f {fakes} fake',
+    #  ''),
+    ('specify_abi',
+     'fake-1.0-fk2-fakeabi-fake_platform.whl',
+     '''--only-binary=:all: --python-version=2 --implementation=fk
+     --platform=fake_platform --abi=fakeabi -f {fakes} fake''',
+     'fake-1.0-fk2-fakeabi-fake_platform.whl'),
+    ('specify_abi',
+     'fake-1.0-fk2-fakeabi-fake_platform.whl',
+     '''--only-binary=:all: --implementation=fk --platform=fake_platform
+     --abi=none -f {fakes} fake''',
+     ''),
+
+    # Test using "pip download --abi" to download a .whl archive
+    # supported for a specific abi
+    ('specify_implementation',
+     'fake-1.0-py2.py3-none-any.whl',
+     '--only-binary=:all: --implementation=fk -f {fakes} fake',
+     'fake-1.0-py2.py3-none-any.whl'),
+    ('specify_implementation',
+     'fake-1.0-fk2.fk3-none-any.whl',
+     '--only-binary=:all: --implementation=fk -f {fakes} fake',
+     'fake-1.0-fk2.fk3-none-any.whl'),
+    ('specify_implementation',
+     'fake-1.0-fk3-none-any.whl',
+     '''--only-binary=:all: --implementation=fk --python-version=3
+     -f {fakes} fake''',
+     'fake-1.0-fk3-none-any.whl'),
+    ('specify_implementation',
+     'fake-1.0-fk3-none-any.whl',
+     '''--only-binary=:all: --implementation=fk --python-version=2
+     -f {fakes} fake''',
+     ''),
+
+    ('prefer_binary_when_tarball_higher_than_wheel',
+     'source-0.8-py2.py3-none-any.whl',
+     '--prefer-binary -f {fakes} -f {packages} source',
+     'source-0.8-py2.py3-none-any.whl'),
+
+    ('prefer_binary_when_wheel_doesnt_satisfy_req',
+     'source-0.8-py2.py3-none-any.whl',
+     # Because of Windows, `source>0.9` can't be used... and no, updating the
+     # workaround for `shell=True` in `PipTestEnvironment.run` is not an
+     # option: it will fix this case but break one of the YAML tests...
+     '--prefer-binary -f {packages} "source > 0.9"',
+     'source-1.0.tar.gz'),
+
+    ('prefer_binary_when_only_tarball_exists',
+     '',
+     '--prefer-binary -f {packages} source',
+     'source-1.0.tar.gz'),
+
+)
 
 
-def test_no_deps_set_then_download_specific_platform(script, data):
-    """
-    Confirm that specifying an interpreter/platform constraint
-    is allowed when ``--no-deps`` is set.
-    """
-    fake_wheel(data, 'fake-1.0-py2.py3-none-any.whl')
-
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--no-deps',
-        '--dest', '.',
-        '--platform', 'linux_x86_64',
-        'fake'
-    )
-    assert (
-        Path('scratch') / 'fake-1.0-py2.py3-none-any.whl'
-        in result.files_created
-    )
+@pytest.mark.parametrize('fakes, args, downloads',
+                         [t[1:] for t in PLATFORM_DOWNLOAD_TESTS],
+                         ids=[t[0] for t in PLATFORM_DOWNLOAD_TESTS])
+def test_download(script, fakes, args, downloads):
+    fakes = fakes.split()
+    for name in fakes:
+        fake_wheel(script, name)
+    args = [
+        a.format(
+            fakes=script.scratch_path / 'fakes',
+            packages=DATA_DIR / 'packages',
+        )
+        for a in shlex.split(args)
+    ]
+    downloads = downloads.split()
+    check_download(script, args, downloads, links=None)
 
 
-def test_download_specific_platform_fails(script, data):
+def test_download_specific_platform_fails(script):
     """
     Confirm that specifying an interpreter/platform constraint
     enforces that ``--no-deps`` or ``--only-binary=:all:`` is set.
     """
-    fake_wheel(data, 'fake-1.0-py2.py3-none-any.whl')
-
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--dest', '.',
+    result = script.pip_local(
+        'download',
         '--platform', 'linux_x86_64',
         'fake',
         expect_error=True,
@@ -223,365 +389,20 @@ def test_download_specific_platform_fails(script, data):
     assert '--only-binary=:all:' in result.stderr
 
 
-def test_no_binary_set_then_download_specific_platform_fails(script, data):
+def test_no_binary_set_then_download_specific_platform_fails(script):
     """
     Confirm that specifying an interpreter/platform constraint
     enforces that ``--only-binary=:all:`` is set without ``--no-binary``.
     """
-    fake_wheel(data, 'fake-1.0-py2.py3-none-any.whl')
-
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
+    result = script.pip_local(
+        'download',
         '--only-binary=:all:',
         '--no-binary=fake',
-        '--dest', '.',
         '--platform', 'linux_x86_64',
         'fake',
         expect_error=True,
     )
     assert '--only-binary=:all:' in result.stderr
-
-
-def test_download_specify_platform(script, data):
-    """
-    Test using "pip download --platform" to download a .whl archive
-    supported for a specific platform
-    """
-    fake_wheel(data, 'fake-1.0-py2.py3-none-any.whl')
-
-    # Confirm that universal wheels are returned even for specific
-    # platforms.
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--platform', 'linux_x86_64',
-        'fake'
-    )
-    assert (
-        Path('scratch') / 'fake-1.0-py2.py3-none-any.whl'
-        in result.files_created
-    )
-
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--platform', 'macosx_10_9_x86_64',
-        'fake'
-    )
-
-    data.reset()
-    fake_wheel(data, 'fake-1.0-py2.py3-none-macosx_10_9_x86_64.whl')
-    fake_wheel(data, 'fake-2.0-py2.py3-none-linux_x86_64.whl')
-
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--platform', 'macosx_10_10_x86_64',
-        'fake'
-    )
-    assert (
-        Path('scratch') /
-        'fake-1.0-py2.py3-none-macosx_10_9_x86_64.whl'
-        in result.files_created
-    )
-
-    # OSX platform wheels are not backward-compatible.
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--platform', 'macosx_10_8_x86_64',
-        'fake',
-        expect_error=True,
-    )
-
-    # No linux wheel provided for this version.
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--platform', 'linux_x86_64',
-        'fake==1',
-        expect_error=True,
-    )
-
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--platform', 'linux_x86_64',
-        'fake==2'
-    )
-    assert (
-        Path('scratch') / 'fake-2.0-py2.py3-none-linux_x86_64.whl'
-        in result.files_created
-    )
-
-
-def test_download_platform_manylinux(script, data):
-    """
-    Test using "pip download --platform" to download a .whl archive
-    supported for a specific platform.
-    """
-    fake_wheel(data, 'fake-1.0-py2.py3-none-any.whl')
-    # Confirm that universal wheels are returned even for specific
-    # platforms.
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--platform', 'linux_x86_64',
-        'fake',
-    )
-    assert (
-        Path('scratch') / 'fake-1.0-py2.py3-none-any.whl'
-        in result.files_created
-    )
-
-    data.reset()
-    fake_wheel(data, 'fake-1.0-py2.py3-none-manylinux1_x86_64.whl')
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--platform', 'manylinux1_x86_64',
-        'fake',
-    )
-    assert (
-        Path('scratch') /
-        'fake-1.0-py2.py3-none-manylinux1_x86_64.whl'
-        in result.files_created
-    )
-
-    # When specifying the platform, manylinux1 needs to be the
-    # explicit platform--it won't ever be added to the compatible
-    # tags.
-    data.reset()
-    fake_wheel(data, 'fake-1.0-py2.py3-none-linux_x86_64.whl')
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--platform', 'linux_x86_64',
-        'fake',
-        expect_error=True,
-    )
-
-
-def test_download_specify_python_version(script, data):
-    """
-    Test using "pip download --python-version" to download a .whl archive
-    supported for a specific interpreter
-    """
-    fake_wheel(data, 'fake-1.0-py2.py3-none-any.whl')
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--python-version', '2',
-        'fake'
-    )
-    assert (
-        Path('scratch') / 'fake-1.0-py2.py3-none-any.whl'
-        in result.files_created
-    )
-
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--python-version', '3',
-        'fake'
-    )
-
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--python-version', '27',
-        'fake'
-    )
-
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--python-version', '33',
-        'fake'
-    )
-
-    data.reset()
-    fake_wheel(data, 'fake-1.0-py2-none-any.whl')
-    fake_wheel(data, 'fake-2.0-py3-none-any.whl')
-
-    # No py3 provided for version 1.
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--python-version', '3',
-        'fake==1.0',
-        expect_error=True,
-    )
-
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--python-version', '2',
-        'fake'
-    )
-    assert (
-        Path('scratch') / 'fake-1.0-py2-none-any.whl'
-        in result.files_created
-    )
-
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--python-version', '26',
-        'fake'
-    )
-
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--python-version', '3',
-        'fake'
-    )
-    assert (
-        Path('scratch') / 'fake-2.0-py3-none-any.whl'
-        in result.files_created
-    )
-
-
-def test_download_specify_abi(script, data):
-    """
-    Test using "pip download --abi" to download a .whl archive
-    supported for a specific abi
-    """
-    fake_wheel(data, 'fake-1.0-py2.py3-none-any.whl')
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--implementation', 'fk',
-        '--abi', 'fake_abi',
-        'fake'
-    )
-    assert (
-        Path('scratch') / 'fake-1.0-py2.py3-none-any.whl'
-        in result.files_created
-    )
-
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--implementation', 'fk',
-        '--abi', 'none',
-        'fake'
-    )
-
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--abi', 'cp27m',
-        'fake',
-        expect_error=True,
-    )
-
-    data.reset()
-    fake_wheel(data, 'fake-1.0-fk2-fakeabi-fake_platform.whl')
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--python-version', '2',
-        '--implementation', 'fk',
-        '--platform', 'fake_platform',
-        '--abi', 'fakeabi',
-        'fake'
-    )
-    assert (
-        Path('scratch') / 'fake-1.0-fk2-fakeabi-fake_platform.whl'
-        in result.files_created
-    )
-
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--implementation', 'fk',
-        '--platform', 'fake_platform',
-        '--abi', 'none',
-        'fake',
-        expect_error=True,
-    )
-
-
-def test_download_specify_implementation(script, data):
-    """
-    Test using "pip download --abi" to download a .whl archive
-    supported for a specific abi
-    """
-    fake_wheel(data, 'fake-1.0-py2.py3-none-any.whl')
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--implementation', 'fk',
-        'fake'
-    )
-    assert (
-        Path('scratch') / 'fake-1.0-py2.py3-none-any.whl'
-        in result.files_created
-    )
-
-    data.reset()
-    fake_wheel(data, 'fake-1.0-fk2.fk3-none-any.whl')
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--implementation', 'fk',
-        'fake'
-    )
-    assert (
-        Path('scratch') / 'fake-1.0-fk2.fk3-none-any.whl'
-        in result.files_created
-    )
-
-    data.reset()
-    fake_wheel(data, 'fake-1.0-fk3-none-any.whl')
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--implementation', 'fk',
-        '--python-version', '3',
-        'fake'
-    )
-    assert (
-        Path('scratch') / 'fake-1.0-fk3-none-any.whl'
-        in result.files_created
-    )
-
-    result = script.pip(
-        'download', '--no-index', '--find-links', data.find_links,
-        '--only-binary=:all:',
-        '--dest', '.',
-        '--implementation', 'fk',
-        '--python-version', '2',
-        'fake',
-        expect_error=True,
-    )
 
 
 def test_download_exit_status_code_when_no_requirements(script):
@@ -601,60 +422,3 @@ def test_download_exit_status_code_when_blank_requirements_file(script):
     """
     script.scratch_path.join("blank.txt").write("\n")
     script.pip('download', '-r', 'blank.txt')
-
-
-def test_download_prefer_binary_when_tarball_higher_than_wheel(script, data):
-    fake_wheel(data, 'source-0.8-py2.py3-none-any.whl')
-    result = script.pip(
-        'download',
-        '--prefer-binary',
-        '--no-index',
-        '-f', data.packages,
-        '-d', '.', 'source'
-    )
-    assert (
-        Path('scratch') / 'source-0.8-py2.py3-none-any.whl'
-        in result.files_created
-    )
-    assert (
-        Path('scratch') / 'source-1.0.tar.gz'
-        not in result.files_created
-    )
-
-
-def test_download_prefer_binary_when_wheel_doesnt_satisfy_req(script, data):
-    fake_wheel(data, 'source-0.8-py2.py3-none-any.whl')
-    script.scratch_path.join("test-req.txt").write(textwrap.dedent("""
-        source>0.9
-        """))
-
-    result = script.pip(
-        'download',
-        '--prefer-binary',
-        '--no-index',
-        '-f', data.packages,
-        '-d', '.',
-        '-r', script.scratch_path / 'test-req.txt'
-    )
-    assert (
-        Path('scratch') / 'source-1.0.tar.gz'
-        in result.files_created
-    )
-    assert (
-        Path('scratch') / 'source-0.8-py2.py3-none-any.whl'
-        not in result.files_created
-    )
-
-
-def test_download_prefer_binary_when_only_tarball_exists(script, data):
-    result = script.pip(
-        'download',
-        '--prefer-binary',
-        '--no-index',
-        '-f', data.packages,
-        '-d', '.', 'source'
-    )
-    assert (
-        Path('scratch') / 'source-1.0.tar.gz'
-        in result.files_created
-    )
