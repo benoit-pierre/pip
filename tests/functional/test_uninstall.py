@@ -6,17 +6,15 @@ import os
 import sys
 import textwrap
 from os.path import join, normpath
-from tempfile import mkdtemp
 
 import pretend
 import pytest
 
 from pip._internal.req.constructors import install_req_from_line
-from pip._internal.utils.misc import rmtree
 from tests.lib import (
     assert_all_changes, create_test_package_with_setup, need_svn,
 )
-from tests.lib.local_repos import local_checkout, local_repo
+from tests.lib.local_repos import local_checkout
 
 
 @pytest.mark.network
@@ -321,40 +319,19 @@ def test_uninstall_editable_with_source_outside_venv(script, tmpdir):
     Test uninstalling editable install from existing source outside the venv.
 
     """
-    cache_dir = tmpdir.join("cache")
-
-    try:
-        temp = mkdtemp()
-        tmpdir = join(temp, 'pip-test-package')
-        _test_uninstall_editable_with_source_outside_venv(
-            script,
-            tmpdir,
-            cache_dir,
-        )
-    finally:
-        rmtree(temp)
-
-
-def _test_uninstall_editable_with_source_outside_venv(
-        script, tmpdir, cache_dir):
-    result = script.run(
-        'git', 'clone',
-        local_repo(
-            'git+git://github.com/pypa/pip-test-package',
-            cache_dir,
-        ),
-        tmpdir,
-        expect_stderr=True,
-    )
-    result2 = script.pip('install', '-e', tmpdir)
+    checkout = tmpdir.join('checkout')
+    script.run('git', 'clone', '-q',
+               'git://github.com/pypa/pip-test-package',
+               checkout)
+    result1 = script.pip('install', '-e', checkout)
     assert join(
         script.site_packages, 'pip-test-package.egg-link'
-    ) in result2.files_created, list(result2.files_created.keys())
-    result3 = script.pip('uninstall', '-y',
+    ) in result1.files_created, list(result1.files_created.keys())
+    result2 = script.pip('uninstall', '-y',
                          'pip-test-package', expect_error=True)
     assert_all_changes(
-        result,
-        result3,
+        result1,
+        result2,
         [script.venv / 'build', script.site_packages / 'easy-install.pth'],
     )
 
