@@ -384,13 +384,10 @@ class PipTestEnvironment(TestFileEnvironment):
         return self.run(exe, *args, **kwargs)
 
     def pip_local(self, command, *args, **kwargs):
-        links = kwargs.pop('links',
-                           path_to_url(os.path.join(DATA_DIR, "packages")))
-        return self.pip(
-            command, "--no-index",
-            "--find-links", links,
-            *args, **kwargs
-        )
+        links = kwargs.pop('links', path_to_url(DATA_DIR / 'packages'))
+        if links:
+            args = ("--find-links", links) + args
+        return self.pip(command, "--no-index", *args, **kwargs)
 
     def pip_install_local(self, *args, **kwargs):
         return self.pip_local("install", *args, **kwargs)
