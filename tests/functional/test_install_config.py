@@ -1,5 +1,3 @@
-import os
-import tempfile
 import textwrap
 
 
@@ -157,19 +155,15 @@ def test_options_from_venv_config(script, virtualenv):
 
 def test_install_no_binary_via_config_disables_cached_wheels(
         script, data, with_wheel):
-    config_file = tempfile.NamedTemporaryFile(mode='wt', delete=False)
-    try:
-        script.environ['PIP_CONFIG_FILE'] = config_file.name
-        config_file.write(textwrap.dedent("""\
-            [global]
-            no-binary = :all:
-            """))
-        config_file.close()
-        res = script.pip(
-            'install', '--no-index', '-f', data.find_links,
-            'upper', expect_stderr=True)
-    finally:
-        os.unlink(config_file.name)
+    config_file = script.scratch_path / 'pip.cfg'
+    script.environ['PIP_CONFIG_FILE'] = config_file
+    config_file.write(textwrap.dedent("""\
+        [global]
+        no-binary = :all:
+        """))
+    res = script.pip(
+        'install', '--no-index', '-f', data.find_links,
+        'upper', expect_stderr=True)
     assert "Successfully installed upper-2.0" in str(res), str(res)
     # No wheel building for upper, which was blacklisted
     assert "Running setup.py bdist_wheel for upper" not in str(res), str(res)
