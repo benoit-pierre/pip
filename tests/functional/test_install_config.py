@@ -2,8 +2,6 @@ import os
 import tempfile
 import textwrap
 
-import pytest
-
 
 def test_options_from_env_vars(script):
     """
@@ -19,45 +17,33 @@ def test_options_from_env_vars(script):
     )
 
 
-def test_command_line_options_override_env_vars(script, virtualenv):
+def test_command_line_options_override_env_vars(script, data):
     """
     Test that command line options override environmental variables.
 
     """
-    script.environ['PIP_INDEX_URL'] = 'https://example.com/simple/'
-    result = script.pip('install', '-vvv', 'INITools', expect_error=True)
+    script.environ['PIP_INDEX_URL'] = data.index_url(index='datarequire')
+    result = script.pip('download', '-vvv', 'simple', expect_error=True)
     assert (
-        "Getting page https://example.com/simple/initools"
+        "Looking in indexes: %s" % script.environ['PIP_INDEX_URL']
         in result.stdout
     )
-    virtualenv.clear()
     result = script.pip(
-        'install', '-vvv', '--index-url', 'https://download.zope.org/ppix',
-        'INITools',
+        'download', '-vvv', '--index-url', data.index_url(), 'simple',
         expect_error=True,
     )
-    assert "example.com" not in result.stdout
-    assert "Getting page https://download.zope.org/ppix" in result.stdout
+    assert (
+        "Looking in indexes: %s" % data.index_url()
+        in result.stdout
+    )
 
 
-@pytest.mark.network
-def test_env_vars_override_config_file(script, virtualenv):
+def test_env_vars_override_config_file(script, data):
     """
     Test that environmental variables override settings in config files.
 
     """
-    fd, config_file = tempfile.mkstemp('-pip.cfg', 'test-')
-    try:
-        _test_env_vars_override_config_file(script, virtualenv, config_file)
-    finally:
-        # `os.close` is a workaround for a bug in subprocess
-        # https://bugs.python.org/issue3210
-        os.close(fd)
-        os.remove(config_file)
-
-
-def _test_env_vars_override_config_file(script, virtualenv, config_file):
-    # set this to make pip load it
+    config_file = script.scratch_path / 'pip.cfg'
     script.environ['PIP_CONFIG_FILE'] = config_file
     # It's important that we test this particular config value ('no-index')
     # because there is/was a bug which only shows up in cases in which
@@ -67,118 +53,88 @@ def _test_env_vars_override_config_file(script, virtualenv, config_file):
         [global]
         no-index = 1
         """))
-    result = script.pip('install', '-vvv', 'INITools', expect_error=True)
+    args = ('download', '-vvv', '-i', data.index_url(), 'simple')
+    result = script.pip(*args, expect_error=True)
     assert (
-        "DistributionNotFound: No matching distribution found for INITools"
+        "DistributionNotFound: No matching distribution found for simple"
         in result.stdout
     )
     script.environ['PIP_NO_INDEX'] = '0'
-    virtualenv.clear()
-    result = script.pip('install', '-vvv', 'INITools', expect_error=True)
-    assert "Successfully installed INITools" in result.stdout
+    result = script.pip(*args)
+    assert "Successfully downloaded simple" in result.stdout
 
 
-@pytest.mark.network
 def test_command_line_append_flags(script, virtualenv, data):
     """
     Test command line flags that append to defaults set by environmental
     variables.
 
     """
-    script.environ['PIP_FIND_LINKS'] = 'https://test.pypi.org'
+    script.environ['PIP_FIND_LINKS'] = data.find_links
     result = script.pip(
-        'install', '-vvv', 'INITools', '--trusted-host',
-        'test.pypi.org',
-        expect_error=True,
+        'download', '-vvv', '--no-index', 'INITools',
     )
     assert (
-        "Analyzing links from page https://test.pypi.org"
+        "Looking in links: %s" % data.find_links
         in result.stdout
     ), str(result)
-    virtualenv.clear()
     result = script.pip(
-        'install', '-vvv', '--find-links', data.find_links, 'INITools',
-        '--trusted-host', 'test.pypi.org',
-        expect_error=True,
+        'download', '-vvv', '--no-index', 'INITools',
+        '--find-links', data.find_links2,
     )
     assert (
-        "Analyzing links from page https://test.pypi.org"
+        "Looking in links: %s, %s" % (data.find_links, data.find_links2)
         in result.stdout
-    )
-    assert "Skipping link %s" % data.find_links in result.stdout
+    ), str(result)
 
 
-@pytest.mark.network
 def test_command_line_appends_correctly(script, data):
     """
     Test multiple appending options set by environmental variables.
 
     """
     script.environ['PIP_FIND_LINKS'] = (
-        'https://test.pypi.org %s' % data.find_links
+        '%s %s' % (data.find_links, data.find_links2)
     )
     result = script.pip(
-        'install', '-vvv', 'INITools', '--trusted-host',
-        'test.pypi.org',
-        expect_error=True,
+        'download', '-vvv', '--no-index', 'INITools',
     )
 
     assert (
-        "Analyzing links from page https://test.pypi.org"
+        "Looking in links: %s, %s" % (data.find_links, data.find_links2)
         in result.stdout
     ), result.stdout
-    assert "Skipping link %s" % data.find_links in result.stdout
 
 
-def test_config_file_override_stack(script, virtualenv):
+def test_config_file_override_stack(script, virtualenv, data):
     """
     Test config files (global, overriding a global config with a
     local, overriding all with a command line flag).
 
     """
-    fd, config_file = tempfile.mkstemp('-pip.cfg', 'test-')
-    try:
-        _test_config_file_override_stack(script, virtualenv, config_file)
-    finally:
-        # `os.close` is a workaround for a bug in subprocess
-        # https://bugs.python.org/issue3210
-        os.close(fd)
-        os.remove(config_file)
-
-
-def _test_config_file_override_stack(script, virtualenv, config_file):
-    # set this to make pip load it
+    config_file = script.scratch_path / 'pip.cfg'
     script.environ['PIP_CONFIG_FILE'] = config_file
     (script.scratch_path / config_file).write(textwrap.dedent("""\
         [global]
-        index-url = https://download.zope.org/ppix
-        """))
+        index-url = %s
+        """ % data.index_url()))
     result = script.pip('install', '-vvv', 'INITools', expect_error=True)
-    assert (
-        "Getting page https://download.zope.org/ppix/initools" in result.stdout
-    )
+    assert "Looking in indexes: %s" % data.index_url() in result.stdout
     virtualenv.clear()
     (script.scratch_path / config_file).write(textwrap.dedent("""\
         [global]
         index-url = https://download.zope.org/ppix
         [install]
-        index-url = https://pypi.gocept.com/
-        """))
+        index-url = %s
+        """ % data.index_url()))
     result = script.pip('install', '-vvv', 'INITools', expect_error=True)
-    assert "Getting page https://pypi.gocept.com/initools" in result.stdout
+    assert "Looking in indexes: %s" % data.index_url() in result.stdout
     result = script.pip(
-        'install', '-vvv', '--index-url', 'https://pypi.org/simple/',
+        'install', '-vvv', '--index-url', data.index_url('empty_with_pkg'),
         'INITools',
         expect_error=True,
     )
-    assert (
-        "Getting page http://download.zope.org/ppix/INITools"
-        not in result.stdout
-    )
-    assert "Getting page https://pypi.gocept.com/INITools" not in result.stdout
-    assert (
-        "Getting page https://pypi.org/simple/initools" in result.stdout
-    )
+    assert "Looking in indexes: %s" % data.index_url('empty_with_pkg')
 
 
 def test_options_from_venv_config(script, virtualenv):
