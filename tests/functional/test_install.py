@@ -4,6 +4,7 @@ import itertools
 import os
 import sys
 import textwrap
+import time
 from os.path import curdir, join, pardir
 
 import pytest
@@ -13,9 +14,10 @@ from pip._internal.cli.status_codes import ERROR, SUCCESS
 from pip._internal.models.index import PyPI, TestPyPI
 from pip._internal.utils.misc import rmtree
 from tests.lib import (
-    _create_svn_repo, _create_test_package, create_test_package_with_setup,
-    need_bzr, need_mercurial, need_svn, path_to_url, pyversion,
-    pyversion_tuple, requirements_file,
+    _create_svn_repo, _create_test_package, create_basic_wheel_for_package,
+    create_test_package_with_setup, list_distributions, need_bzr,
+    need_mercurial, need_svn, path_to_url, pyversion, pyversion_tuple,
+    requirements_file,
 )
 from tests.lib.local_repos import local_checkout
 from tests.lib.path import Path
@@ -650,42 +652,50 @@ def test_install_package_which_contains_dev_in_name(script):
     assert egg_info_folder in result.files_created, str(result)
 
 
-def test_install_package_with_target(script):
+@pytest.mark.parametrize('singlemodule', (False, True))
+def test_install_package_with_target(script, singlemodule):
     """
     Test installing a package using pip install --target
     """
+    t1 = time.time() - 20
+    t2 = t1 + 10
+    t3 = t2 + 10
+
+    create_basic_wheel_for_package(script.scratch_path, 'pkg', '1.0',
+                                   timestamp=t1, singlemodule=singlemodule)
+    create_basic_wheel_for_package(script.scratch_path, 'pkg', '2.0',
+                                   timestamp=t3, singlemodule=singlemodule)
+
     target_dir = script.scratch_path / 'target'
-    result = script.pip_install_local('-t', target_dir, "simple==1.0")
-    assert Path('scratch') / 'target' / 'simple' in result.files_created, (
-        str(result)
-    )
+
+    result = script.pip_install_local('-t', target_dir, 'pkg==1.0',
+                                      links=script.scratch_path)
+    assert list_distributions(target_dir) == ['pkg-1.0'], str(result)
+
+    # Update pkg-1.0 wheel timestamps.
+    create_basic_wheel_for_package(script.scratch_path, 'pkg', '1.0',
+                                   timestamp=t2, singlemodule=singlemodule)
 
     # Test repeated call without --upgrade, no files should have changed
-    result = script.pip_install_local(
-        '-t', target_dir, "simple==1.0", expect_stderr=True,
-    )
-    assert not Path('scratch') / 'target' / 'simple' in result.files_updated
+    result = script.pip_install_local('-t', target_dir, 'pkg==1.0',
+                                      links=script.scratch_path,
+                                      expect_stderr=True)
+    assert list_distributions(target_dir) == ['pkg-1.0'], str(result)
+    assert (
+        not result.files_updated and
+        'Specify --upgrade to force replacement.' in result.stderr
+    ), str(result)
 
     # Test upgrade call, check that new version is installed
-    result = script.pip_install_local('--upgrade', '-t',
-                                      target_dir, "simple==2.0")
-    assert Path('scratch') / 'target' / 'simple' in result.files_updated, (
-        str(result)
+    result = script.pip_install_local('-U', '-t', target_dir, "pkg==2.0",
+                                      links=script.scratch_path)
+    pkg_mod_path = (target_dir - script.base_path).join(
+        *('pkg.py',) if singlemodule else ('pkg', '__init__.py')
     )
-    egg_folder = (
-        Path('scratch') / 'target' / 'simple-2.0-py%s.egg-info' % pyversion)
-    assert egg_folder in result.files_created, (
-        str(result)
-    )
-
-    # Test install and upgrade of single-module package
-    result = script.pip_install_local('-t', target_dir, 'singlemodule==0.0.0')
-    singlemodule_py = Path('scratch') / 'target' / 'singlemodule.py'
-    assert singlemodule_py in result.files_created, str(result)
-
-    result = script.pip_install_local('-t', target_dir, 'singlemodule==0.0.1',
-                                      '--upgrade')
-    assert singlemodule_py in result.files_updated, str(result)
+    assert (
+        pkg_mod_path in result.files_updated and
+        list_distributions(target_dir) == ['pkg-1.0', 'pkg-2.0']
+    ), str(result)
 
 
 def test_install_nonlocal_compatible_wheel(script, data):
