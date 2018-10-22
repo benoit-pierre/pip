@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from contextlib import contextmanager
+import operator
 import os
 import sys
 import re
@@ -12,6 +13,7 @@ import zipfile
 
 import pkg_resources
 import pytest
+import six
 from scripttest import FoundDir, TestFileEnvironment
 
 from tests.lib.path import Path, curdir
@@ -490,6 +492,61 @@ def _create_main_file(dir_path, name=None, output=None):
     """.format(output))
     filename = '{}.py'.format(name)
     dir_path.join(filename).write(text)
+
+
+def yield_words(strs):
+    if isinstance(strs, six.string_types):
+        for s in strs.split():
+            s = s.strip()
+            if s and not s.startswith('#'):
+                yield s
+    else:
+        for ss in strs:
+            for s in yield_words(ss):
+                yield s
+
+
+def list_distributions(target, ignore=None):
+    if ignore is None:
+        ignore = set()
+    else:
+        ignore = {
+            pkg_resources.safe_name(dist_name)
+            for dist_name in yield_words(ignore)
+        }
+    return list(sorted(
+        '%s-%s' % (dist.project_name, dist.version)
+        for dist in pkg_resources.find_distributions(target)
+        if dist.project_name not in ignore
+    ))
+
+
+def assert_distributions_installed(script, system=(), user=(),
+                                   ignore='pip setuptools wheel'):
+
+    __tracebackhide__ = operator.methodcaller('errisinstance',
+                                              AssertionError)
+
+    installed = {}
+    expected = {}
+    for name, location, expected_distributions in (
+        ('system', script.site_packages_path, system),
+        ('user', script.user_site_path, user),
+    ):
+        installed[name] = list_distributions(location, ignore=ignore)
+        expected[name] = list(sorted(
+            pkg_resources.safe_name(dist_name)
+            for dist_name in yield_words(expected_distributions)
+        ))
+
+    assert installed == expected, (
+        '\nexpected: system=(%s) user=(%s)'
+        '\ninstalled: system=(%s) user=(%s)' % (
+            ', '.join(expected['system']),
+            ', '.join(expected['user']),
+            ', '.join(installed['system']),
+            ', '.join(installed['user']),
+        ))
 
 
 def _create_test_package_with_subdirectory(script, subdirectory):
