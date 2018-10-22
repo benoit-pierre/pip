@@ -1185,15 +1185,12 @@ def test_install_no_binary_disables_building_wheels(script, data, with_wheel):
     assert "Running setup.py install for upper" in str(res), str(res)
 
 
-def test_install_no_binary_disables_cached_wheels(script, data, with_wheel):
+def test_install_no_binary_disables_cached_wheels(
+        virtualenv, script, with_wheel):
     # Seed the cache
-    script.pip(
-        'install', '--no-index', '-f', data.find_links,
-        'upper')
-    script.pip('uninstall', 'upper', '-y')
-    res = script.pip(
-        'install', '--no-index', '--no-binary=:all:', '-f', data.find_links,
-        'upper', expect_stderr=True)
+    script.pip_install_local('upper')
+    virtualenv.clear()
+    res = script.pip_install_local('--no-binary=:all:', 'upper')
     assert "Successfully installed upper-2.0" in str(res), str(res)
     # No wheel building for upper, which was blacklisted
     assert "Running setup.py bdist_wheel for upper" not in str(res), str(res)
