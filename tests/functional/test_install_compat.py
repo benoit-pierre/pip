@@ -4,12 +4,9 @@ Tests for compatibility workarounds.
 """
 import os
 
-import pytest
-
 from tests.lib import assert_all_changes, pyversion
 
 
-@pytest.mark.network
 def test_debian_egg_name_workaround(script):
     """
     We can uninstall packages installed with the pyversion removed from the
@@ -21,10 +18,10 @@ def test_debian_egg_name_workaround(script):
     https://bitbucket.org/ianb/pip/issue/104/pip-uninstall-on-ubuntu-linux
 
     """
-    result = script.pip('install', 'INITools==0.2', expect_error=True)
+    result = script.pip_install_local('source==1.0')
 
     egg_info = os.path.join(
-        script.site_packages, "INITools-0.2-py%s.egg-info" % pyversion)
+        script.site_packages, "source-1.0-py%s.egg-info" % pyversion)
 
     # Debian only removes pyversion for global installs, not inside a venv
     # so even if this test runs on a Debian/Ubuntu system with broken
@@ -33,7 +30,7 @@ def test_debian_egg_name_workaround(script):
     assert egg_info in result.files_created, "Couldn't find %s" % egg_info
 
     # The Debian no-pyversion version of the .egg-info
-    mangled = os.path.join(script.site_packages, "INITools-0.2.egg-info")
+    mangled = os.path.join(script.site_packages, "source-1.0.egg-info")
     assert mangled not in result.files_created, "Found unexpected %s" % mangled
 
     # Simulate a Debian install by copying the .egg-info to their name for it
@@ -44,7 +41,7 @@ def test_debian_egg_name_workaround(script):
     assert os.path.isdir(full_mangled)
 
     # Try the uninstall and verify that everything is removed.
-    result2 = script.pip("uninstall", "INITools", "-y")
+    result2 = script.pip("uninstall", "source", "-y")
     assert_all_changes(result, result2, [script.venv / 'build', 'cache'])
 
 
