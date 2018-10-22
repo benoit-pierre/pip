@@ -2,11 +2,13 @@
 tests specific to "pip install --user"
 """
 import textwrap
-from os.path import curdir, isdir, isfile
+from os.path import curdir
 
 import pytest
 
-from tests.lib import need_svn, pyversion
+from tests.lib import (
+    assert_distributions_installed, create_basic_wheel_for_package, need_svn,
+)
 from tests.lib.local_repos import local_checkout
 
 
@@ -26,19 +28,14 @@ def _patch_dist_in_site_packages(virtualenv):
 
 class Tests_UserSite:
 
-    @pytest.mark.network
     def test_reset_env_system_site_packages_usersite(self, script):
         """
         Check user site works as expected.
         """
-        script.pip('install', '--user', 'INITools==0.2')
-        result = script.run(
-            'python', '-c',
-            "import pkg_resources; print(pkg_resources.get_distribution"
-            "('initools').project_name)",
-        )
-        project_name = result.stdout.strip()
-        assert 'INITools' == project_name, project_name
+        pkg = create_basic_wheel_for_package(script.scratch_path, 'pkg', '0.1')
+        script.pip_install_local('--user', pkg)
+        assert_distributions_installed(script, user='pkg-0.1')
+        script.run('python', '-c', 'import pkg')
 
     @pytest.mark.network
     @need_svn
@@ -98,30 +95,22 @@ class Tests_UserSite:
             "visible in this virtualenv." in result.stderr
         )
 
-    @pytest.mark.network
     def test_install_user_conflict_in_usersite(self, script):
         """
         Test user install with conflict in usersite updates usersite.
         """
 
-        script.pip('install', '--user', 'INITools==0.3', '--no-binary=:all:')
+        create_basic_wheel_for_package(script.scratch_path, 'pkg', '0.1')
+        create_basic_wheel_for_package(script.scratch_path, 'pkg', '0.3')
 
-        result2 = script.pip(
-            'install', '--user', 'INITools==0.1', '--no-binary=:all:')
+        script.pip_install_local('--user', 'pkg==0.3',
+                                 links=script.scratch_path)
+        assert_distributions_installed(script, user='pkg-0.3')
 
-        # usersite has 0.1
-        egg_info_folder = (
-            script.user_site / 'INITools-0.1-py%s.egg-info' % pyversion
-        )
-        initools_v3_file = (
-            # file only in 0.3
-            script.base_path / script.user_site / 'initools' /
-            'configparser.py'
-        )
-        assert egg_info_folder in result2.files_created, str(result2)
-        assert not isfile(initools_v3_file), initools_v3_file
+        script.pip_install_local('--user', 'pkg==0.1',
+                                 links=script.scratch_path)
+        assert_distributions_installed(script, user='pkg-0.1')
 
-    @pytest.mark.network
     def test_install_user_conflict_in_globalsite(self, virtualenv, script):
         """
         Test user install with conflict in global site ignores site and
@@ -129,29 +118,17 @@ class Tests_UserSite:
         """
         _patch_dist_in_site_packages(virtualenv)
 
-        script.pip('install', 'INITools==0.2', '--no-binary=:all:')
+        create_basic_wheel_for_package(script.scratch_path, 'pkg', '0.1')
+        create_basic_wheel_for_package(script.scratch_path, 'pkg', '0.2')
 
-        result2 = script.pip(
-            'install', '--user', 'INITools==0.1', '--no-binary=:all:')
+        script.pip_install_local('pkg==0.2', links=script.scratch_path)
+        assert_distributions_installed(script, system='pkg-0.2')
 
-        # usersite has 0.1
-        egg_info_folder = (
-            script.user_site / 'INITools-0.1-py%s.egg-info' % pyversion
-        )
-        initools_folder = script.user_site / 'initools'
-        assert egg_info_folder in result2.files_created, str(result2)
-        assert initools_folder in result2.files_created, str(result2)
+        script.pip_install_local('--user', 'pkg==0.1',
+                                 links=script.scratch_path)
+        assert_distributions_installed(script, system='pkg-0.2',
+                                       user='pkg-0.1')
 
-        # site still has 0.2 (can't look in result1; have to check)
-        egg_info_folder = (
-            script.base_path / script.site_packages /
-            'INITools-0.2-py%s.egg-info' % pyversion
-        )
-        initools_folder = script.base_path / script.site_packages / 'initools'
-        assert isdir(egg_info_folder)
-        assert isdir(initools_folder)
-
-    @pytest.mark.network
     def test_upgrade_user_conflict_in_globalsite(self, virtualenv, script):
         """
         Test user install/upgrade with conflict in global site ignores site and
@@ -159,28 +136,17 @@ class Tests_UserSite:
         """
         _patch_dist_in_site_packages(virtualenv)
 
-        script.pip('install', 'INITools==0.2', '--no-binary=:all:')
-        result2 = script.pip(
-            'install', '--user', '--upgrade', 'INITools', '--no-binary=:all:')
+        create_basic_wheel_for_package(script.scratch_path, 'pkg', '0.2')
+        create_basic_wheel_for_package(script.scratch_path, 'pkg', '0.3.1')
 
-        # usersite has 0.3.1
-        egg_info_folder = (
-            script.user_site / 'INITools-0.3.1-py%s.egg-info' % pyversion
-        )
-        initools_folder = script.user_site / 'initools'
-        assert egg_info_folder in result2.files_created, str(result2)
-        assert initools_folder in result2.files_created, str(result2)
+        script.pip_install_local('pkg==0.2', links=script.scratch_path)
+        assert_distributions_installed(script, system='pkg-0.2')
 
-        # site still has 0.2 (can't look in result1; have to check)
-        egg_info_folder = (
-            script.base_path / script.site_packages /
-            'INITools-0.2-py%s.egg-info' % pyversion
-        )
-        initools_folder = script.base_path / script.site_packages / 'initools'
-        assert isdir(egg_info_folder), result2.stdout
-        assert isdir(initools_folder)
+        script.pip_install_local('--user', '--upgrade', 'pkg',
+                                 links=script.scratch_path)
+        assert_distributions_installed(script, system='pkg-0.2',
+                                       user='pkg-0.3.1')
 
-    @pytest.mark.network
     def test_install_user_conflict_in_globalsite_and_usersite(
             self, virtualenv, script):
         """
@@ -189,34 +155,23 @@ class Tests_UserSite:
         """
         _patch_dist_in_site_packages(virtualenv)
 
-        script.pip('install', 'INITools==0.2', '--no-binary=:all:')
-        script.pip('install', '--user', 'INITools==0.3', '--no-binary=:all:')
+        create_basic_wheel_for_package(script.scratch_path, 'pkg', '0.1')
+        create_basic_wheel_for_package(script.scratch_path, 'pkg', '0.2')
+        create_basic_wheel_for_package(script.scratch_path, 'pkg', '0.3')
 
-        result3 = script.pip(
-            'install', '--user', 'INITools==0.1', '--no-binary=:all:')
+        script.pip_install_local('pkg==0.2', links=script.scratch_path)
+        assert_distributions_installed(script, system='pkg-0.2')
 
-        # usersite has 0.1
-        egg_info_folder = (
-            script.user_site / 'INITools-0.1-py%s.egg-info' % pyversion
-        )
-        initools_v3_file = (
-            # file only in 0.3
-            script.base_path / script.user_site / 'initools' /
-            'configparser.py'
-        )
-        assert egg_info_folder in result3.files_created, str(result3)
-        assert not isfile(initools_v3_file), initools_v3_file
+        script.pip_install_local('--user', 'pkg==0.3',
+                                 links=script.scratch_path)
+        assert_distributions_installed(script, system='pkg-0.2',
+                                       user='pkg-0.3')
 
-        # site still has 0.2 (can't just look in result1; have to check)
-        egg_info_folder = (
-            script.base_path / script.site_packages /
-            'INITools-0.2-py%s.egg-info' % pyversion
-        )
-        initools_folder = script.base_path / script.site_packages / 'initools'
-        assert isdir(egg_info_folder)
-        assert isdir(initools_folder)
+        script.pip_install_local('--user', 'pkg==0.1',
+                                 links=script.scratch_path)
+        assert_distributions_installed(script, system='pkg-0.2',
+                                       user='pkg-0.1')
 
-    @pytest.mark.network
     def test_install_user_in_global_virtualenv_with_conflict_fails(
             self, script):
         """
@@ -224,20 +179,18 @@ class Tests_UserSite:
         site fails.
         """
 
-        script.pip('install', 'INITools==0.2')
+        create_basic_wheel_for_package(script.scratch_path, 'pkg', '0.1')
+        create_basic_wheel_for_package(script.scratch_path, 'pkg', '0.2')
 
-        result2 = script.pip(
-            'install', '--user', 'INITools==0.1',
-            expect_error=True,
-        )
-        resultp = script.run(
-            'python', '-c',
-            "import pkg_resources; print(pkg_resources.get_distribution"
-            "('initools').location)",
-        )
-        dist_location = resultp.stdout.strip()
+        script.pip_install_local('pkg==0.2', links=script.scratch_path)
+        assert_distributions_installed(script, system='pkg-0.2')
+
+        result = script.pip_install_local('--user', 'pkg==0.1',
+                                          links=script.scratch_path,
+                                          expect_error=True)
+        assert_distributions_installed(script, system='pkg-0.2')
         assert (
             "Will not install to the user site because it will lack sys.path "
             "precedence to %s in %s" %
-            ('INITools', dist_location) in result2.stderr
+            ('pkg', script.site_packages_path.normcase) in result.stderr
         )
