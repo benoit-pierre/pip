@@ -1,5 +1,4 @@
 import distutils
-import glob
 import itertools
 import os
 import sys
@@ -994,45 +993,20 @@ def test_url_incorrect_case_file_index(script, data):
 
 
 @pytest.mark.network
-def test_compiles_pyc(script):
+@pytest.mark.parametrize('mode', ('compile', 'no-compile'))
+def test_install_compile(script, mode):
     """
-    Test installing with --compile on
-    """
-    del script.environ["PYTHONDONTWRITEBYTECODE"]
-    script.pip("install", "--compile", "--no-binary=:all:", "INITools==0.2")
-
-    # There are many locations for the __init__.pyc file so attempt to find
-    #   any of them
-    exists = [
-        os.path.exists(script.site_packages_path / "initools/__init__.pyc"),
-    ]
-
-    exists += glob.glob(
-        script.site_packages_path / "initools/__pycache__/__init__*.pyc"
-    )
-
-    assert any(exists)
-
-
-@pytest.mark.network
-def test_no_compiles_pyc(script):
-    """
-    Test installing from wheel with --compile on
+    Test installing with --compile/--no-compile.
     """
     del script.environ["PYTHONDONTWRITEBYTECODE"]
-    script.pip("install", "--no-compile", "--no-binary=:all:", "INITools==0.2")
-
-    # There are many locations for the __init__.pyc file so attempt to find
-    #   any of them
-    exists = [
-        os.path.exists(script.site_packages_path / "initools/__init__.pyc"),
-    ]
-
-    exists += glob.glob(
-        script.site_packages_path / "initools/__pycache__/__init__*.pyc"
+    script.pip_install_local(
+        "--%s" % mode, "--no-binary=:all:", "simple==1.0",
     )
-
-    assert not any(exists)
+    simple_pyc = (
+        next(script.site_packages_path.glob('simple/__init__.pyc'), None) or
+        next(script.site_packages_path.glob('simple/__pycache__/*.pyc'), None)
+    )
+    assert bool(simple_pyc) == (mode == 'compile')
 
 
 def test_install_upgrade_editable_depending_on_other_editable(script):
