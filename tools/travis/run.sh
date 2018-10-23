@@ -26,7 +26,7 @@ fi
 if [ "$TOXENV" = 'py' ]
 then
     # Unit tests
-    tox -- -m unit -n2
+    tox -- -m unit
     # Integration tests
     tox -- --use-venv -m integration -n2 --durations=10
 else

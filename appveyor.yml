@@ -2,8 +2,6 @@ environment:
   matrix:
     # Unit and integration tests.
     - PYTHON: "C:\\Python27"
-    - PYTHON: "C:\\Python36-x64"
-    - PYTHON: "C:\\Python27"
       RUN_INTEGRATION_TESTS: "True"
     - PYTHON: "C:\\Python36-x64"
       RUN_INTEGRATION_TESTS: "True"
@@ -59,15 +57,22 @@ test_script:
             return $true
         }
 
+        function Invoke-NativeCommand {
+            $command = $args[0]
+            $arguments = $args[1..($args.Length)]
+            & $command @arguments
+            if ($LastExitCode -ne 0) {
+                Write-Error "Exit code $LastExitCode while running $command $arguments"
+            }
+        }
+
         if (should_run_tests) {
             # Shorten paths, workaround https://bugs.python.org/issue18199
             subst T: $env:TEMP
             $env:TEMP = "T:\"
             $env:TMP = "T:\"
+            Invoke-NativeCommand tox -e py -- -m unit
             if ($env:RUN_INTEGRATION_TESTS -eq "True") {
-                tox -e py -- --use-venv -m integration -n2 --durations=10
-            }
-            else {
-                tox -e py -- -m unit -n2
+                Invoke-NativeCommand tox -e py -- --use-venv -m integration -n2 --durations=10
             }
         }
