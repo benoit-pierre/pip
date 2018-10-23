@@ -1,6 +1,5 @@
 from __future__ import with_statement
 
-import json
 import logging
 import os
 import sys
@@ -12,26 +11,24 @@ import pytest
 
 from pip._internal.req.constructors import install_req_from_line
 from tests.lib import (
-    assert_all_changes, create_test_package_with_setup, need_svn,
+    assert_all_changes, assert_distributions_installed,
+    create_basic_wheel_for_package, create_test_package_with_setup, need_svn,
 )
 from tests.lib.local_repos import local_checkout
 
 
-@pytest.mark.network
 def test_basic_uninstall(script):
     """
     Test basic install and uninstall.
 
     """
-    result = script.pip('install', 'INITools==0.2')
-    assert join(script.site_packages, 'initools') in result.files_created, (
-        sorted(result.files_created.keys())
-    )
-    # the import forces the generation of __pycache__ if the version of python
-    # supports it
-    script.run('python', '-c', "import initools")
-    result2 = script.pip('uninstall', 'INITools', '-y')
-    assert_all_changes(result, result2, [script.venv / 'build', 'cache'])
+    pkg_path = create_basic_wheel_for_package(script.scratch_path,
+                                              'pkg', '0.2')
+    result = script.pip_install_local(pkg_path)
+    assert_distributions_installed(script, 'pkg-0.2'), str(result)
+
+    result = script.pip('uninstall', 'pkg', '-y')
+    assert_distributions_installed(script), str(result)
 
 
 def test_basic_uninstall_distutils(script):
@@ -49,9 +46,8 @@ def test_basic_uninstall_distutils(script):
         )
     """))
     result = script.run('python', pkg_path / 'setup.py', 'install')
-    result = script.pip('list', '--format=json')
-    assert {"name": "distutils-install", "version": "0.1"} \
-        in json.loads(result.stdout)
+    assert_distributions_installed(
+        script, 'distutils-install-0.1'), str(result)
     result = script.pip('uninstall', 'distutils_install', '-y',
                         expect_stderr=True, expect_error=True)
     assert (
@@ -79,56 +75,47 @@ def test_basic_uninstall_with_scripts(script):
     )
 
 
-@pytest.mark.network
 def test_uninstall_easy_install_after_import(script):
     """
     Uninstall an easy_installed package after it's been imported
 
     """
-    result = script.easy_install('--always-unzip', 'INITools==0.2',
-                                 expect_stderr=True)
-    # the import forces the generation of __pycache__ if the version of python
-    # supports it
-    script.run('python', '-c', "import initools")
-    result2 = script.pip('uninstall', 'INITools', '-y')
-    assert_all_changes(
-        result,
-        result2,
-        [
-            script.venv / 'build',
-            'cache',
-            script.site_packages / 'easy-install.pth',
-        ]
-    )
+    pkg = create_basic_wheel_for_package(script.scratch_path, 'pkg', '0.2')
+    result = script.easy_install(pkg)
+    assert_distributions_installed(script, 'pkg-0.2'), str(result)
+    del script.environ["PYTHONDONTWRITEBYTECODE"]
+    script.run('python', '-c', "import pkg")
+    result = script.pip('uninstall', 'pkg', '-y')
+    assert_distributions_installed(script), str(result)
 
 
-@pytest.mark.network
 def test_uninstall_trailing_newline(script):
     """
     Uninstall behaves appropriately if easy-install.pth
     lacks a trailing newline
 
     """
-    script.easy_install('INITools==0.2', expect_stderr=True)
-    script.easy_install('PyLogo', expect_stderr=True)
+    foo_pkg = create_basic_wheel_for_package(script.scratch_path, 'foo', '0.2')
+    bar_pkg = create_basic_wheel_for_package(script.scratch_path, 'bar', '3.0')
+
+    result = script.easy_install(foo_pkg, bar_pkg)
+    assert_distributions_installed(script, 'foo-0.2 bar-3.0'), str(result)
+
+    # Trim trailing newline from easy-install.pth.
     easy_install_pth = script.site_packages_path / 'easy-install.pth'
+    pth_before = easy_install_pth.read_text()
+    easy_install_pth.write(pth_before.rstrip())
 
-    # trim trailing newline from easy-install.pth
-    with open(easy_install_pth) as f:
-        pth_before = f.read()
+    # Uninstall initools.
+    result = script.pip('uninstall', 'foo', '-y')
+    assert_distributions_installed(script, 'bar-3.0'), str(result)
 
-    with open(easy_install_pth, 'w') as f:
-        f.write(pth_before.rstrip())
+    pth_after = easy_install_pth.read_text()
 
-    # uninstall initools
-    script.pip('uninstall', 'INITools', '-y')
-    with open(easy_install_pth) as f:
-        pth_after = f.read()
-
-    # verify that only initools is removed
+    # Verify that only initools is removed.
     before_without_initools = [
         line for line in pth_before.splitlines()
-        if 'initools' not in line.lower()
+        if 'foo' not in line
     ]
     lines_after = pth_after.splitlines()
 
@@ -217,16 +204,14 @@ def test_uninstall_entry_point(script, console_scripts):
     script_name = script.bin_path.join(console_scripts.split('=')[0].strip())
     if sys.platform == 'win32':
         script_name += '.exe'
+
     result = script.pip('install', pkg_path)
-    assert script_name.exists
-    result = script.pip('list', '--format=json')
-    assert {"name": "ep-install", "version": "0.1"} \
-        in json.loads(result.stdout)
-    script.pip('uninstall', 'ep_install', '-y')
-    assert not script_name.exists
-    result2 = script.pip('list', '--format=json')
-    assert {"name": "ep-install", "version": "0.1"} \
-        not in json.loads(result2.stdout)
+    assert script_name.exists, str(result)
+    assert_distributions_installed(script, 'ep-install-0.1'), str(result)
+
+    result = script.pip('uninstall', 'ep_install', '-y')
+    assert not script_name.exists, str(result)
+    assert_distributions_installed(script), str(result)
 
 
 def test_uninstall_gui_scripts(script):
@@ -440,55 +425,60 @@ def test_uninstall_wheel(script, data):
 
 def test_uninstall_setuptools_develop_install(script, data):
     """Try uninstall after setup.py develop followed of setup.py install"""
+
     pkg_path = data.src.join("FSPkg")
-    script.run('python', 'setup.py', 'develop',
-               expect_stderr=True, cwd=pkg_path)
-    script.run('python', 'setup.py', 'install',
-               expect_stderr=True, cwd=pkg_path)
-    list_result = script.pip('list', '--format=json')
-    assert {"name": os.path.normcase("FSPkg"), "version": "0.1.dev0"} \
-        in json.loads(list_result.stdout), str(list_result)
+    pkg_egg_link = script.site_packages / 'FSPkg.egg-link'
+
+    result = script.run('python', 'setup.py', 'develop',
+                        expect_stderr=True, cwd=pkg_path)
+    assert pkg_egg_link in result.files_created, str(result)
+    assert_distributions_installed(script, 'FSPkg-0.1.dev0'), str(result)
+
+    result = script.run('python', 'setup.py', 'install',
+                        expect_stderr=True, cwd=pkg_path)
+    assert_distributions_installed(script, '''
+                                   FSPkg-0.1.dev0
+                                   FSPkg-0.1.dev0
+                                   '''), str(result)
+
     # Uninstall both develop and install
-    uninstall = script.pip('uninstall', 'FSPkg', '-y')
-    assert any(filename.endswith('.egg')
-               for filename in uninstall.files_deleted.keys())
-    uninstall2 = script.pip('uninstall', 'FSPkg', '-y')
-    assert join(
-        script.site_packages, 'FSPkg.egg-link'
-    ) in uninstall2.files_deleted, list(uninstall2.files_deleted.keys())
-    list_result2 = script.pip('list', '--format=json')
-    assert "FSPkg" not in {p["name"] for p in json.loads(list_result2.stdout)}
+    result = script.pip('uninstall', 'FSPkg', '-y')
+    assert pkg_egg_link not in result.files_deleted, str(result)
+    assert_distributions_installed(script, 'FSPkg-0.1.dev0'), str(result)
+
+    result = script.pip('uninstall', 'FSPkg', '-y')
+    assert pkg_egg_link in result.files_deleted, str(result)
+    assert_distributions_installed(script), str(result)
 
 
 def test_uninstall_editable_and_pip_install(script, data):
     """Try uninstall after pip install -e after pip install"""
-    # SETUPTOOLS_SYS_PATH_TECHNIQUE=raw removes the assumption that `-e`
-    # installs are always higher priority than regular installs.
-    # This becomes the default behavior in setuptools 25.
-    script.environ['SETUPTOOLS_SYS_PATH_TECHNIQUE'] = 'raw'
 
     pkg_path = data.src.join("FSPkg")
-    script.pip('install', '-e', '.',
-               expect_stderr=True, cwd=pkg_path)
+    pkg_egg_link = script.site_packages / 'FSPkg.egg-link'
+
+    result = script.pip('install', '-e', pkg_path)
+    assert pkg_egg_link in result.files_created, str(result)
+    assert_distributions_installed(script, 'FSPkg-0.1.dev0'), str(result)
+
     # ensure both are installed with --ignore-installed:
-    script.pip('install', '--ignore-installed', '.',
-               expect_stderr=True, cwd=pkg_path)
-    list_result = script.pip('list', '--format=json')
-    assert {"name": "FSPkg", "version": "0.1.dev0"} \
-        in json.loads(list_result.stdout)
+    script.pip('install', '--ignore-installed', pkg_path)
+    assert_distributions_installed(script, '''
+                                   FSPkg-0.1.dev0
+                                   FSPkg-0.1.dev0
+                                   '''), str(result)
+
     # Uninstall both develop and install
-    uninstall = script.pip('uninstall', 'FSPkg', '-y')
-    assert not any(filename.endswith('.egg-link')
-                   for filename in uninstall.files_deleted.keys())
-    uninstall2 = script.pip('uninstall', 'FSPkg', '-y')
-    assert join(
-        script.site_packages, 'FSPkg.egg-link'
-    ) in uninstall2.files_deleted, list(uninstall2.files_deleted.keys())
-    list_result2 = script.pip('list', '--format=json')
-    assert "FSPkg" not in {p["name"] for p in json.loads(list_result2.stdout)}
+    result = script.pip('uninstall', 'FSPkg', '-y')
+    assert pkg_egg_link not in result.files_deleted, str(result)
+    assert_distributions_installed(script, 'FSPkg-0.1.dev0'), str(result)
+
+    result = script.pip('uninstall', 'FSPkg', '-y')
+    assert pkg_egg_link in result.files_deleted, str(result)
+    assert_distributions_installed(script), str(result)
 
 
-def test_uninstall_ignores_missing_packages(script, data):
+def test_uninstall_ignores_missing_packages(script):
     """Uninstall of a non existent package prints a warning and exits cleanly
     """
     result = script.pip(
@@ -499,10 +489,11 @@ def test_uninstall_ignores_missing_packages(script, data):
     assert result.returncode == 0, "Expected clean exit"
 
 
-def test_uninstall_ignores_missing_packages_and_uninstalls_rest(script, data):
-    script.pip_install_local('simple')
+def test_uninstall_ignores_missing_packages_and_uninstalls_rest(script):
+    script.pip_install_local('simplewheel')
     result = script.pip(
-        'uninstall', '-y', 'non-existent-pkg', 'simple', expect_stderr=True,
+        'uninstall', '-y', 'non-existent-pkg', 'simplewheel',
+        expect_stderr=True,
     )
 
     assert "Skipping non-existent-pkg as it is not installed." in result.stderr
