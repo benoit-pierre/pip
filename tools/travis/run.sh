@@ -28,7 +28,7 @@ then
     # Unit tests
     tox -- -m unit
     # Integration tests
-    tox -- --use-venv -m integration -n 4 --durations=10
+    tox -- --use-venv -m integration -n 3 --durations=10
 else
     # Non-Testing Jobs should run once
     tox
