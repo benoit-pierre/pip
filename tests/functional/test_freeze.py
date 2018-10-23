@@ -6,9 +6,10 @@ from doctest import ELLIPSIS, OutputChecker
 import pytest
 
 from tests.lib import (
-    _create_test_package, _create_test_package_with_srcdir, need_bzr,
-    need_mercurial, need_svn,
+    _create_test_package, _create_test_package_with_srcdir,
+    create_basic_wheel_for_package, need_bzr, need_mercurial, need_svn,
 )
+from tests.lib.path import Path
 
 
 def _check_output(result, expected):
@@ -35,7 +36,20 @@ def _check_output(result, expected):
     )
 
 
-def test_basic_freeze(script):
+@pytest.fixture(scope='module')
+def wheelhouse(tmpdir_factory):
+    wheels = Path(str(tmpdir_factory.mktemp('wheels')))
+    create_basic_wheel_for_package(wheels, 'INITools', '0.2')
+    create_basic_wheel_for_package(wheels, 'simple', '1.0')
+    create_basic_wheel_for_package(wheels, 'simple', '3.0')
+    create_basic_wheel_for_package(wheels, 'simple2', '1.0')
+    create_basic_wheel_for_package(wheels, 'meta', '1.0',
+                                   depends=['simple==1.0',
+                                            'simple2==1.0'])
+    return wheels
+
+
+def test_basic_freeze(script, wheelhouse):
     """
     Some tests of freeze, first we have to install some stuff.  Note that
     the test is a little crude at the end because Python 2.5+ adds egg
@@ -45,17 +59,18 @@ def test_basic_freeze(script):
 
     """
     script.scratch_path.join("initools-req.txt").write(textwrap.dedent("""\
-        simple==2.0
+        simple==3.0
         # and something else to test out:
-        simple2<=3.0
+        simple2<=1.0
         """))
     script.pip_install_local(
         '-r', script.scratch_path / 'initools-req.txt',
+        links=wheelhouse,
     )
     result = script.pip('freeze', expect_stderr=True)
     expected = textwrap.dedent("""\
-        ...simple==2.0
-        simple2==3.0...
+        ...simple==3.0
+        simple2==1.0...
         <BLANKLINE>""")
     _check_output(result.stdout, expected)
 
@@ -206,7 +221,7 @@ def test_freeze_git_clone(script, tmpdir):
     # Create a new commit to ensure that the commit has only one branch
     # or tag name associated to it (to avoid the non-determinism reported
     # in issue #1867).
-    script.run('touch', 'newfile', cwd=repo_dir)
+    (repo_dir / 'newfile').touch()
     script.run('git', 'add', 'newfile', cwd=repo_dir)
     script.run('git', 'commit', '-m', '...', cwd=repo_dir)
     result = script.pip('freeze', expect_stderr=True)
@@ -412,19 +427,18 @@ _freeze_req_opts = textwrap.dedent("""\
 """)
 
 
-def test_freeze_with_requirement_option(script):
+def test_freeze_with_requirement_option_1(script, wheelhouse):
     """
     Test that new requirements are created correctly with --requirement hints
 
     """
-
     script.scratch_path.join("hint.txt").write(textwrap.dedent("""\
         INITools==0.1
         NoExist==4.2  # A comment that ensures end of line comments work.
         simple==3.0; python_version > '1.0'
         """) + _freeze_req_opts)
-    result = script.pip_install_local('initools==0.2')
-    result = script.pip_install_local('simple')
+    result = script.pip_install_local('initools==0.2', 'simple',
+                                      links=wheelhouse)
     result = script.pip(
         'freeze', '--requirement', 'hint.txt',
         expect_stderr=True,
@@ -442,7 +456,7 @@ def test_freeze_with_requirement_option(script):
     ) in result.stderr
 
 
-def test_freeze_with_requirement_option_multiple(script):
+def test_freeze_with_requirement_option_multiple(script, wheelhouse):
     """
     Test that new requirements are created correctly with multiple
     --requirement hints
@@ -457,10 +471,12 @@ def test_freeze_with_requirement_option_multiple(script):
         NoExist2==2.0
         simple2==1.0
     """) + _freeze_req_opts)
-    result = script.pip_install_local('initools==0.2')
-    result = script.pip_install_local('simple')
-    result = script.pip_install_local('simple2==1.0')
-    result = script.pip_install_local('meta')
+    result = script.pip_install_local(
+        'initools==0.2',
+        'simple2==1.0',
+        'meta',
+        links=wheelhouse,
+    )
     result = script.pip(
         'freeze', '--requirement', 'hint1.txt', '--requirement', 'hint2.txt',
         expect_stderr=True,
@@ -491,7 +507,8 @@ def test_freeze_with_requirement_option_multiple(script):
     assert result.stdout.count("--index-url http://ignore") == 1
 
 
-def test_freeze_with_requirement_option_package_repeated_one_file(script):
+def test_freeze_with_requirement_option_package_repeated_one_file(
+        script, wheelhouse):
     """
     Test freezing with single requirements file that contains a package
     multiple times
@@ -501,8 +518,7 @@ def test_freeze_with_requirement_option_package_repeated_one_file(script):
         simple2
         NoExist
     """) + _freeze_req_opts)
-    result = script.pip_install_local('simple2==1.0')
-    result = script.pip_install_local('meta')
+    result = script.pip_install_local('simple2==1.0', 'meta', links=wheelhouse)
     result = script.pip(
         'freeze', '--requirement', 'hint1.txt',
         expect_stderr=True,
@@ -525,7 +541,8 @@ def test_freeze_with_requirement_option_package_repeated_one_file(script):
     assert result.stderr.count('is not installed') == 1
 
 
-def test_freeze_with_requirement_option_package_repeated_multi_file(script):
+def test_freeze_with_requirement_option_package_repeated_multi_file(
+        script, wheelhouse):
     """
     Test freezing with multiple requirements file that contain a package
     """
@@ -536,8 +553,7 @@ def test_freeze_with_requirement_option_package_repeated_multi_file(script):
         simple
         NoExist
     """) + _freeze_req_opts)
-    result = script.pip_install_local('simple==1.0')
-    result = script.pip_install_local('meta')
+    result = script.pip_install_local('simple==1.0', 'meta', links=wheelhouse)
     result = script.pip(
         'freeze', '--requirement', 'hint1.txt',
         '--requirement', 'hint2.txt',
@@ -563,15 +579,15 @@ def test_freeze_with_requirement_option_package_repeated_multi_file(script):
     assert result.stderr.count('is not installed') == 1
 
 
-def test_freeze_user(script):
+def test_freeze_user(script, wheelhouse):
     """
     Testing freeze with --user, first we have to install some stuff.
     """
-    script.pip_install_local('--user', 'simple==2.0')
-    script.pip_install_local('simple2==3.0')
+    script.pip_install_local('--user', 'simple==3.0', links=wheelhouse)
+    script.pip_install_local('simple2==1.0', links=wheelhouse)
     result = script.pip('freeze', '--user')
     expected = textwrap.dedent("""\
-        simple==2.0
+        simple==3.0
         <BLANKLINE>""")
     _check_output(result.stdout, expected)
     assert 'simple2' not in result.stdout
