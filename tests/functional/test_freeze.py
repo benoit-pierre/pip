@@ -1,5 +1,4 @@
 import os
-import re
 import sys
 import textwrap
 from doctest import ELLIPSIS, OutputChecker
@@ -10,8 +9,6 @@ from tests.lib import (
     _create_test_package, _create_test_package_with_srcdir, need_bzr,
     need_mercurial, need_svn,
 )
-
-distribute_re = re.compile('^distribute==[0-9.]+\n', re.MULTILINE)
 
 
 def _check_output(result, expected):
@@ -28,10 +25,6 @@ def _check_output(result, expected):
     # the proper fully-cased package name in our error message.
     if sys.platform == 'win32':
         actual = actual.replace('initools', 'INITools')
-
-    # This allows our existing tests to work when run in a context
-    # with distribute installed.
-    actual = distribute_re.sub('', actual)
 
     def banner(msg):
         return '\n========== %s ==========\n' % msg
