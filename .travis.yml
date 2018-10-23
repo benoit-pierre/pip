@@ -17,46 +17,24 @@ jobs:
     - env: TOXENV=lint-py3
     - env: TOXENV=mypy
     - env: TOXENV=packaging
-    # Latest CPython
-    - env: GROUP=1
+    - env: TOXENV=py
       python: 2.7
-    - env: GROUP=2
-      python: 2.7
-    - env: GROUP=1
+    - env: TOXENV=py
       python: 3.6
-    - env: GROUP=2
-      python: 3.6
-    # Complete checking for ensuring compatibility
-    # PyPy
-    - stage: secondary
-      env: GROUP=1
-      python: pypy3
-    - env: GROUP=2
-      python: pypy3
-    - env: GROUP=1
-      python: pypy
-    - env: GROUP=2
-      python: pypy
     # Other Supported CPython
-    - env: GROUP=1
+    - stage: secondary
+      env: TOXENV=py
+      python: pypy
+    - env: TOXENV=py
+      python: pypy3
+    - env: TOXENV=py
+      python: 3.4
+    - env: TOXENV=py
+      python: 3.5
+    - env: TOXENV=py
       python: 3.7
       dist: xenial
-    - env: GROUP=2
-      python: 3.7
-      dist: xenial
-    - env: GROUP=1
-      python: 3.5
-    - env: GROUP=2
-      python: 3.5
-    - env: GROUP=1
-      python: 3.4
-    - env: GROUP=2
-      python: 3.4
-
-    - env: GROUP=1
-      python: 3.8-dev
-      dist: xenial
-    - env: GROUP=2
+    - env: TOXENV=py
       python: 3.8-dev
       dist: xenial
 
