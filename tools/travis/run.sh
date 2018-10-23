@@ -26,9 +26,9 @@ fi
 if [ "$TOXENV" = 'py' ]
 then
     # Unit tests
-    tox -- -m unit
+    tox -- -m unit -n2
     # Integration tests
-    tox -- --use-venv -m integration -n 2 --durations=10
+    tox -- --use-venv -m integration -n2 --durations=10
 else
     # Non-Testing Jobs should run once
     tox
