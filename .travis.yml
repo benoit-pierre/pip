@@ -11,16 +11,16 @@ jobs:
   include:
     # Basic Checks
     - stage: primary
-      env: TOXENV=docs
-    - env: TOXENV=lint-py2
-      python: 2.7
-    - env: TOXENV=lint-py3
-    - env: TOXENV=mypy
-    - env: TOXENV=packaging
-    - env: TOXENV=py
+      env: TOXENV=py
       python: 2.7
     - env: TOXENV=py
       python: 3.6
+    - env: TOXENV=mypy
+    - env: TOXENV=packaging
+    - env: TOXENV=lint-py2
+      python: 2.7
+    - env: TOXENV=lint-py3
+    - env: TOXENV=docs
     # Other Supported CPython
     - stage: secondary
       env: TOXENV=py
