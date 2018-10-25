@@ -105,23 +105,24 @@ class IsSDist(DistAbstraction):
             # requirements.
             self.req.build_env = BuildEnvironment()
             self.req.build_env.install_requirements(
-                finder, self.req.pyproject_requires,
+                finder, self.req.pyproject_requires, 'overlay',
                 "Installing build dependencies"
             )
-            missing = []
             if self.req.requirements_to_check:
-                check = self.req.requirements_to_check
-                missing = self.req.build_env.missing_requirements(check)
-            if missing:
-                logger.warning(
-                    "Missing build requirements in pyproject.toml for %s.",
-                    self.req,
+                conflicting, missing = self.req.build_env.check_requirements(
+                    self.req.requirements_to_check
                 )
-                logger.warning(
-                    "The project does not specify a build backend, and pip "
-                    "cannot fall back to setuptools without %s.",
-                    " and ".join(map(repr, sorted(missing)))
-                )
+                assert not conflicting
+                if missing:
+                    logger.warning(
+                        "Missing build requirements in pyproject.toml for %s.",
+                        self.req,
+                    )
+                    logger.warning(
+                        "The project does not specify a build backend, and "
+                        "pip cannot fall back to setuptools without %s.",
+                        " and ".join(map(repr, sorted(missing)))
+                    )
 
         self.req.run_egg_info()
         self.req.assert_source_matches_version()
