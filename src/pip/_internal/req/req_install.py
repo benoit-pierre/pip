@@ -620,24 +620,11 @@ class InstallRequirement(object):
     def get_dist(self):
         """Return a pkg_resources.Distribution for this requirement"""
         if self.metadata_directory:
-            base_dir, distinfo = os.path.split(self.metadata_directory)
-            metadata = pkg_resources.PathMetadata(
-                base_dir, self.metadata_directory
-            )
-            dist_name = os.path.splitext(distinfo)[0]
-            typ = pkg_resources.DistInfoDistribution
+            metadata_path = self.metadata_directory
         else:
-            egg_info = self.egg_info_path.rstrip(os.path.sep)
-            base_dir = os.path.dirname(egg_info)
-            metadata = pkg_resources.PathMetadata(base_dir, egg_info)
-            dist_name = os.path.splitext(os.path.basename(egg_info))[0]
-            typ = pkg_resources.Distribution
-
-        return typ(
-            base_dir,
-            project_name=dist_name,
-            metadata=metadata,
-        )
+            metadata_path = self.egg_info_path
+        metadata_path = metadata_path.rstrip(os.path.sep)
+        return next(pkg_resources.distributions_from_metadata(metadata_path))
 
     def assert_source_matches_version(self):
         assert self.source_dir
